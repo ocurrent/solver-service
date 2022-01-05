@@ -1,4 +1,4 @@
-module Worker = Ocaml_ci_api.Worker
+module Worker = Solver_service_api.Worker
 module Solver = Opam_0install.Solver.Make(Git_context)
 module Store = Git_unix.Store
 

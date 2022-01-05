@@ -1,0 +1,6 @@
+(executable
+  (name main)
+  (public_name solver-service)
+  (package solver-service)
+  (preprocess (pps ppx_deriving.std ppx_deriving_yojson))
+  (libraries lwt.unix solver-service-api ppx_deriving_yojson.runtime opam-0install capnp-rpc-unix git-unix logs.cli))

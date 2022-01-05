@@ -1,6 +1,6 @@
 open Lwt.Infix
 
-module Log = Ocaml_ci_api.Solver.Log
+module Log = Solver_service_api.Solver.Log
 module Store = Git_unix.Store
 
 let clone_path = "opam-repository"
