@@ -1,8 +1,8 @@
 open Lwt.Infix
 open Capnp_rpc_lwt
 
-module Worker = Ocaml_ci_api.Worker
-module Log = Ocaml_ci_api.Solver.Log
+module Worker = Solver_service_api.Worker
+module Log = Solver_service_api.Solver.Log
 module Selection = Worker.Selection
 module Store = Git_unix.Store
 
@@ -11,7 +11,7 @@ module Epoch : sig
   (* An Epoch handles all requests for a single opam-repository HEAD commit. *)
 
   val create : n_workers:int -> create_worker:(Git_unix.Store.Hash.t -> Lwt_process.process) -> Store.Hash.t -> t Lwt.t
-  val handle : log:Ocaml_ci_api.Solver.Log.t -> Worker.Solve_request.t -> t -> Selection.t list Lwt.t
+  val handle : log:Solver_service_api.Solver.Log.t -> Worker.Solve_request.t -> t -> Selection.t list Lwt.t
   val dispose : t -> unit Lwt.t
 end = struct
   type t = Lwt_process.process Lwt_pool.t
@@ -128,7 +128,7 @@ let v ~n_workers ~create_worker =
   Opam_repository.clone () >|= fun () ->
   let create hash = Epoch.create ~n_workers ~create_worker (Store.Hash.of_hex hash) in
   let t = Epoch_lock.v ~create ~dispose:Epoch.dispose () in
-  let module X = Ocaml_ci_api.Raw.Service.Solver in
+  let module X = Solver_service_api.Raw.Service.Solver in
   X.local @@ object
     inherit X.service
 
