@@ -1,6 +1,5 @@
 (lang dune 2.0)
 (name solver-service)
-(formatting disabled)
 (generate_opam_files true)
 (source (github patricoferris/solver-service))
 (authors "talex5@gmail.com")
