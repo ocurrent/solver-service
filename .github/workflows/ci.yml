@@ -1,0 +1,51 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  build:
+    name: Build and test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+        ocaml-compiler:
+          - ocaml-base-compiler.4.13.0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          dune-cache: ${{ matrix.os != 'macos-latest' }}
+      - name: Install opam dependencies
+        run: opam install --deps-only --with-test .
+      - name: Build project
+        run: opam exec -- dune build @install
+      - name: Run tests
+        run: opam exec -- dune build @runtest
+  lint-fmt:
+    strategy:
+      matrix:
+        ocaml-compiler:
+          - ocaml-base-compiler.4.13.0
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+          dune-cache: true
+      - name: Install ocamlformat
+        run: opam install ocamlformat.0.20.1
+      - name: Install opam dependencies
+        run: opam install --deps-only .
+      - name: Format code
+        run: opam exec -- dune build --auto-promote --ignore-promoted-rules @fmt
