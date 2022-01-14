@@ -1,4 +1,4 @@
-open Lwt.Infix
+open Lwt.Syntax
 open Capnp_rpc_lwt
 
 module Log = struct
@@ -36,7 +36,10 @@ let solve t ~log reqs =
   let request, params = Capability.Request.create Params.init_pointer in
   Params.request_set params (Worker.Solve_request.to_yojson reqs |> Yojson.Safe.to_string);
   Params.log_set params (Some log);
-  Capability.call_for_value_exn t method_id request >|= Results.response_get >|= fun json ->
-  match Worker.Solve_response.of_yojson (Yojson.Safe.from_string json) with
-  | Ok x -> x
-  | Error ex -> failwith ex
+  let+ result = Capability.call_for_value t method_id request in
+  match result with 
+  | Error (`Capnp e) -> Fmt.failwith "Capnp error: %a" Capnp_rpc.Error.pp e
+  | Ok json ->
+    match Worker.Solve_response.of_yojson (Yojson.Safe.from_string @@ Results.response_get json) with
+    | Ok x -> x
+    | Error ex -> failwith ex

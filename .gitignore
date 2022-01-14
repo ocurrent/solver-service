@@ -6,3 +6,5 @@ var
 *.cap
 .*.swp
 .vscode
+
+opam-repository

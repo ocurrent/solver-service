@@ -95,7 +95,8 @@ end = struct
         let id = fst p in
         let slice = { request with platforms = [p] } in
         Lwt_pool.use t (process ~log ~id slice) >>= function
-        | Error _ as e -> Lwt.return (id, e)
+        | Error _ as e -> 
+          Lwt.return (id, e)
         | Ok packages ->
           let repo_packages =
             packages |> List.filter_map (fun pkg ->
