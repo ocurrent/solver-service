@@ -14,7 +14,7 @@
   lwt
   logs
   fmt
-  ocaml-ci-api
+  solver-service-api
   conf-libev
   (opam-0install (>= "0.2"))
   (git-unix (>= 3.2.0))
