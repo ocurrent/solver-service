@@ -35,7 +35,7 @@ module Procress = struct
     end
 end
 
-let test _sw () =
+let test_good_packages _sw () =
   let proc = Procress.const_response ~response:"+lwt.5.5.0 yaml.3.0.0" in
   let log = Buffer.create 100 in
   let req =
@@ -56,4 +56,29 @@ let test _sw () =
     (Ok [ "lwt.5.5.0"; "yaml.3.0.0" ])
     process
 
-let tests = [ Alcotest_lwt.test_case "solve" `Quick test ]
+let test_error _sw () =
+  let msg = "Something went wrong!" in
+  let proc = Procress.const_response ~response:("-" ^ msg) in
+  let log = Buffer.create 100 in
+  let req =
+    Solver_service_api.Worker.Solve_request.
+      {
+        opam_repository_commit = "abcdef";
+        root_pkgs = [];
+        pinned_pkgs = [];
+        platforms = [];
+      }
+  in
+  let+ process =
+    Solver_service.Service.Epoch.process ~log:(job_log log) ~id:"unique-id" req
+      proc
+  in
+  Alcotest.(check (result (list string) string))
+    "Same packages" (Error msg) process
+
+let tests =
+  Alcotest_lwt.
+    [
+      test_case "good-packages" `Quick test_good_packages;
+      test_case "error-handling" `Quick test_error;
+    ]
