@@ -1,5 +1,6 @@
 open Solver_service
 open Lwt.Syntax
+module Service = Service.Make (Opam_repository)
 
 let n_workers = 20
 

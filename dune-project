@@ -8,6 +8,7 @@
  (name solver-service)
  (synopsis "Choose package versions to test")
  (depends
+  (alcotest-lwt :with-test)
   (ppx_deriving_yojson (>= 3.6.1))
   (ppx_deriving (>= 5.1))
   yojson
@@ -26,6 +27,7 @@
  (name solver-service-api)
  (synopsis "Cap'n Proto API for the solver service")
  (depends
+  (alcotest-lwt :with-test)
   current_rpc
   (capnp (>= 3.4.0))
   capnp-rpc-lwt
