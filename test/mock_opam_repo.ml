@@ -3,7 +3,7 @@ module Log = Solver_service_api.Solver.Log
 module P = Solver_service.Process
 
 let commit, set_commit = Lwt.wait ()
-let clone_path : Fpath.t option ref = ref None
+let clone_path, set_clone_path = Lwt.wait ()
 
 let get_sha clone_path =
   let cmd =
@@ -17,7 +17,7 @@ let setup_store path =
   match path with
   | Error _ -> failwith "failed to create in-memory git store"
   | Ok path -> (
-      clone_path := Some path;
+      Lwt.wakeup set_clone_path path;
       let* () =
         P.exec ("git", [| "git"; "-C"; Fpath.to_string path; "init" |])
       in
@@ -43,7 +43,7 @@ let setup_store path =
           store)
 
 let open_store () =
-  let clone_path = Option.get !clone_path in
+  let* clone_path in
   let+ store = Git_unix.Store.v clone_path in
   match store with
   | Ok store -> store

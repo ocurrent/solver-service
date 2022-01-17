@@ -9,7 +9,8 @@ let opam_template arch =
     "os": "%%{os}%%",
     "os_family": "%%{os-family}%%",
     "os_distribution": "%%{os-distribution}%%",
-    "os_version": "%%{os-version}%%"
+    "os_version": "%%{os-version}%%",
+    "opam_version": "%%{opam-version}%%"
   }
 |}
     arch
@@ -31,4 +32,6 @@ let get_vars ~ocaml_package_name ~ocaml_version ?arch () =
           Yojson.Safe.(pretty_print ~std:true)
           json
   in
-  Result.get_ok @@ Solver_service_api.Worker.Vars.of_yojson json
+  match Solver_service_api.Worker.Vars.of_yojson json with
+  | Ok x -> x
+  | Error m -> failwith m

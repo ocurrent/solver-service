@@ -32,6 +32,7 @@ let opam_template arch =
     "os_family": "%%{os-family}%%",
     "os_distribution": "%%{os-distribution}%%",
     "os_version": "%%{os-version}%%"
+    "opam_version": "%%{opam-version}%%"
   }
 |}
     arch
