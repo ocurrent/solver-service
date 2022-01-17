@@ -15,6 +15,13 @@ module Epoch : sig
     Store.Hash.t ->
     t Lwt.t
 
+  val process :
+    log:Log.X.t Capability.t ->
+    id:string ->
+    Worker.Solve_request.t ->
+    < stdin : Lwt_io.output_channel ; stdout : Lwt_io.input_channel ; .. > ->
+    (string list, string) result Lwt.t
+
   val handle :
     log:Solver_service_api.Solver.Log.t ->
     Worker.Solve_request.t ->

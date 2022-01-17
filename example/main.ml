@@ -15,24 +15,6 @@ let job_log job =
          Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
      end
 
-let solve ~root_pkgs ~pinned_pkgs ~platforms ~opam_repository_commit ~job
-    ~solver =
-  let request =
-    {
-      Solver_service_api.Worker.Solve_request.opam_repository_commit =
-        Current_git.Commit_id.hash opam_repository_commit;
-      root_pkgs;
-      pinned_pkgs;
-      platforms;
-    }
-  in
-  Capnp_rpc_lwt.Capability.with_ref (job_log job) @@ fun log ->
-  let+ res = Solver_service_api.Solver.solve solver request ~log in
-  match res with
-  | Ok [] -> Fmt.error_msg "No solution found for any supported platform"
-  | Ok x -> Ok x
-  | Error (`Msg msg) -> Fmt.error_msg "Error from solver: %s" msg
-
 (* ~~~ Solver client ~~~ *)
 let () =
   Logs.set_level (Some Info);
