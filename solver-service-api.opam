@@ -7,6 +7,7 @@ homepage: "https://github.com/patricoferris/solver-service"
 bug-reports: "https://github.com/patricoferris/solver-service/issues"
 depends: [
   "dune" {>= "2.0"}
+  "alcotest-lwt" {with-test}
   "current_rpc"
   "capnp" {>= "3.4.0"}
   "capnp-rpc-lwt"

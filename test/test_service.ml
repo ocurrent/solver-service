@@ -35,21 +35,22 @@ module Procress = struct
     end
 end
 
+module Service = Solver_service.Service.Make (Mock_opam_repo)
+
 let test_good_packages _sw () =
   let proc = Procress.const_response ~response:"+lwt.5.5.0 yaml.3.0.0" in
   let log = Buffer.create 100 in
   let req =
     Solver_service_api.Worker.Solve_request.
       {
-        opam_repository_commit = "abcdef";
+        opam_repository_commit = "95d27ad970057f68179577594813dc1828324a2f";
         root_pkgs = [];
         pinned_pkgs = [];
         platforms = [];
       }
   in
   let+ process =
-    Solver_service.Service.Epoch.process ~log:(job_log log) ~id:"unique-id" req
-      proc
+    Service.Epoch.process ~log:(job_log log) ~id:"unique-id" req proc
   in
   Alcotest.(check (result (list string) string))
     "Same packages"
@@ -63,22 +64,56 @@ let test_error _sw () =
   let req =
     Solver_service_api.Worker.Solve_request.
       {
-        opam_repository_commit = "abcdef";
+        opam_repository_commit = "95d27ad970057f68179577594813dc1828324a2f";
         root_pkgs = [];
         pinned_pkgs = [];
         platforms = [];
       }
   in
   let+ process =
-    Solver_service.Service.Epoch.process ~log:(job_log log) ~id:"unique-id" req
-      proc
+    Service.Epoch.process ~log:(job_log log) ~id:"unique-id" req proc
   in
   Alcotest.(check (result (list string) string))
     "Same packages" (Error msg) process
+
+let solver_response =
+  Alcotest.of_pp (fun ppf t ->
+      Yojson.Safe.pp ppf (Solver_service_api.Worker.Solve_response.to_yojson t))
+
+let test_e2e _sw () =
+  Lwt_io.with_temp_dir @@ fun dir ->
+  let* _store = Mock_opam_repo.setup_store (Ok (Fpath.v dir)) in
+  let* commit = Mock_opam_repo.commit in
+  let os_id = "testOS" in
+  let* vars =
+    Utils.get_vars ~ocaml_package_name:"ocaml" ~ocaml_version:"4.13.1" ()
+  in
+  let create_worker _hash =
+    Procress.const_response ~response:"+lwt.5.5.0 yaml.3.0.0"
+  in
+  let log = Buffer.create 100 in
+  let req =
+    Solver_service_api.Worker.Solve_request.
+      {
+        opam_repository_commit = commit;
+        root_pkgs = [ ("yaml.3.0.0", "") ];
+        pinned_pkgs = [];
+        platforms = [ (os_id, vars) ];
+      }
+  in
+  let* service = Service.v ~n_workers:1 ~create_worker in
+  let+ response =
+    Solver_service_api.Solver.solve ~log:(job_log log) service req
+  in
+  Alcotest.(check solver_response)
+    "Same solve reponse"
+    (Ok [ { id = os_id; packages = [ "lwt.5.5.0"; "yaml.3.0.0" ]; commit } ])
+    response
 
 let tests =
   Alcotest_lwt.
     [
       test_case "good-packages" `Quick test_good_packages;
       test_case "error-handling" `Quick test_error;
+      test_case "end-to-end" `Quick test_e2e;
     ]
