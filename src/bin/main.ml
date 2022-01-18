@@ -35,6 +35,30 @@ let setup_log level =
      @@ Logs.Src.list (); *)
   Logs.set_reporter reporter
 
+let export service ~on:socket =
+  let restore =
+    Capnp_rpc_net.Restorer.single
+      (Capnp_rpc_net.Restorer.Id.public "solver")
+      service
+  in
+  let switch = Lwt_switch.create () in
+  let stdin =
+    Capnp_rpc_unix.Unix_flow.connect socket
+    |> Capnp_rpc_net.Endpoint.of_flow
+         (module Capnp_rpc_unix.Unix_flow)
+         ~peer_id:Capnp_rpc_net.Auth.Digest.insecure ~switch
+  in
+  let (_ : Capnp_rpc_unix.CapTP.t) =
+    Capnp_rpc_unix.CapTP.connect ~restore stdin
+  in
+  let crashed, set_crashed = Lwt.wait () in
+  let* () =
+    Lwt_switch.add_hook_or_exec (Some switch) (fun () ->
+        Lwt.wakeup_exn set_crashed (Failure "Capnp switch turned off");
+        Lwt.return_unit)
+  in
+  crashed
+
 let start_server address =
   let config =
     Capnp_rpc_unix.Vat_config.create ~secret_key:`Ephemeral address
@@ -56,15 +80,25 @@ let start_server address =
 let main () hash address =
   match (hash, address) with
   | None, Some address ->
+      (* Run with a capnp address as the endpoint *)
       Lwt_main.run
         (let* uri = start_server address in
          Fmt.pr "Solver service running at: %a@." Uri.pp_hum uri;
          fst @@ Lwt.wait ())
+  | None, None ->
+      (* Run locally reading from stdin *)
+      Lwt_main.run
+        (let create_worker hash =
+           let cmd =
+             ( "",
+               [| Sys.argv.(0); "--worker"; Git_unix.Store.Hash.to_hex hash |]
+             )
+           in
+           Lwt_process.open_process cmd
+         in
+         let* service = Service.v ~n_workers ~create_worker in
+         export service ~on:Lwt_unix.stdin)
   | Some hash, _ -> Solver.main (Git_unix.Store.Hash.of_hex hash)
-  | _ ->
-      failwith
-        "The solver is either the Capnp endpoint (with an address) or a solver \
-         (with a hash)"
 
 (* Command-line parsing *)
 
