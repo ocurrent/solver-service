@@ -7,6 +7,12 @@ homepage: "https://github.com/patricoferris/solver-service"
 bug-reports: "https://github.com/patricoferris/solver-service/issues"
 depends: [
   "dune" {>= "2.0"}
+  "alcotest-lwt" {>= "1.5.0" & with-test}
+  "ocluster"
+  "prometheus-app" {>= "1.1"}
+  "logs" {>= "0.7.0"}
+  "fmt" {>= "0.9.0"}
+  "dune-build-info" {>= "2.9.1"}
   "solver-service" {= version}
 ]
 build: [

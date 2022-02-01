@@ -20,9 +20,7 @@
   (opam-0install (>= "0.2"))
   (git-unix (>= 3.2.0))
   (capnp-rpc-unix (>= 1.2)))
- (conflicts
-  (carton (< 0.4.2))) ; workaround for mirage/ocaml-git#514
-)
+ (conflicts (carton (< 0.4.2))))
 (package
  (name solver-service-api)
  (synopsis "Cap'n Proto API for the solver service")
@@ -37,4 +35,10 @@
  (name solver-worker)
  (synopsis "An OCluster worker that can solve opam constraints")
  (depends
+  (alcotest-lwt (and (>= 1.5.0) :with-test))
+  ocluster
+  (prometheus-app (>= 1.1))
+  (logs (>= 0.7.0))
+  (fmt (>= 0.9.0))
+  (dune-build-info (>= 2.9.1))
   (solver-service (= :version))))
