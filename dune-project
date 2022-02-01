@@ -33,3 +33,8 @@
   capnp-rpc-lwt
   ppx_deriving
   ppx_deriving_yojson))
+(package
+ (name solver-worker)
+ (synopsis "An OCluster worker that can solve opam constraints")
+ (depends
+  (solver-service (= :version))))
