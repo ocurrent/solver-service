@@ -2,13 +2,15 @@
 (name solver-service)
 (generate_opam_files true)
 (source (github patricoferris/solver-service))
-(authors "talex5@gmail.com")
-(maintainers "talex5@gmail.com")
+(authors "talex5@gmail.com" "patrick@sirref.org")
 (package
  (name solver-service)
  (synopsis "Choose package versions to test")
  (depends
   (alcotest-lwt :with-test)
+  ; Examples dependencies
+  (current_web :with-test)
+  (current_github :with-test)
   (ppx_deriving_yojson (>= 3.6.1))
   (ppx_deriving (>= 5.1))
   yojson
@@ -20,9 +22,7 @@
   (opam-0install (>= "0.2"))
   (git-unix (>= 3.2.0))
   (capnp-rpc-unix (>= 1.2)))
- (conflicts
-  (carton (< 0.4.2))) ; workaround for mirage/ocaml-git#514
-)
+ (conflicts (carton (< 0.4.2))))
 (package
  (name solver-service-api)
  (synopsis "Cap'n Proto API for the solver service")
@@ -33,3 +33,14 @@
   capnp-rpc-lwt
   ppx_deriving
   ppx_deriving_yojson))
+(package
+ (name solver-worker)
+ (synopsis "An OCluster worker that can solve opam constraints")
+ (depends
+  (alcotest-lwt (and (>= 1.5.0) :with-test))
+  ocluster
+  (prometheus-app (>= 1.1))
+  (logs (>= 0.7.0))
+  (fmt (>= 0.9.0))
+  (dune-build-info (>= 2.9.1))
+  (solver-service (= :version))))

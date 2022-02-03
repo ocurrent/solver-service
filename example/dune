@@ -1,6 +1,0 @@
-(executable
- (name main)
- (preprocess
-  (pps ppx_deriving.std ppx_deriving_yojson))
- (libraries capnp-rpc-unix solver-service-api solver-service
-   logs.cli logs.fmt opam-0install))

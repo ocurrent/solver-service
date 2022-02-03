@@ -8,3 +8,4 @@ var
 .vscode
 
 opam-repository
+capnp-secrets

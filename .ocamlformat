@@ -1,4 +1,5 @@
 version = 0.20.1
 profile = conventional
+ocaml-version = 4.08.0
 parse-docstrings = true
 module-item-spacing = compact
