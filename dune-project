@@ -2,13 +2,15 @@
 (name solver-service)
 (generate_opam_files true)
 (source (github patricoferris/solver-service))
-(authors "talex5@gmail.com")
-(maintainers "talex5@gmail.com")
+(authors "talex5@gmail.com" "patrick@sirref.org")
 (package
  (name solver-service)
  (synopsis "Choose package versions to test")
  (depends
   (alcotest-lwt :with-test)
+  ; Examples dependencies
+  (current_web :with-test)
+  (current_github :with-test)
   (ppx_deriving_yojson (>= 3.6.1))
   (ppx_deriving (>= 5.1))
   yojson
