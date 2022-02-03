@@ -43,10 +43,9 @@ let pipeline ~cluster vars () =
       ("obuilder.dev", Fpath.v "obuilder.opam");
     ]
   in
-  let opamfiles = Solve.get_opamfile ~packages src in
   let cluster = Current_ocluster.with_timeout (Some timeout) cluster in
   let request =
-    let+ opamfiles
+    let+ opamfiles = Solve.get_opamfile ~packages src
     and* opam_repo =
       Current_github.Api.Anonymous.head_of opam_repository
         (`Ref "refs/heads/master")
