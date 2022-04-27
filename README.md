@@ -29,11 +29,11 @@ $ dune exec -- ./example/main.exe --package=yaml --version=3.0.0 <capnp-address>
 
 The solver worker can join an existing pool on a scheduler and solve request jobs sent as a custom job type. The example [`submit.ml`](examples/submit.ml) will send such a job to a scheduler (you need to supply the submission cap file).
 
-To try this example locally with the submodule OCluster, first get the scheduler up and running.
+To try this example locally, first get the scheduler up and running.
 
 ```
 $ mkdir capnp-secrets
-$ dune exec -- ocluster-scheduler --capnp-secret-key-file=capnp-secrets/key.cap --capnp-listen-address=tcp:127.0.0.1:9000 --pools=solver --state-dir=var --verbosity=info
+$ ocluster-scheduler --capnp-secret-key-file=capnp-secrets/key.cap --capnp-listen-address=tcp:127.0.0.1:9000 --pools=solver --state-dir=var --verbosity=info
 ```
 
 This will write an `admin.cap` file into `capnp-secrets`. We can use this to add a new client and get a submission capability file.

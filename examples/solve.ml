@@ -119,20 +119,15 @@ let get_vars ~ocaml_package_name ~ocaml_version ?arch () =
   in
   Result.get_ok @@ Solver_service_api.Worker.Vars.of_yojson json
 
-let solve_to_custom req =
-  let open Cluster_api.Raw in
+let solve_to_custom req builder =
   let params =
     Yojson.Safe.to_string
     @@ Solver_service_api.Worker.Solve_request.to_yojson req
   in
-  let custom = Builder.Custom.init_root () in
-  let builder = Builder.Custom.payload_get custom in
-  let request =
+  let builder =
     Solver_service_api.Raw.Builder.Solver.Solve.Params.init_pointer builder
   in
-  Solver_service_api.Raw.Builder.Solver.Solve.Params.request_set request params;
-  let r = Reader.Custom.of_builder custom in
-  Reader.Custom.payload_get r
+  Solver_service_api.Raw.Builder.Solver.Solve.Params.request_set builder params
 
 let solve_of_custom c =
   let open Solver_service_api.Raw in
