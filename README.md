@@ -39,7 +39,7 @@ $ ocluster-scheduler --capnp-secret-key-file=capnp-secrets/key.cap --capnp-liste
 This will write an `admin.cap` file into `capnp-secrets`. We can use this to add a new client and get a submission capability file.
 
 ```
-$ dune exec -- ocluster-admin --connect ./capnp-secrets/admin.cap add-client solver > capnp-secrets/submission.cap
+$ ocluster-admin --connect ./capnp-secrets/admin.cap add-client solver > capnp-secrets/submission.cap
 ```
 
 Now, we need to connect our solver worker to the pool. In a new terminal connect the worker using the pool registration cap file.

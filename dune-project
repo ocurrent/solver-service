@@ -11,6 +11,7 @@
   ; Examples dependencies
   (current_web :with-test)
   (current_github :with-test)
+  (current_ocluster :with-test)
   (ppx_deriving_yojson (>= 3.6.1))
   (ppx_deriving (>= 5.1))
   yojson
