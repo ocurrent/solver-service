@@ -1,5 +1,4 @@
 pin-depends: [
-  # The worker library is added as ocluster.worker at this commit...
   ["ocluster-api.0.1" "git+https://github.com/ocurrent/ocluster#1982b5dc07266631613263b32a67d2f88b37d39a"]
   ["ocluster.0.1" "git+https://github.com/ocurrent/ocluster#1982b5dc07266631613263b32a67d2f88b37d39a"]
 ]
