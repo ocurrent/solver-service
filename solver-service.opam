@@ -9,6 +9,7 @@ depends: [
   "alcotest-lwt" {with-test}
   "current_web" {with-test}
   "current_github" {with-test}
+  "current_ocluster" {with-test}
   "ppx_deriving_yojson" {>= "3.6.1"}
   "ppx_deriving" {>= "5.1"}
   "yojson"
@@ -39,3 +40,6 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/patricoferris/solver-service.git"
+pin-depends: [
+  ["current_ocluster.0.1" "git+https://github.com/ocurrent/ocluster#1982b5dc07266631613263b32a67d2f88b37d39a"]
+]

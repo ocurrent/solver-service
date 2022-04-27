@@ -1,5 +1,3 @@
-open Lwt.Infix
-
 let setup_log default_level =
   Prometheus_unix.Logging.init ?default_level ();
   ()
@@ -18,57 +16,16 @@ module Self_update = struct
   let tag = "live"
 end
 
-let update_docker () =
-  let image_name = Printf.sprintf "%s:%s" Self_update.repo Self_update.tag in
-  Lwt_process.exec ("", [| "docker"; "pull"; image_name |])
-  >|= check_exit_status
-  >>= fun () ->
-  Lwt_process.pread_line
-    ( "",
-      [|
-        "docker";
-        "image";
-        "inspect";
-        "-f";
-        "{{ range index .RepoDigests }}{{ . }} {{ end }}";
-        "--";
-        image_name;
-      |] )
-  >|= fun new_repo_ids ->
-  let new_repo_ids = Astring.String.cuts ~sep:" " new_repo_ids in
-  let affix = Self_update.repo ^ "@" in
-  match List.find_opt (Astring.String.is_prefix ~affix) new_repo_ids with
-  | None -> Fmt.failwith "No new image starts with %S!" affix
-  | Some id ->
-      Logs.info (fun f -> f "Latest service version is %s" id);
-      fun () ->
-        Lwt_process.exec
-          ( "",
-            [|
-              "docker"; "service"; "update"; "--image"; id; Self_update.service;
-            |] )
-        >|= check_exit_status
-
-(* Respond to update requests by doing nothing, on the assumption that the
-   admin has updated the local package version. *)
-let update_normal () = Lwt.return (fun () -> Lwt.return ())
-
-(* We extend the default build function to support solver jobs *)
-let build ~solver ~switch ~log ~src:_ ~secrets:_ = function
-  | `Custom c -> Solver_worker.solve ~solver ~switch ~log c
-  | _ -> failwith "Only solver jobs are supported on this worker..."
+let build ~solver ~switch ~log ~src:_ ~secrets:_ c =
+  Solver_worker.solve ~solver ~switch ~log c
 
 let main default_level registration_path capacity name state_dir =
   setup_log default_level;
-  let update =
-    if Sys.file_exists "/.dockerenv" then update_docker else update_normal
-  in
   Lwt_main.run
     (let vat = Capnp_rpc_unix.client_only_vat () in
      let sr = Capnp_rpc_unix.Cap_file.load vat registration_path |> or_die in
      let solver = Solver_worker.spawn_local ~solver_dir:state_dir () in
-     Cluster_worker.run ~build:(build ~solver) ~capacity ~name ~allow_push:[]
-       ~state_dir ~update sr)
+     Worker.run ~build:(build ~solver) ~capacity ~name ~state_dir sr)
 
 open Cmdliner
 
@@ -108,9 +65,10 @@ let cmd =
          opam dependencies.";
     ]
   in
-  ( Term.(
+  let info = Cmd.info "ocluster-scheduler" ~doc ~man ~version in
+  Cmd.v info
+    Term.(
       const main $ Logs_cli.level () $ connect_addr $ capacity $ worker_name
-      $ state_dir),
-    Term.info "ocluster-scheduler" ~doc ~man ~version )
+      $ state_dir)
 
-let () = Term.(exit @@ eval cmd)
+let () = Cmd.(exit @@ eval cmd)

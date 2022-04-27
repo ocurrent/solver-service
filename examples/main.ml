@@ -124,7 +124,8 @@ let version =
 
 let connect_cmd =
   let doc = "Solve a simple package.version request using a solver-service" in
-  ( Term.(const connect $ package $ version $ opam_commit $ connect_addr),
-    Term.info "solve-local" ~doc )
+  let info = Cmd.info "solve-local" ~doc in
+  Cmd.v info
+    Term.(const connect $ package $ version $ opam_commit $ connect_addr)
 
-let () = Term.eval connect_cmd |> Term.exit
+let () = Cmd.(exit @@ eval connect_cmd)

@@ -1,6 +1,10 @@
 (* Workers that can also solve opam jobs *)
 
 open Lwt.Syntax
+module Log_data = Log_data
+module Context = Context
+module Log = Log
+module Process = Process
 
 let solve_to_custom req =
   let open Cluster_api.Raw in
@@ -20,9 +24,8 @@ let solve_to_custom req =
 let solve_of_custom c =
   let open Solver_service_api.Raw in
   let payload = Cluster_api.Custom.payload c in
-  let request =
-    Reader.Solver.Solve.Params.request_get @@ Reader.of_pointer payload
-  in
+  let r = Reader.of_pointer payload in
+  let request = Reader.Solver.Solve.Params.request_get r in
   Solver_service_api.Worker.Solve_request.of_yojson
   @@ Yojson.Safe.from_string request
 
@@ -38,7 +41,7 @@ let cluster_worker_log log =
          let open L.Write in
          release_param_caps ();
          let msg = Params.msg_get params in
-         Cluster_worker.Log_data.write log msg;
+         Log_data.write log msg;
          Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
      end
 
@@ -53,7 +56,7 @@ let solve ~solver ~switch:_ ~log c =
         Yojson.Safe.to_string
         @@ Solver_service_api.Worker.Solve_response.to_yojson response
       in
-      Cluster_worker.Log_data.write log response;
+      Log_data.write log response;
       Ok response
 
 let spawn_local ?solver_dir () : Solver_service_api.Solver.t =

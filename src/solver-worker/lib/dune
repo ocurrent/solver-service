@@ -1,4 +1,4 @@
 (library
  (name solver_worker)
  (public_name solver-worker)
- (libraries ocluster-api ocluster.worker solver-service))
+ (libraries ocluster-api solver-service))

@@ -30,6 +30,58 @@ let repo = { Current_github.Repo_id.owner = "ocurrent"; name = "obuilder" }
 let pool = "solver"
 let timeout = Duration.of_min 60
 
+module Current_solve = struct
+  module Op = struct
+    open Lwt.Infix
+
+    type t = Current_ocluster.Connection.t
+
+    let ( >>!= ) = Lwt_result.bind
+    let id = "mock-ocluster-build"
+
+    (* Build Pool *)
+    module Key = Current.String
+
+    (* Dockerfile Spec *)
+    module Value = struct
+      open Solver_service_api.Worker
+
+      type t = Solve_request.t
+
+      let digest t = Solve_request.to_yojson t |> Yojson.Safe.to_string
+      let pp ppf t = Yojson.Safe.pp ppf (Solve_request.to_yojson t)
+    end
+
+    module Outcome = Current.String
+
+    let pp = Fmt.(pair string Value.pp)
+    let auto_cancel = true
+    let latched = true
+
+    let run t job pool value =
+      let action =
+        Cluster_api.Submission.custom_build
+        @@ Cluster_api.Custom.v ~kind:"solve"
+        @@ Solve.solve_to_custom value
+      in
+      let build_pool =
+        Current_ocluster.Connection.pool ~job ~pool ~action ~cache_hint:"" t
+      in
+      Current.Job.start_with ~pool:build_pool job ~level:Current.Level.Average
+      >>= fun build_job ->
+      Capnp_rpc_lwt.Capability.with_ref build_job
+        (Current_ocluster.Connection.run_job ~job)
+  end
+
+  module BC = Current_cache.Generic (Op)
+
+  let solve t pool request =
+    let open Current.Syntax in
+    Current.component "custom cluster solver"
+    |> let> request = request in
+       BC.run t pool request
+end
+
 let pipeline ~cluster vars () =
   let src =
     let+ src =
@@ -43,29 +95,22 @@ let pipeline ~cluster vars () =
       ("obuilder.dev", Fpath.v "obuilder.opam");
     ]
   in
-  let cluster = Current_ocluster.with_timeout (Some timeout) cluster in
   let request =
     let+ opamfiles = Solve.get_opamfile ~packages src
     and* opam_repo =
       Current_github.Api.Anonymous.head_of opam_repository
         (`Ref "refs/heads/master")
     in
-    let payload =
-      Solve.solve_to_custom
-        Solver_service_api.Worker.Solve_request.
-          {
-            opam_repository_commit = Current_git.Commit_id.hash opam_repo;
-            root_pkgs = opamfiles;
-            pinned_pkgs = [];
-            platforms = [ ("os", vars) ];
-          }
-    in
-    Cluster_api.Custom.v ~kind:"solve" payload
+    Solver_service_api.Worker.Solve_request.
+      {
+        opam_repository_commit = Current_git.Commit_id.hash opam_repo;
+        root_pkgs = opamfiles;
+        pinned_pkgs = [];
+        platforms = [ ("os", vars) ];
+      }
   in
   let selection =
-    let+ response =
-      Current_ocluster.custom ~label:"solver" cluster ~src ~pool request
-    in
+    let+ response = Current_solve.solve cluster pool request in
     match
       Solver_service_api.Worker.Solve_response.of_yojson
         (Yojson.Safe.from_string response)
@@ -88,8 +133,7 @@ let main config mode submission_uri =
     @@ Solve.get_vars ~ocaml_package_name:"obuilder" ~ocaml_version:"4.13.1" ()
   in
   let submission_cap = Capnp_rpc_unix.Vat.import_exn vat submission_uri in
-  let connection = Current_ocluster.Connection.create submission_cap in
-  let cluster = Current_ocluster.v connection in
+  let cluster = Current_ocluster.Connection.create submission_cap in
   let engine = Current.Engine.create ~config (pipeline ~cluster vars) in
   let site =
     Current_web.Site.(v ~has_role:allow_all)
@@ -110,11 +154,12 @@ let submission_service =
        ~docv:"FILE" [ "submission-service" ]
 
 let cmd =
-  let doc = "Run a custom solver job and a Docker build on a cluster." in
-  ( Term.(
+  let doc = "Run a custom solver job in the cluster." in
+  let info = Cmd.info program_name ~doc in
+  Cmd.v info
+    Term.(
       term_result
         (const main $ Current.Config.cmdliner $ Current_web.cmdliner
-       $ submission_service)),
-    Term.info program_name ~doc )
+       $ submission_service))
 
-let () = Term.(exit @@ eval cmd)
+let () = Cmd.(exit @@ eval cmd)

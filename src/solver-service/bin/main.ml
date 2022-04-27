@@ -120,7 +120,7 @@ let address =
 
 let cmd =
   let doc = "Solver for ocaml-ci" in
-  ( Term.(const main $ setup_log $ worker_hash $ address),
-    Term.info "solver" ~doc )
+  let info = Cmd.info "solver" ~doc in
+  Cmd.v info Term.(const main $ setup_log $ worker_hash $ address)
 
-let () = Term.(exit @@ eval cmd)
+let () = Cmd.(exit @@ eval cmd)
