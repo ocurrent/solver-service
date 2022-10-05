@@ -7,7 +7,12 @@ let clone_path, set_clone_path = Lwt.wait ()
 
 let get_sha clone_path =
   let cmd =
-    "git" :: "-C" :: clone_path :: "log" :: "-n" :: "1"
+    "git"
+    :: "-C"
+    :: clone_path
+    :: "log"
+    :: "-n"
+    :: "1"
     :: [ "--format=format:%H" ]
   in
   let cmd = ("", Array.of_list cmd) in

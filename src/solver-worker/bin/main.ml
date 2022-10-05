@@ -41,7 +41,8 @@ let connect_addr =
        [ "c"; "connect" ]
 
 let capacity =
-  Arg.value @@ Arg.opt Arg.int 10
+  Arg.value
+  @@ Arg.opt Arg.int 10
   @@ Arg.info ~doc:"The number of builds that can run in parallel" ~docv:"N"
        [ "capacity" ]
 
@@ -68,7 +69,11 @@ let cmd =
   let info = Cmd.info "ocluster-scheduler" ~doc ~man ~version in
   Cmd.v info
     Term.(
-      const main $ Logs_cli.level () $ connect_addr $ capacity $ worker_name
+      const main
+      $ Logs_cli.level ()
+      $ connect_addr
+      $ capacity
+      $ worker_name
       $ state_dir)
 
 let () = Cmd.(exit @@ eval cmd)

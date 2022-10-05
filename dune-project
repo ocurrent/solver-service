@@ -1,8 +1,9 @@
 (lang dune 2.0)
 (name solver-service)
 (generate_opam_files true)
-(source (github patricoferris/solver-service))
+(source (github ocurrent/solver-service))
 (authors "talex5@gmail.com" "patrick@sirref.org")
+(maintainers "tim@tarides.com" "alpha@tarides.com")
 (package
  (name solver-service)
  (synopsis "Choose package versions to test")

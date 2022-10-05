@@ -19,8 +19,10 @@ let get_tmp_dir t = t.state_dir / "tmp"
 
 let git_merge_env =
   let orig = Unix.environment () |> Array.to_list in
-  "GIT_AUTHOR_NAME=ocluster" :: "GIT_COMMITTER_NAME=ocluster"
-  :: "EMAIL=ocluster@ocurrent.org" :: orig
+  "GIT_AUTHOR_NAME=ocluster"
+  :: "GIT_COMMITTER_NAME=ocluster"
+  :: "EMAIL=ocluster@ocurrent.org"
+  :: orig
   |> Array.of_list
 
 module Repo = struct
