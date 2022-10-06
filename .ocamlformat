@@ -1,5 +1,6 @@
-version = 0.20.1
+version = 0.24.1
+ocaml-version = 4.12.0
 profile = conventional
-ocaml-version = 4.08.0
+break-infix = fit-or-vertical
 parse-docstrings = true
 module-item-spacing = compact

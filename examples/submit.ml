@@ -159,7 +159,9 @@ let cmd =
   Cmd.v info
     Term.(
       term_result
-        (const main $ Current.Config.cmdliner $ Current_web.cmdliner
-       $ submission_service))
+        (const main
+        $ Current.Config.cmdliner
+        $ Current_web.cmdliner
+        $ submission_service))
 
 let () = Cmd.(exit @@ eval cmd)
