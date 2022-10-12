@@ -9,8 +9,9 @@ type t = {
   packages : OpamFile.OPAM.t OpamPackage.Version.Map.t OpamPackage.Name.Map.t;
   pins : (OpamPackage.Version.t * OpamFile.OPAM.t) OpamPackage.Name.Map.t;
   constraints : OpamFormula.version_constraint OpamTypes.name_map;
-  (* User-provided constraints *)
+      (* User-provided constraints *)
   test : OpamPackage.Name.Set.t;
+  with_beta_remote : bool;
 }
 
 let ocaml_beta_pkg = OpamPackage.of_string "ocaml-beta.enabled"
@@ -33,6 +34,7 @@ authors: [
 homepage: "https://ocaml.org"
 synopsis: "OCaml beta releases enabled"
 description: "Virtual package enabling the installation of OCaml beta releases."
+flags: avoid-version
 |}
 
 let user_restrictions t name = OpamPackage.Name.Map.find_opt name t.constraints
@@ -63,6 +65,17 @@ let filter_available t pkg opam =
         (OpamFilter.to_string available);
       Error Unavailable
 
+let version_compare (v1, opam1) (v2, opam2) =
+  let avoid1 =
+    List.mem OpamTypes.Pkgflag_AvoidVersion (OpamFile.OPAM.flags opam1)
+  in
+  let avoid2 =
+    List.mem OpamTypes.Pkgflag_AvoidVersion (OpamFile.OPAM.flags opam2)
+  in
+  if avoid1 = avoid2 then OpamPackage.Version.compare v1 v2
+  else if avoid1 then -1
+  else 1
+
 let candidates t name =
   match OpamPackage.Name.Map.find_opt name t.pins with
   | Some (version, opam) ->
@@ -77,8 +90,9 @@ let candidates t name =
       | Some versions ->
           let versions =
             if
-              OpamPackage.Name.compare name (OpamPackage.name ocaml_beta_pkg)
-              = 0
+              t.with_beta_remote
+              && OpamPackage.Name.compare name (OpamPackage.name ocaml_beta_pkg)
+                 = 0
             then
               OpamPackage.Version.Map.add
                 (OpamPackage.version ocaml_beta_pkg)
@@ -87,6 +101,7 @@ let candidates t name =
           in
           let user_constraints = user_restrictions t name in
           OpamPackage.Version.Map.bindings versions
+          |> List.fast_sort version_compare
           |> List.rev_map (fun (v, opam) ->
                  match user_constraints with
                  | Some test
@@ -165,5 +180,6 @@ let read_packages store commit =
                OpamPackage.Name.Map.empty)
 
 let create ?(test = OpamPackage.Name.Set.empty)
-    ?(pins = OpamPackage.Name.Map.empty) ~constraints ~env ~packages () =
-  { env; packages; pins; constraints; test }
+    ?(pins = OpamPackage.Name.Map.empty) ~constraints ~env ~packages
+    ~with_beta_remote () =
+  { env; packages; pins; constraints; test; with_beta_remote }
