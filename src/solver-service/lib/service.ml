@@ -12,8 +12,8 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
 
     val create :
       n_workers:int ->
-      create_worker:(Git_unix.Store.Hash.t -> Lwt_process.process) ->
-      Store.Hash.t ->
+      create_worker:(Remote_commit.t list -> Lwt_process.process) ->
+      Remote_commit.t list ->
       t Lwt.t
 
     val process :
@@ -48,21 +48,25 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
       worker#terminate;
       worker#status >|= fun _ -> Fmt.epr "Worker %d finished@." pid
 
-    let create ~n_workers ~create_worker hash =
-      ( Opam_repo.open_store () >>= fun store ->
-        Store.mem store hash >>= function
-        | true -> Lwt.return_unit
-        | false -> (
-            Fmt.pr "Need to update opam-repository to get new commit %a@."
-              Store.Hash.pp hash;
-            Opam_repo.fetch () >>= fun () ->
-            Opam_repo.open_store () >>= fun new_store ->
-            Store.mem new_store hash >>= function
-            | false -> Fmt.failwith "Still missing commit after update!"
-            | true -> Lwt.return_unit) )
-      >|= fun () ->
+    let update_opam_repository_to_commit commit =
+      let repo_url = commit.Remote_commit.repo in
+      let hash = Store.Hash.of_hex commit.Remote_commit.hash in
+      Opam_repo.open_store ~repo_url () >>= fun store ->
+      Store.mem store hash >>= function
+      | true -> Lwt.return_unit
+      | false -> (
+          Fmt.pr "Need to update %s to get new commit %a@." repo_url
+            Store.Hash.pp hash;
+          Opam_repo.fetch ~repo_url () >>= fun () ->
+          Opam_repo.open_store ~repo_url () >>= fun new_store ->
+          Store.mem new_store hash >>= function
+          | false -> Fmt.failwith "Still missing commit after update!"
+          | true -> Lwt.return_unit)
+
+    let create ~n_workers ~create_worker commits =
+      Lwt_list.iter_p update_opam_repository_to_commit commits >|= fun () ->
       Lwt_pool.create n_workers ~validate ~dispose (fun () ->
-          Lwt.return (create_worker hash))
+          Lwt.return (create_worker commits))
 
     let dispose = Lwt_pool.clear
 
@@ -137,14 +141,13 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
 
     let handle ~log request t =
       let {
-        Worker.Solve_request.opam_repository_commit;
+        Worker.Solve_request.opam_repository_commits;
         platforms;
         root_pkgs;
         pinned_pkgs;
       } =
         request
       in
-      let opam_repository_commit = Store.Hash.of_hex opam_repository_commit in
       let root_pkgs = List.map fst root_pkgs in
       let pinned_pkgs = List.map fst pinned_pkgs in
       let pins =
@@ -192,11 +195,11 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                  let repo_packages =
                    OpamPackage.of_string "odoc.2.1.1" :: repo_packages
                  in
-                 Opam_repo.oldest_commit_with repo_packages
-                   ~from:opam_repository_commit
-                 >|= fun commit ->
+                 Opam_repo.oldest_commits_with repo_packages
+                   ~from:opam_repository_commits
+                 >|= fun commits ->
                  let compat_pkgs = List.map fst compatible_root_pkgs in
-                 (id, Ok { Worker.Selection.id; compat_pkgs; packages; commit }))
+                 (id, Ok { Worker.Selection.id; compat_pkgs; packages; commits }))
       >|= List.filter_map (fun (id, result) ->
               Log.info log "= %s =" id;
               match result with
@@ -204,8 +207,9 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                   Log.info log "-> @[<hov>%a@]"
                     Fmt.(list ~sep:sp string)
                     result.Selection.packages;
-                  Log.info log "(valid since opam-repository commit %s)"
-                    result.Selection.commit;
+                  Log.info log "(valid since opam-repository commit(s) :@[%a@])"
+                    Fmt.(list ~sep:semi (pair ~sep:comma string string))
+                    result.Selection.commits;
                   Some result
               | Error msg ->
                   Log.info log "%s" msg;
@@ -214,17 +218,18 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
 
   (* Handle a request by distributing it among the worker processes and then aggregating their responses. *)
   let handle t ~log (request : Worker.Solve_request.t) =
-    Epoch_lock.with_epoch t request.opam_repository_commit
-      (Epoch.handle ~log request)
+    let commits =
+      request.opam_repository_commits
+      |> List.map (fun (repo, hash) -> Remote_commit.v ~repo ~hash)
+    in
+    Epoch_lock.with_epoch t commits (Epoch.handle ~log request)
 
   let v ~n_workers ~create_worker =
-    Opam_repo.clone () >|= fun () ->
-    let create hash =
-      Epoch.create ~n_workers ~create_worker (Store.Hash.of_hex hash)
-    in
+    let create commits = Epoch.create ~n_workers ~create_worker commits in
     let t = Epoch_lock.v ~create ~dispose:Epoch.dispose () in
     let module X = Solver_service_api.Raw.Service.Solver in
-    X.local
+    Lwt.return
+    @@ X.local
     @@ object
          inherit X.service
 

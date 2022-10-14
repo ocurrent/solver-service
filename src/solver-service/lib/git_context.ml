@@ -156,7 +156,24 @@ let read_versions store (entry : Store.Value.Tree.entry) =
            OpamPackage.Version.Map.empty
       >|= fun versions -> Some versions
 
-let read_packages store commit =
+let merge_versions vs1 vs2 =
+  OpamPackage.Version.Map.merge
+    (fun _ v1 v2 ->
+      match (v1, v2) with
+      | None, _ -> v2
+      | Some _, None -> v1
+      | Some _, Some _ ->
+          (* Overwrite the v1 entry. This gives the semantics that that second
+             repo given to read_packages is an overlay on the first one. *)
+          v2)
+    vs1 vs2
+
+let add_versions name versions packages_by_name =
+  OpamPackage.Name.Map.update name
+    (fun prev_versions -> merge_versions prev_versions versions)
+    OpamPackage.Version.Map.empty packages_by_name
+
+let read_packages ?acc:(result_acc = OpamPackage.Name.Map.empty) store commit =
   Search.find store commit (`Commit (`Path [ "packages" ])) >>= function
   | None -> Fmt.failwith "Failed to find packages directory!"
   | Some tree_hash -> (
@@ -175,9 +192,8 @@ let read_packages store commit =
                  | name -> (
                      read_versions store entry >|= function
                      | None -> acc
-                     | Some versions ->
-                         OpamPackage.Name.Map.add name versions acc))
-               OpamPackage.Name.Map.empty)
+                     | Some versions -> add_versions name versions acc))
+               result_acc)
 
 let create ?(test = OpamPackage.Name.Set.empty)
     ?(pins = OpamPackage.Name.Map.empty) ~constraints ~env ~packages

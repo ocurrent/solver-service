@@ -43,7 +43,11 @@ let test_good_packages _sw () =
   let req =
     Solver_service_api.Worker.Solve_request.
       {
-        opam_repository_commit = "95d27ad970057f68179577594813dc1828324a2f";
+        opam_repository_commits =
+          [
+            ( "github.com/ocaml/opam-repository",
+              "95d27ad970057f68179577594813dc1828324a2f" );
+          ];
         root_pkgs = [];
         pinned_pkgs = [];
         platforms = [];
@@ -64,7 +68,11 @@ let test_error _sw () =
   let req =
     Solver_service_api.Worker.Solve_request.
       {
-        opam_repository_commit = "95d27ad970057f68179577594813dc1828324a2f";
+        opam_repository_commits =
+          [
+            ( "github.com/ocaml/opam-repository",
+              "95d27ad970057f68179577594813dc1828324a2f" );
+          ];
         root_pkgs = [];
         pinned_pkgs = [];
         platforms = [];
@@ -83,7 +91,7 @@ let solver_response =
 let test_e2e _sw () =
   Lwt_io.with_temp_dir @@ fun dir ->
   let* _store = Mock_opam_repo.setup_store (Ok (Fpath.v dir)) in
-  let* commit = Mock_opam_repo.commit in
+  let* commits = Mock_opam_repo.commits in
   let os_id = "testOS" in
   let* vars =
     Utils.get_vars ~ocaml_package_name:"ocaml" ~ocaml_version:"4.13.1" ()
@@ -95,7 +103,7 @@ let test_e2e _sw () =
   let req =
     Solver_service_api.Worker.Solve_request.
       {
-        opam_repository_commit = commit;
+        opam_repository_commits = commits;
         root_pkgs = [ ("yaml.3.0.0", "") ];
         pinned_pkgs = [];
         platforms = [ (os_id, vars) ];
@@ -113,7 +121,7 @@ let test_e2e _sw () =
            id = os_id;
            packages = [ "lwt.5.5.0"; "yaml.3.0.0" ];
            compat_pkgs = [ "yaml.3.0.0" ];
-           commit;
+           commits;
          };
        ])
     response

@@ -4,3 +4,4 @@ module Opam_repository = Opam_repository
 module Process = Process
 module Service = Service
 module Solver = Solver
+module Remote_commit = Remote_commit

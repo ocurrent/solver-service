@@ -66,9 +66,9 @@ let start_server address =
   let service_id =
     Capnp_rpc_unix.Vat_config.derived_id config "solver-service"
   in
-  let create_worker hash =
+  let create_worker commits =
     let cmd =
-      ("", [| Sys.argv.(0); "--worker"; Git_unix.Store.Hash.to_hex hash |])
+      ("", [| Sys.argv.(0); "--worker"; Remote_commit.list_to_string commits |])
     in
     Lwt_process.open_process cmd
   in
@@ -88,17 +88,19 @@ let main () hash address =
   | None, None ->
       (* Run locally reading from stdin *)
       Lwt_main.run
-        (let create_worker hash =
+        (let create_worker commits =
            let cmd =
              ( "",
-               [| Sys.argv.(0); "--worker"; Git_unix.Store.Hash.to_hex hash |]
-             )
+               [|
+                 Sys.argv.(0); "--worker"; Remote_commit.list_to_string commits;
+               |] )
            in
            Lwt_process.open_process cmd
          in
          let* service = Service.v ~n_workers ~create_worker in
          export service ~on:Lwt_unix.stdin)
-  | Some hash, _ -> Solver.main (Git_unix.Store.Hash.of_hex hash)
+  | Some commits_str, _ ->
+      Solver.main (Remote_commit.list_of_string_or_fail commits_str)
 
 (* Command-line parsing *)
 
@@ -106,10 +108,11 @@ open Cmdliner
 
 let setup_log = Term.(const setup_log $ Logs_cli.level ())
 
-let worker_hash =
+let worker_commits =
   Arg.value
   @@ Arg.opt Arg.(some string) None
-  @@ Arg.info ~doc:"The hash of the worker." ~docv:"HASH" [ "worker" ]
+  @@ Arg.info ~doc:"The hash commits of the worker." ~docv:"COMMITS"
+       [ "worker" ]
 
 let address =
   Arg.value
@@ -121,6 +124,6 @@ let address =
 let cmd =
   let doc = "Solver for ocaml-ci" in
   let info = Cmd.info "solver" ~doc in
-  Cmd.v info Term.(const main $ setup_log $ worker_hash $ address)
+  Cmd.v info Term.(const main $ setup_log $ worker_commits $ address)
 
 let () = Cmd.(exit @@ eval cmd)
