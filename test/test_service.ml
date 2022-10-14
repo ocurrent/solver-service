@@ -107,7 +107,15 @@ let test_e2e _sw () =
   in
   Alcotest.(check solver_response)
     "Same solve reponse"
-    (Ok [ { id = os_id; packages = [ "lwt.5.5.0"; "yaml.3.0.0" ]; commit } ])
+    (Ok
+       [
+         {
+           id = os_id;
+           packages = [ "lwt.5.5.0"; "yaml.3.0.0" ];
+           compat_pkgs = [ "yaml.3.0.0" ];
+           commit;
+         };
+       ])
     response
 
 let tests =
