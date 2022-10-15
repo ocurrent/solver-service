@@ -2,7 +2,7 @@ open Lwt.Syntax
 module Log = Solver_service_api.Solver.Log
 module P = Solver_service.Process
 
-let commit, set_commit = Lwt.wait ()
+let commits, set_commits = Lwt.wait ()
 let clone_path, set_clone_path = Lwt.wait ()
 
 let get_sha clone_path =
@@ -44,16 +44,16 @@ let setup_store path =
       | Error err -> Fmt.failwith "%a" Git_unix.Store.pp_error err
       | Ok store ->
           let+ hash = get_sha (Fpath.to_string path) in
-          Lwt.wakeup set_commit hash;
+          Lwt.wakeup set_commits [ ("github.com/ocaml/opam-repository", hash) ];
           store)
 
-let open_store () =
+let open_store ?repo_url:_ () =
   let* clone_path = clone_path in
   let+ store = Git_unix.Store.v clone_path in
   match store with
   | Ok store -> store
   | Error err -> Fmt.failwith "%a" Git_unix.Store.pp_error err
 
-let clone () = Lwt.return ()
-let oldest_commit_with ~from:_ _pkgs = commit
-let fetch () = Lwt.return ()
+let clone ?repo_url:_ () = Lwt.return ()
+let oldest_commits_with ~from:_ _pkgs = commits
+let fetch ?repo_url:_ () = Lwt.return ()
