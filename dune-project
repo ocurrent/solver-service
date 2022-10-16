@@ -19,6 +19,7 @@
   lwt
   logs
   fmt
+  ocaml-version
   solver-service-api
   conf-libev
   (opam-0install (>= "0.2"))
