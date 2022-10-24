@@ -42,6 +42,7 @@
  (depends
   (alcotest-lwt (and (>= 1.5.0) :with-test))
   ocluster
+  current
   (prometheus-app (>= 1.1))
   (logs (>= 0.7.0))
   (fmt (>= 0.9.0))
