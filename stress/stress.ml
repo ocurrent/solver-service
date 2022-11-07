@@ -25,7 +25,8 @@ let package_to_custom vars package =
   let+ opamfile = Utils.get_opam_file package in
   Solver_service_api.Worker.Solve_request.
     {
-      opam_repository_commit;
+      opam_repository_commits =
+        [ ("git@github.com:ocaml/opam-repository.git", opam_repository_commit) ];
       root_pkgs = [ (package, opamfile) ];
       pinned_pkgs = [];
       platforms = [ ("macOS", vars); ("linux", vars); ("windows", vars) ];

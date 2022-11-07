@@ -33,7 +33,7 @@ end
 module Solve_request = struct
   type t = {
     opam_repository_commits : (string * string) list;
-        (**Pair of repo URL and commit hash, for each opam-repository to use*)
+        (** Pair of repo URL and commit hash, for each opam-repository to use. *)
     root_pkgs : (string * string) list;
         (** Name and contents of top-level opam files. *)
     pinned_pkgs : (string * string) list;
