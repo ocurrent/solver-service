@@ -41,9 +41,9 @@
  (synopsis "An OCluster worker that can solve opam constraints")
  (depends
   (alcotest-lwt (and (>= 1.5.0) :with-test))
-  ocluster
+  ocluster-api
   current
-  (prometheus-app (>= 1.1))
+  (prometheus-app (>= 1.2))
   (logs (>= 0.7.0))
   (fmt (>= 0.9.0))
   (dune-build-info (>= 2.9.1))

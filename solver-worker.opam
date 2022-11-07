@@ -8,9 +8,9 @@ bug-reports: "https://github.com/ocurrent/solver-service/issues"
 depends: [
   "dune" {>= "2.0"}
   "alcotest-lwt" {>= "1.5.0" & with-test}
-  "ocluster"
+  "ocluster-api"
   "current"
-  "prometheus-app" {>= "1.1"}
+  "prometheus-app" {>= "1.2"}
   "logs" {>= "0.7.0"}
   "fmt" {>= "0.9.0"}
   "dune-build-info" {>= "2.9.1"}
@@ -31,7 +31,3 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/ocurrent/solver-service.git"
-pin-depends: [
-  ["ocluster-api.0.2" "git+https://github.com/ocurrent/ocluster#6f5f7c321261ba3cb4ca440b643cc7cc068fee06"]
-  ["ocluster.0.2" "git+https://github.com/ocurrent/ocluster#6f5f7c321261ba3cb4ca440b643cc7cc068fee06"]
-]

@@ -1,4 +1,0 @@
-pin-depends: [
-  ["ocluster-api.0.2" "git+https://github.com/ocurrent/ocluster#6f5f7c321261ba3cb4ca440b643cc7cc068fee06"]
-  ["ocluster.0.2" "git+https://github.com/ocurrent/ocluster#6f5f7c321261ba3cb4ca440b643cc7cc068fee06"]
-]
