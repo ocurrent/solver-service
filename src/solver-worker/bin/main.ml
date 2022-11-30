@@ -24,7 +24,10 @@ let main default_level registration_path capacity name state_dir =
   Lwt_main.run
     (let vat = Capnp_rpc_unix.client_only_vat () in
      let sr = Capnp_rpc_unix.Cap_file.load vat registration_path |> or_die in
-     let solver = Solver_worker.spawn_local ~solver_dir:state_dir () in
+     let solver =
+       Solver_worker.spawn_local ~solver_dir:state_dir
+         ~internal_workers:capacity ()
+     in
      Worker.run ~build:(build ~solver) ~capacity ~name ~state_dir sr)
 
 open Cmdliner
@@ -42,7 +45,7 @@ let connect_addr =
 
 let capacity =
   Arg.value
-  @@ Arg.opt Arg.int 10
+  @@ Arg.opt Arg.int 20
   @@ Arg.info ~doc:"The number of builds that can run in parallel" ~docv:"N"
        [ "capacity" ]
 

@@ -2,8 +2,6 @@ open Solver_service
 open Lwt.Syntax
 module Service = Service.Make (Opam_repository)
 
-let n_workers = 20
-
 let pp_timestamp f x =
   let open Unix in
   let tm = localtime x in
@@ -59,7 +57,7 @@ let export service ~on:socket =
   in
   crashed
 
-let start_server address =
+let start_server address ~n_workers =
   let config =
     Capnp_rpc_unix.Vat_config.create ~secret_key:`Ephemeral address
   in
@@ -77,12 +75,12 @@ let start_server address =
   let+ vat = Capnp_rpc_unix.serve config ~restore in
   Capnp_rpc_unix.Vat.sturdy_uri vat service_id
 
-let main () hash address =
+let main () hash address n_workers =
   match (hash, address) with
   | None, Some address ->
       (* Run with a capnp address as the endpoint *)
       Lwt_main.run
-        (let* uri = start_server address in
+        (let* uri = start_server address ~n_workers in
          Fmt.pr "Solver service running at: %a@." Uri.pp_hum uri;
          fst @@ Lwt.wait ())
   | None, None ->
@@ -114,6 +112,14 @@ let worker_commits =
   @@ Arg.info ~doc:"The hash commits of the worker." ~docv:"COMMITS"
        [ "worker" ]
 
+let internal_workers =
+  Arg.value
+  @@ Arg.opt Arg.int 20
+  @@ Arg.info
+       ~doc:"The number of threads that can handle more requests in parallel"
+       ~docv:"N"
+       [ "internal-thread-workers" ]
+
 let address =
   Arg.value
   @@ Arg.opt Arg.(some Capnp_rpc_unix.Network.Location.cmdliner_conv) None
@@ -124,6 +130,7 @@ let address =
 let cmd =
   let doc = "Solver for ocaml-ci" in
   let info = Cmd.info "solver" ~doc in
-  Cmd.v info Term.(const main $ setup_log $ worker_commits $ address)
+  Cmd.v info
+    Term.(const main $ setup_log $ worker_commits $ address $ internal_workers)
 
 let () = Cmd.(exit @@ eval cmd)

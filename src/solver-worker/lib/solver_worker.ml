@@ -59,7 +59,7 @@ let solve ~solver ~switch:_ ~log c =
       Log_data.write log response;
       Ok response
 
-let spawn_local ?solver_dir () : Solver_service_api.Solver.t =
+let spawn_local ?solver_dir ~internal_workers () : Solver_service_api.Solver.t =
   Logs.info (fun f -> f "Setting up solver...");
   let p, c = Unix.(socketpair PF_UNIX SOCK_STREAM 0 ~cloexec:true) in
   Unix.clear_close_on_exec c;
@@ -68,7 +68,14 @@ let spawn_local ?solver_dir () : Solver_service_api.Solver.t =
     | None -> Fpath.to_string (Current.state_dir "solver")
     | Some x -> x
   in
-  let cmd = ("", [| "solver-service" |]) in
+  let cmd =
+    ( "",
+      [|
+        "solver-service";
+        "--internal-thread-workers";
+        string_of_int internal_workers;
+      |] )
+  in
   let _child =
     Lwt_process.open_process_none ~cwd:solver_dir ~stdin:(`FD_move c) cmd
   in

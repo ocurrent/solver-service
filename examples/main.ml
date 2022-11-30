@@ -70,7 +70,7 @@ let run_client ~package ~version ~opam_commit service =
     Solver_service_api.Worker.Solve_request.
       {
         opam_repository_commits =
-          [ ("github.com/ocaml/opam-repository", opam_commit) ];
+          [ ("https://github.com/ocaml/opam-repository.git", opam_commit) ];
         root_pkgs = [ (pv, opam_file) ];
         pinned_pkgs = [];
         platforms = [ (platform.os, platform) ];
