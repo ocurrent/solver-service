@@ -23,6 +23,10 @@ val solve :
 (** [solve ~solver ~switch ~log c] interprets [c] as a solver request and solves
     it using [solver]. *)
 
-val spawn_local : ?solver_dir:string -> unit -> Solver_service_api.Solver.t
+val spawn_local :
+  ?solver_dir:string ->
+  internal_workers:int ->
+  unit ->
+  Solver_service_api.Solver.t
 (** [spawn_local ()] forks a process running a [solver-service] that
     communicates over standard input/output. *)
