@@ -59,10 +59,18 @@ let solve ~solver ~switch:_ ~log c =
       Log_data.write log response;
       Ok response
 
+let temp_file_name prefix suffix =
+  let temp_dir = Filename.get_temp_dir_name () in
+  let rnd = Random.(State.bits (get_state ())) land 0xFFFFFF in
+  Filename.concat temp_dir (Printf.sprintf "%s%06x%s" prefix rnd suffix)
+
 let spawn_local ?solver_dir ~internal_workers () : Solver_service_api.Solver.t =
-  Logs.info (fun f -> f "Setting up solver...");
-  let p, c = Unix.(socketpair PF_UNIX SOCK_STREAM 0 ~cloexec:true) in
-  Unix.clear_close_on_exec c;
+  let name = temp_file_name "solver-worker" ".sock" in
+  Logs.info (fun f -> f "Setting up solver %s…" name);
+  let listener = Unix.socket ~cloexec:true PF_UNIX SOCK_STREAM 0 in
+  (try Unix.unlink name with Unix.Unix_error (Unix.ENOENT, _, _) -> ());
+  Unix.bind listener (ADDR_UNIX name);
+  Unix.listen listener 1;
   let solver_dir =
     match solver_dir with
     | None -> Fpath.to_string (Current.state_dir "solver")
@@ -74,12 +82,25 @@ let spawn_local ?solver_dir ~internal_workers () : Solver_service_api.Solver.t =
         "solver-service";
         "--internal-thread-workers";
         string_of_int internal_workers;
+        "--sockpath";
+        name;
       |] )
   in
   let _child =
-    Lwt_process.open_process_none ~cwd:solver_dir ~stdin:(`FD_move c) cmd
+    Lwt_process.open_process_none ~cwd:solver_dir ~stdin:`Close cmd
   in
   let switch = Lwt_switch.create () in
+  let p, _ =
+    match Unix.select [ listener ] [] [] 1. with
+    | [ listener' ], [], [] when listener = listener' ->
+        Unix.accept ~cloexec:true listener
+    | _ -> failwith "Solver process didn't start correctly"
+    | exception (Unix.Unix_error (Unix.EINTR, _, _) as exn) ->
+        prerr_endline "Solver process didn't start correctly";
+        raise exn
+  in
+  Unix.close listener;
+  Unix.unlink name;
   let p =
     Lwt_unix.of_unix_file_descr p
     |> Capnp_rpc_unix.Unix_flow.connect ~switch
