@@ -77,7 +77,7 @@ let start_server address ~n_workers =
   let+ vat = Capnp_rpc_unix.serve config ~restore in
   Capnp_rpc_unix.Vat.sturdy_uri vat service_id
 
-let main () hash address n_workers =
+let main () hash address sockpath n_workers =
   match (hash, address) with
   | None, Some address ->
       (* Run with a capnp address as the endpoint *)
@@ -86,7 +86,15 @@ let main () hash address n_workers =
          Fmt.pr "Solver service running at: %a@." Uri.pp_hum uri;
          fst @@ Lwt.wait ())
   | None, None ->
-      (* Run locally reading from stdin *)
+      let socket =
+        match sockpath with
+        | Some path ->
+            let sock = Unix.(socket PF_UNIX SOCK_STREAM 0) in
+            Unix.connect sock (ADDR_UNIX path);
+            Lwt_unix.of_unix_file_descr sock
+        | None -> Lwt_unix.stdin
+      in
+      (* Run locally reading from socket *)
       Lwt_main.run
         (let create_worker commits =
            let cmd =
@@ -98,7 +106,7 @@ let main () hash address n_workers =
            Lwt_process.open_process cmd
          in
          let* service = Service.v ~n_workers ~create_worker in
-         export service ~on:Lwt_unix.stdin)
+         export service ~on:socket)
   | Some commits_str, _ ->
       Solver.main (Remote_commit.list_of_string_or_fail commits_str)
 
@@ -129,13 +137,30 @@ let address =
   Arg.value
   @@ Arg.opt Arg.(some Capnp_rpc_unix.Network.Location.cmdliner_conv) None
   @@ Arg.info
-       ~doc:"The address to read requests from, if not provided will use stdin."
+       ~doc:
+         "The address to read requests from, if not provided will use \
+          $(b,--sockpath)."
        ~docv:"ADDRESS" [ "address" ]
+
+let sockpath =
+  Arg.value
+  @@ Arg.opt Arg.(some string) None
+  @@ Arg.info
+       ~doc:
+         "The UNIX domain socket path to read requests from, if not provided \
+          will use stdin."
+       ~docv:"SOCKPATH" [ "sockpath" ]
 
 let cmd =
   let doc = "Solver for ocaml-ci" in
   let info = Cmd.info "solver-service" ~doc in
   Cmd.v info
-    Term.(const main $ setup_log $ worker_commits $ address $ internal_workers)
+    Term.(
+      const main
+      $ setup_log
+      $ worker_commits
+      $ address
+      $ sockpath
+      $ internal_workers)
 
 let () = Cmd.(exit @@ eval cmd)
