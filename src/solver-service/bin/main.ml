@@ -59,7 +59,7 @@ let export service ~on:socket =
 
 let start_server address ~n_workers =
   let config =
-    Capnp_rpc_unix.Vat_config.create ~secret_key:`Ephemeral address
+    Capnp_rpc_unix.Vat_config.create ~serve_tls:false ~secret_key:`Ephemeral address
   in
   let service_id =
     Capnp_rpc_unix.Vat_config.derived_id config "solver-service"

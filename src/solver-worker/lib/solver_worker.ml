@@ -60,25 +60,34 @@ let solve ~solver ~switch:_ ~log c =
       Ok response
 
 let spawn_local ?solver_dir ~internal_workers () : Solver_service_api.Solver.t =
-  Logs.info (fun f -> f "Setting up solver...");
-  let p, c = Unix.(socketpair PF_UNIX SOCK_STREAM 0 ~cloexec:true) in
-  Unix.clear_close_on_exec c;
+  let name = Filename.temp_file "solver-service-" ".sock" in
+  Logs.info (fun f -> f "Setting up solver %s…" name);
   let solver_dir =
     match solver_dir with
     | None -> Fpath.to_string (Current.state_dir "solver")
     | Some x -> x
   in
+  (* FIXME: why is the unlink needed here? The server has the unlink
+     code before bind. *)
+  Unix.unlink name;
   let cmd =
     ( "",
       [|
         "solver-service";
         "--internal-thread-workers";
         string_of_int internal_workers;
+        "--address";
+        "unix:" ^ name
       |] )
   in
   let _child =
-    Lwt_process.open_process_none ~cwd:solver_dir ~stdin:(`FD_move c) cmd
+    Lwt_process.open_process_none ~cwd:solver_dir ~stdin:`Close cmd
   in
+  (* FIXME: better way to prevent race between the bind in the
+     service-process and connect here? *)
+  Unix.sleep 10;
+  let p = Unix.socket PF_UNIX SOCK_STREAM 0 in
+  Unix.connect p (ADDR_UNIX name);
   let switch = Lwt_switch.create () in
   let p =
     Lwt_unix.of_unix_file_descr p

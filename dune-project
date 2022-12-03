@@ -40,6 +40,7 @@
  (name solver-worker)
  (synopsis "An OCluster worker that can solve opam constraints")
  (depends
+  (ocaml (>= "4.14.0"))
   (alcotest-lwt (and (>= 1.5.0) :with-test))
   ocluster-api
   current
