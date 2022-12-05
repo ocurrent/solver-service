@@ -1,5 +1,8 @@
-let setup_log default_level =
-  Prometheus_unix.Logging.init ?default_level ();
+let setup_log style_renderer level =
+  Fmt_tty.setup_std_outputs ?style_renderer ();
+  Logs.set_level level;
+  Prometheus_unix.Logging.init ?default_level:level ();
+  Logs.set_reporter (Logs_fmt.reporter ());
   ()
 
 let or_die = function Ok x -> x | Error (`Msg m) -> failwith m
@@ -7,8 +10,7 @@ let or_die = function Ok x -> x | Error (`Msg m) -> failwith m
 let build ~solver ~switch ~log ~src:_ ~secrets:_ c =
   Solver_worker.solve ~solver ~switch ~log c
 
-let main default_level registration_path capacity name state_dir =
-  setup_log default_level;
+let main () registration_path capacity name state_dir =
   Lwt_main.run
     (let vat = Capnp_rpc_unix.client_only_vat () in
      let sr = Capnp_rpc_unix.Cap_file.load vat registration_path |> or_die in
@@ -20,10 +22,15 @@ let main default_level registration_path capacity name state_dir =
 
 open Cmdliner
 
+let setup_log =
+  let docs = Manpage.s_common_options in
+  Term.(
+    const setup_log $ Fmt_cli.style_renderer ~docs () $ Logs_cli.level ~docs ())
+
 let worker_name =
   Arg.required
   @@ Arg.opt Arg.(some string) None
-  @@ Arg.info ~doc:"Unique builder name" ~docv:"ID" [ "name" ]
+  @@ Arg.info ~doc:"Unique worker name" ~docv:"ID" [ "name" ]
 
 let connect_addr =
   Arg.required
@@ -40,7 +47,7 @@ let capacity =
 let state_dir =
   Arg.required
   @@ Arg.opt Arg.(some string) None
-  @@ Arg.info ~doc:"Directory for caches, etc (e.g. /var/lib/ocluster-worker)"
+  @@ Arg.info ~doc:"Directory for caches, etc (e.g. /var/lib/solver-worker)"
        ~docv:"PATH" [ "state-dir" ]
 
 let version =
@@ -53,18 +60,13 @@ let cmd =
   let man =
     [
       `P
-        "Connect to an OCluster sheduler pool and submit custom jobs to solver \
+        "Connect to an OCluster scheduler pool and submit custom jobs to solve \
          opam dependencies.";
     ]
   in
-  let info = Cmd.info "ocluster-scheduler" ~doc ~man ~version in
+  let info = Cmd.info "solver-worker" ~doc ~man ~version in
   Cmd.v info
     Term.(
-      const main
-      $ Logs_cli.level ()
-      $ connect_addr
-      $ capacity
-      $ worker_name
-      $ state_dir)
+      const main $ setup_log $ connect_addr $ capacity $ worker_name $ state_dir)
 
 let () = Cmd.(exit @@ eval cmd)
