@@ -9,6 +9,7 @@
  (libraries
   dune-build-info
   logs.cli
+  fmt.cli
   fmt.tty
   prometheus-app.unix
   solver-worker)

@@ -11,7 +11,9 @@
   capnp-rpc-unix
   git-unix
   ocaml-version
-  str)
+  str
+  fmt.cli
+  fmt.tty)
  (modules
   epoch_lock
   git_context

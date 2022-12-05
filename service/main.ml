@@ -25,13 +25,15 @@ let reporter =
   in
   { Logs.report }
 
-let setup_log level =
+let setup_log style_renderer level =
+  Fmt_tty.setup_std_outputs ?style_renderer ();
   Logs.set_level level;
   (* Disable tls.tracing when logs are set to debug *)
   (* List.iter
      (fun src -> match Logs.Src.name src with "tls.tracing" -> Logs.Src.set_level src (Some Info) | _ -> ())
      @@ Logs.Src.list (); *)
-  Logs.set_reporter reporter
+  Logs.set_reporter reporter;
+  ()
 
 let export service ~on:socket =
   let restore =
@@ -104,7 +106,10 @@ let main () hash address n_workers =
 
 open Cmdliner
 
-let setup_log = Term.(const setup_log $ Logs_cli.level ())
+let setup_log =
+  let docs = Manpage.s_common_options in
+  Term.(
+    const setup_log $ Fmt_cli.style_renderer ~docs () $ Logs_cli.level ~docs ())
 
 let worker_commits =
   Arg.value
@@ -129,7 +134,7 @@ let address =
 
 let cmd =
   let doc = "Solver for ocaml-ci" in
-  let info = Cmd.info "solver" ~doc in
+  let info = Cmd.info "solver-service" ~doc in
   Cmd.v info
     Term.(const main $ setup_log $ worker_commits $ address $ internal_workers)
 
