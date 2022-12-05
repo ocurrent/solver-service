@@ -1,6 +1,0 @@
-(executable
- (name main)
- (public_name solver-worker)
- (package solver-worker)
- (libraries dune-build-info logs.cli fmt.tty prometheus-app.unix
-   solver-worker))
