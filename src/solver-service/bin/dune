@@ -1,0 +1,5 @@
+(executable
+ (name main)
+ (package solver-service)
+ (public_name solver-service)
+ (libraries solver-service logs.cli))
