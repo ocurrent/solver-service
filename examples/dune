@@ -1,5 +1,8 @@
-(executables
+; No-op test to attach examples to the solver-service package
+
+(tests
  (names main submit)
+ (package solver-service)
  (libraries
   current_git
   capnp-rpc-unix
@@ -12,4 +15,5 @@
   ocluster-api
   current_github
   current_ocluster
-  fmt.tty))
+  fmt.tty)
+ (action (progn)))

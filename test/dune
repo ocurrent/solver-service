@@ -1,3 +1,4 @@
 (test
  (name test)
+ (package solver-service)
  (libraries alcotest-lwt solver-service))
