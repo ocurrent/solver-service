@@ -18,17 +18,17 @@ let reporter =
   in
   { Logs.report }
 
-let init ?(level = Logs.Info) () =
-  Fmt_tty.setup_std_outputs ();
-  Logs.set_level (Some level);
-  Logs.set_reporter reporter
+let setup_log style_renderer level =
+  Fmt_tty.setup_std_outputs ?style_renderer ();
+  Logs.set_level level;
+  Logs.set_reporter reporter;
+  ()
 
 let opam_repository =
   { Current_github.Repo_id.owner = "ocaml"; name = "opam-repository" }
 
 let repo = { Current_github.Repo_id.owner = "ocurrent"; name = "obuilder" }
 let pool = "solver"
-let timeout = Duration.of_min 60
 
 module Current_solve = struct
   module Op = struct
@@ -36,7 +36,6 @@ module Current_solve = struct
 
     type t = Current_ocluster.Connection.t
 
-    let ( >>!= ) = Lwt_result.bind
     let id = "mock-ocluster-build"
 
     (* Build Pool *)
@@ -130,7 +129,7 @@ let pipeline ~cluster vars () =
   in
   selection
 
-let main config mode submission_uri =
+let main () config mode submission_uri =
   let vat = Capnp_rpc_unix.client_only_vat () in
   let vars =
     Lwt_main.run
@@ -157,6 +156,9 @@ let submission_service =
   @@ Arg.info ~doc:"The submission.cap file for the build scheduler service"
        ~docv:"FILE" [ "submission-service" ]
 
+let setup_log =
+  Term.(const setup_log $ Fmt_cli.style_renderer () $ Logs_cli.level ())
+
 let cmd =
   let doc = "Run a custom solver job in the cluster." in
   let info = Cmd.info program_name ~doc in
@@ -164,6 +166,7 @@ let cmd =
     Term.(
       term_result
         (const main
+        $ setup_log
         $ Current.Config.cmdliner
         $ Current_web.cmdliner
         $ submission_service))

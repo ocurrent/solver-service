@@ -16,10 +16,9 @@ let job_log job =
          Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
      end
 
-let solver_dir = "solver"
 let ocaml_package_name = "ocaml-base-compiler"
-let ocaml_version = "4.13.1"
-let opam_repository_commit = "ad79e369dfb9be127d520e0f96ca6002f6860ff9"
+let ocaml_version = "4.14.0"
+let opam_repository_commit = "34576e67c88137d40ce6ff9e252d549e9e87205f"
 
 let package_to_custom vars package =
   let+ opamfile = Utils.get_opam_file package in
@@ -34,7 +33,7 @@ let package_to_custom vars package =
 
 let requests log solver =
   let* vars = Utils.get_vars ~ocaml_package_name ~ocaml_version () in
-  let packages = [ "fmt.0.8.7"; "alcotest.1.5.0"; "yojson.1.7.0" ] in
+  let packages = [ "fmt.0.9.0"; "alcotest.1.6.0"; "yojson.2.0.2" ] in
   let* requests = Lwt_list.map_p (package_to_custom vars) packages in
   let before = Unix.gettimeofday () in
   let* results =

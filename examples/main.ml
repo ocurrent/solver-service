@@ -20,8 +20,6 @@ let () =
   Logs.set_level (Some Info);
   Logs.set_reporter (Logs_fmt.reporter ())
 
-let callback_fn msg = Fmt.pr "Callback got %S@." msg
-
 let opam_template arch =
   let arch = Option.value ~default:"%{arch}%" arch in
   Fmt.str
@@ -59,11 +57,10 @@ let get_vars ~ocaml_package_name ~ocaml_version ?arch () =
 let get_opam_file pv =
   Solver_service.Process.pread ("", [| "opam"; "show"; "--raw"; pv |])
 
-let run_client ~package ~version ~opam_commit service =
+let run_client ~package ~version ~ocaml_version ~opam_commit service =
   let pv = package ^ "." ^ version in
   let* platform =
-    get_vars ~ocaml_package_name:"ocaml-base-compiler" ~ocaml_version:"4.13.0"
-      ()
+    get_vars ~ocaml_package_name:"ocaml-base-compiler" ~ocaml_version ()
   in
   let* opam_file = get_opam_file pv in
   let request =
@@ -87,11 +84,12 @@ let run_client ~package ~version ~opam_commit service =
       print_endline (Buffer.contents job);
       Fmt.failwith "Solver service failed with: %s" m
 
-let connect package version opam_commit uri =
+let connect package version ocaml_version opam_commit uri =
   Lwt_main.run
     (let client_vat = Capnp_rpc_unix.client_only_vat () in
      let sr = Capnp_rpc_unix.Vat.import_exn client_vat uri in
-     Capnp_rpc_unix.with_cap_exn sr (run_client ~package ~version ~opam_commit))
+     Capnp_rpc_unix.with_cap_exn sr
+       (run_client ~package ~version ~ocaml_version ~opam_commit))
 
 open Cmdliner
 
@@ -101,7 +99,7 @@ let connect_addr =
 
 let ocaml_version =
   Arg.value
-  @@ Arg.(opt string "4.13.0")
+  @@ Arg.(opt string "4.14.0")
   @@ Arg.info [ "ocaml-version" ] ~docv:"OCAML-VERSION"
        ~doc:"A version of OCaml to use for solving (e.g. 4.13.0)"
 
@@ -127,6 +125,12 @@ let connect_cmd =
   let doc = "Solve a simple package.version request using a solver-service" in
   let info = Cmd.info "solve-local" ~doc in
   Cmd.v info
-    Term.(const connect $ package $ version $ opam_commit $ connect_addr)
+    Term.(
+      const connect
+      $ package
+      $ version
+      $ ocaml_version
+      $ opam_commit
+      $ connect_addr)
 
 let () = Cmd.(exit @@ eval connect_cmd)

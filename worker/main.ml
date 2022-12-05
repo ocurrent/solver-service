@@ -4,18 +4,6 @@ let setup_log default_level =
 
 let or_die = function Ok x -> x | Error (`Msg m) -> failwith m
 
-let check_exit_status = function
-  | Unix.WEXITED 0 -> ()
-  | Unix.WEXITED x -> Fmt.failwith "Sub-process failed with exit code %d" x
-  | Unix.WSIGNALED x -> Fmt.failwith "Sub-process failed with signal %d" x
-  | Unix.WSTOPPED x -> Fmt.failwith "Sub-process stopped with signal %d" x
-
-module Self_update = struct
-  let service = "builder_agent"
-  let repo = "ocurrent/solver-worker"
-  let tag = "live"
-end
-
 let build ~solver ~switch ~log ~src:_ ~secrets:_ c =
   Solver_worker.solve ~solver ~switch ~log c
 

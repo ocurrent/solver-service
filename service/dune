@@ -3,10 +3,25 @@
  (public_name solver-service)
  (preprocess
   (pps ppx_deriving.std ppx_deriving_yojson))
- (libraries lwt.unix solver-service-api ppx_deriving_yojson.runtime
-   opam-0install capnp-rpc-unix git-unix ocaml-version str)
- (modules epoch_lock git_context opam_repository opam_repository_intf process
-   remote_commit service solver solver_service))
+ (libraries
+  lwt.unix
+  solver-service-api
+  ppx_deriving_yojson.runtime
+  opam-0install
+  capnp-rpc-unix
+  git-unix
+  ocaml-version
+  str)
+ (modules
+  epoch_lock
+  git_context
+  opam_repository
+  opam_repository_intf
+  process
+  remote_commit
+  service
+  solver
+  solver_service))
 
 (executable
  (name main)
