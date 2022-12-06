@@ -24,7 +24,7 @@
   ocaml-version
   (solver-service-api (= :version))
   conf-libev
-  (opam-0install (>= "0.2"))
+  (opam-0install (>= "0.4.3"))
   (git-unix (>= 3.2.0))
   (capnp-rpc-unix (>= 1.2)))
  (conflicts (carton (< 0.4.2))))
