@@ -6,7 +6,7 @@ authors: ["talex5@gmail.com" "patrick@sirref.org"]
 homepage: "https://github.com/ocurrent/solver-service"
 bug-reports: "https://github.com/ocurrent/solver-service/issues"
 depends: [
-  "dune" {>= "2.0"}
+  "dune" {>= "3.6"}
   "alcotest-lwt" {with-test}
   "current_web" {with-test}
   "current_github" {with-test}
@@ -14,21 +14,22 @@ depends: [
   "ppx_deriving_yojson" {>= "3.6.1"}
   "ppx_deriving" {>= "5.1"}
   "yojson"
-  "lwt"
+  "lwt" {>= "5.6.1"}
   "logs"
   "fmt"
   "ocaml-version"
-  "solver-service-api"
+  "solver-service-api" {= version}
   "conf-libev"
   "opam-0install" {>= "0.2"}
   "git-unix" {>= "3.2.0"}
   "capnp-rpc-unix" {>= "1.2"}
+  "odoc" {with-doc}
 ]
 conflicts: [
   "carton" {< "0.4.2"}
 ]
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   [
     "dune"
     "build"

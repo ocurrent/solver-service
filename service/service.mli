@@ -1,4 +1,4 @@
-module Make (Opam_repo : Opam_repository_intf.S) : sig
+module Make (_ : Opam_repository_intf.S) : sig
   module Epoch : sig
     val process :
       log:Solver_service_api.Solver.Log.X.t Capnp_rpc_lwt.Capability.t ->

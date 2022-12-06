@@ -1,5 +1,19 @@
-(executables
+; No-op test to attach examples to the solver-service package
+
+(tests
  (names main submit)
- (libraries current_git capnp-rpc-unix solver-service-api solver-service
-   logs.cli logs.fmt opam-0install ocluster-api current_github
-   current_ocluster fmt.tty))
+ (package solver-service)
+ (libraries
+  current_git
+  capnp-rpc-unix
+  solver-service-api
+  solver-service
+  logs.cli
+  logs.fmt
+  fmt.cli
+  opam-0install
+  ocluster-api
+  current_github
+  current_ocluster
+  fmt.tty)
+ (action (progn)))

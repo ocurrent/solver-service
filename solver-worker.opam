@@ -6,7 +6,7 @@ authors: ["talex5@gmail.com" "patrick@sirref.org"]
 homepage: "https://github.com/ocurrent/solver-service"
 bug-reports: "https://github.com/ocurrent/solver-service/issues"
 depends: [
-  "dune" {>= "2.0"}
+  "dune" {>= "3.6"}
   "alcotest-lwt" {>= "1.5.0" & with-test}
   "ocluster-api"
   "current"
@@ -15,9 +15,10 @@ depends: [
   "fmt" {>= "0.9.0"}
   "dune-build-info" {>= "2.9.1"}
   "solver-service" {= version}
+  "odoc" {with-doc}
 ]
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   [
     "dune"
     "build"

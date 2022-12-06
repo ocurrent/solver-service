@@ -1,3 +1,7 @@
-(executable
+; No-op test to attach stress.exe to the solver-service package
+
+(test
  (name stress)
- (libraries solver-worker))
+ (package solver-worker)
+ (libraries solver-worker)
+ (action (progn)))
