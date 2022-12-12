@@ -40,6 +40,6 @@ let get_opam_file pv =
 let get_opam_packages () =
   let open Lwt.Infix in
   Solver_service.Process.pread
-    ("", [| "opam"; "list"; "--short"; "--color"; "never" |])
-  >|= (fun s -> String.split_on_char '\n' s)
-  >|= List.map (fun p -> String.trim p)
+    ("", [| "opam"; "list"; "--short"; "--color=never" |])
+  >|= String.split_on_char '\n'
+  >|= List.map String.trim

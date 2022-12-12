@@ -12,9 +12,10 @@ This should give you a capnp address to copy. Then run the stress test passing i
 $ dune exec -- stress/stress.exe capnp://...
 ```
 
-To submit the stress tests to a scheduler that handle a solver-worker, the scheduler could be a
-remote. by the default the number of request is limited to 30 (--limit). Make sure, the
-cache of the solver-worker is reset.
+Use this to submit stress tests to a possibly remote scheduler handling a solver-worker.
+By default the number of request is limited to 30 (--limit). Make sure, the
+cache of the solver-worker is reset. It means using `rm -r var/solver` by finding where `var` directory is
+stored if solver-worker use it(`--state-dir=var`) and restart solver-worker.
 
 ```
 $ dune exec -- stress/stress_submit.exe --submission-service submission.cap --limit N

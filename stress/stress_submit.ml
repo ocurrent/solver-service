@@ -33,36 +33,34 @@ let opam_repository_commit = "34576e67c88137d40ce6ff9e252d549e9e87205f"
 let make_requests limit =
   let* vars = Utils.get_vars ~ocaml_package_name ~ocaml_version () in
   let* opam_packages = Utils.get_opam_packages () in
-  let rec requests packages acc n =
-    match packages with
-    | [] -> Lwt.return acc
-    | package :: tl ->
-        if n >= limit then Lwt.return acc
-        else
-          let* opamfile = Utils.get_opam_file package in
-          let request =
-            Solver_service_api.Worker.Solve_request.
-              {
-                opam_repository_commits =
-                  [
-                    ( "https://github.com/ocaml/opam-repository.git",
-                      opam_repository_commit );
-                  ];
-                root_pkgs = [ (package, opamfile) ];
-                pinned_pkgs = [];
-                platforms =
-                  [ ("macOS", vars); ("linux", vars); ("windows", vars) ];
-              }
-          in
-          requests tl (request :: acc) (n + 1)
-  in
-  requests opam_packages [] 0
+  Lwt_list.fold_left_s
+    (fun acc package ->
+      let requests, nth = acc in
+      if nth >= limit then Lwt.return (List.rev requests, nth)
+      else
+        let+ opamfile = Utils.get_opam_file package in
+        let request =
+          Solver_service_api.Worker.Solve_request.
+            {
+              opam_repository_commits =
+                [
+                  ( "https://github.com/ocaml/opam-repository.git",
+                    opam_repository_commit );
+                ];
+              root_pkgs = [ (package, opamfile) ];
+              pinned_pkgs = [];
+              platforms =
+                [ ("macOS", vars); ("linux", vars); ("windows", vars) ];
+            }
+        in
+        (request :: requests, nth + 1))
+    ([], 0) opam_packages
 
 let switch = Current.Switch.create ~label:"solve-remote" ()
 let config = Current.Config.v ()
 
 let stress cluster limit =
-  let* requests = make_requests limit in
+  let* requests, _ = make_requests limit in
   let before = Unix.gettimeofday () in
   let+ results =
     Lwt_list.map_p
@@ -80,7 +78,8 @@ let main submission_uri limit =
   let before, requested = Lwt_main.run (stress cluster limit) in
   let after = Unix.gettimeofday () in
   ignore (Current.Switch.turn_off switch);
-  Format.printf "\nSolved %d requests in: %f\n" requested (after -. before)
+  Fmt.pr "\nSolved %d requests in: %a\n" requested Fmt.uint64_ns_span
+    (Int64.of_float ((after -. before) *. 10e9))
 
 open Cmdliner
 
