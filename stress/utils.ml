@@ -36,3 +36,10 @@ let get_vars ~ocaml_package_name ~ocaml_version ?arch () =
 
 let get_opam_file pv =
   Solver_service.Process.pread ("", [| "opam"; "show"; "--raw"; pv |])
+
+let get_opam_packages () =
+  let open Lwt.Infix in
+  Solver_service.Process.pread
+    ("", [| "opam"; "list"; "--short"; "--color"; "never" |])
+  >|= (fun s -> String.split_on_char '\n' s)
+  >|= List.map (fun p -> String.trim p)
