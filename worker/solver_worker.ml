@@ -80,7 +80,7 @@ let spawn_local ?solver_dir ~internal_workers () : Solver_service_api.Solver.t =
     ( "",
       [|
         "solver-service";
-        "--internal-thread-workers";
+        "--internal-workers";
         string_of_int internal_workers;
         "--sockpath";
         name;

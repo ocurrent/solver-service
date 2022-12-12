@@ -10,13 +10,12 @@ let or_die = function Ok x -> x | Error (`Msg m) -> failwith m
 let build ~solver ~switch ~log ~src:_ ~secrets:_ c =
   Solver_worker.solve ~solver ~switch ~log c
 
-let main () registration_path capacity name state_dir =
+let main () registration_path capacity internal_workers name state_dir =
   Lwt_main.run
     (let vat = Capnp_rpc_unix.client_only_vat () in
      let sr = Capnp_rpc_unix.Cap_file.load vat registration_path |> or_die in
      let solver =
-       Solver_worker.spawn_local ~solver_dir:state_dir
-         ~internal_workers:capacity ()
+       Solver_worker.spawn_local ~solver_dir:state_dir ~internal_workers ()
      in
      Worker.run ~build:(build ~solver) ~capacity ~name ~state_dir sr)
 
@@ -40,9 +39,21 @@ let connect_addr =
 
 let capacity =
   Arg.value
-  @@ Arg.opt Arg.int 20
+  @@ Arg.opt Arg.int 15
   @@ Arg.info ~doc:"The number of builds that can run in parallel" ~docv:"N"
        [ "capacity" ]
+
+let internal_workers =
+  Arg.value
+  @@ Arg.opt Arg.int 30
+  @@ Arg.info
+       ~doc:
+         "The number of sub-processes solving requests in parallel by the \
+          solver-service. One build\n\
+         \         job ($(b,--capacity)) could take more sub-processes (a \
+          build job can have\n\
+         \         more than one target platform)."
+       ~docv:"N" [ "internal-workers" ]
 
 let state_dir =
   Arg.required
@@ -67,6 +78,12 @@ let cmd =
   let info = Cmd.info "solver-worker" ~doc ~man ~version in
   Cmd.v info
     Term.(
-      const main $ setup_log $ connect_addr $ capacity $ worker_name $ state_dir)
+      const main
+      $ setup_log
+      $ connect_addr
+      $ capacity
+      $ internal_workers
+      $ worker_name
+      $ state_dir)
 
 let () = Cmd.(exit @@ eval cmd)

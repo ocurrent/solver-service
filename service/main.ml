@@ -128,10 +128,8 @@ let worker_commits =
 let internal_workers =
   Arg.value
   @@ Arg.opt Arg.int 20
-  @@ Arg.info
-       ~doc:"The number of threads that can handle more requests in parallel"
-       ~docv:"N"
-       [ "internal-thread-workers" ]
+  @@ Arg.info ~doc:"The number of sub-process solving requests in parallel"
+       ~docv:"N" [ "internal-workers" ]
 
 let address =
   Arg.value
