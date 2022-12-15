@@ -1,6 +1,6 @@
-FROM ocaml/opam:ubuntu-22.04-ocaml-4.14@sha256:1d783d4caa30a9e2913d05aa0e80f803af02f04e3124d38a148c92a3f9ac1bbc AS build
+FROM ocaml/opam:ubuntu-22.04-ocaml-4.14@sha256:20c75a7914d6656f5179b94bb574e2041bc817ec911050ca383f1cc82e171ab8 AS build
 RUN sudo apt-get update && sudo apt-get install libev-dev capnproto m4 pkg-config libsqlite3-dev libgmp-dev -y --no-install-recommends
-RUN cd ~/opam-repository && git pull origin -q master && git reset --hard 241c98c6bd475be55ad96ab4588176d1179bcab6 && opam update
+RUN cd ~/opam-repository && git pull origin -q master && git reset --hard 9262cfc7e96decb0aacbccbd8d987766f78859b1 && opam update
 COPY --chown=opam solver-service.opam solver-service-api.opam solver-worker.opam /src/
 
 COPY --chown=opam \
