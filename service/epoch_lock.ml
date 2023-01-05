@@ -14,10 +14,16 @@ type ('a, 'key) t = {
 }
 
 let activate t epoch ~ready ~set_ready =
-  t.current <- `Activating ready;
-  t.create epoch >|= fun v ->
-  t.current <- `Active (epoch, v);
-  Lwt.wakeup_later set_ready ()
+  Lwt.finalize
+    (fun () ->
+      t.current <- `Activating ready;
+      t.create epoch >|= fun v ->
+      t.current <- `Active (epoch, v);
+      Lwt.wakeup_later set_ready ())
+    (fun () ->
+      match t.current with
+      | `Activating _ -> Lwt.return (t.current <- `Idle)
+      | _ -> Lwt.return_unit)
 
 let rec with_epoch t epoch fn =
   match t.current with
