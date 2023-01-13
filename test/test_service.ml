@@ -14,7 +14,7 @@ let job_log job =
          Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
      end
 
-module Procress = struct
+module Process = struct
   let const_response ~response : Lwt_process.process =
     object
       val std_out =
@@ -38,7 +38,7 @@ end
 module Service = Solver_service.Service.Make (Mock_opam_repo)
 
 let test_good_packages _sw () =
-  let proc = Procress.const_response ~response:"+lwt.5.5.0 yaml.3.0.0" in
+  let proc = Process.const_response ~response:"+lwt.5.5.0 yaml.3.0.0" in
   let log = Buffer.create 100 in
   let req =
     Solver_service_api.Worker.Solve_request.
@@ -51,6 +51,7 @@ let test_good_packages _sw () =
         root_pkgs = [];
         pinned_pkgs = [];
         platforms = [];
+        prefer_oldest = false;
       }
   in
   let+ process =
@@ -63,7 +64,7 @@ let test_good_packages _sw () =
 
 let test_error _sw () =
   let msg = "Something went wrong!" in
-  let proc = Procress.const_response ~response:("-" ^ msg) in
+  let proc = Process.const_response ~response:("-" ^ msg) in
   let log = Buffer.create 100 in
   let req =
     Solver_service_api.Worker.Solve_request.
@@ -76,6 +77,7 @@ let test_error _sw () =
         root_pkgs = [];
         pinned_pkgs = [];
         platforms = [];
+        prefer_oldest = false;
       }
   in
   let+ process =
@@ -97,7 +99,7 @@ let test_e2e _sw () =
     Utils.get_vars ~ocaml_package_name:"ocaml" ~ocaml_version:"4.13.1" ()
   in
   let create_worker _hash =
-    Procress.const_response ~response:"+lwt.5.5.0 yaml.3.0.0"
+    Process.const_response ~response:"+lwt.5.5.0 yaml.3.0.0"
   in
   let log = Buffer.create 100 in
   let req =
@@ -107,6 +109,7 @@ let test_e2e _sw () =
         root_pkgs = [ ("yaml.3.0.0", "") ];
         pinned_pkgs = [];
         platforms = [ (os_id, vars) ];
+        prefer_oldest = false;
       }
   in
   let* service = Service.v ~n_workers:1 ~create_worker in

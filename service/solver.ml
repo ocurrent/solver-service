@@ -13,7 +13,7 @@ let parse_opam (name, contents) =
   let opam = OpamFile.OPAM.read_from_string contents in
   (OpamPackage.name pkg, (OpamPackage.version pkg, opam))
 
-let solve ~packages ~pins ~root_pkgs (vars : Worker.Vars.t) =
+let solve ~packages ~pins ~root_pkgs ~prefer_oldest (vars : Worker.Vars.t) =
   let ocaml_package = OpamPackage.Name.of_string vars.ocaml_package in
   let ocaml_version = OpamPackage.Version.of_string vars.ocaml_version in
   let context =
@@ -23,6 +23,7 @@ let solve ~packages ~pins ~root_pkgs (vars : Worker.Vars.t) =
       ~test:(OpamPackage.Name.Set.of_list root_pkgs)
       ~with_beta_remote:
         Ocaml_version.(Releases.is_dev (of_string_exn vars.ocaml_version))
+      ~prefer_oldest
   in
   let t0 = Unix.gettimeofday () in
   let r = Solver.solve context (ocaml_package :: root_pkgs) in
@@ -62,6 +63,7 @@ let main commits =
           root_pkgs;
           pinned_pkgs;
           platforms;
+          prefer_oldest;
         } =
           request
         in
@@ -76,7 +78,9 @@ let main commits =
         platforms
         |> List.iter (fun (_id, platform) ->
                let msg =
-                 match solve ~packages ~pins ~root_pkgs platform with
+                 match
+                   solve ~packages ~pins ~root_pkgs ~prefer_oldest platform
+                 with
                  | Ok packages -> "+" ^ String.concat " " packages
                  | Error msg -> "-" ^ msg
                in

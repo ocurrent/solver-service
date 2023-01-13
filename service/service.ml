@@ -145,6 +145,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
         platforms;
         root_pkgs;
         pinned_pkgs;
+        prefer_oldest = _prefer_oldest;
       } =
         request
       in

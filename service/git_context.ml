@@ -12,6 +12,7 @@ type t = {
       (* User-provided constraints *)
   test : OpamPackage.Name.Set.t;
   with_beta_remote : bool;
+  prefer_oldest : bool;
 }
 
 let ocaml_beta_pkg = OpamPackage.of_string "ocaml-beta.enabled"
@@ -65,14 +66,16 @@ let filter_available t pkg opam =
         (OpamFilter.to_string available);
       Error Unavailable
 
-let version_compare (v1, opam1) (v2, opam2) =
+let version_compare t (v1, opam1) (v2, opam2) =
   let avoid1 =
     List.mem OpamTypes.Pkgflag_AvoidVersion (OpamFile.OPAM.flags opam1)
   in
   let avoid2 =
     List.mem OpamTypes.Pkgflag_AvoidVersion (OpamFile.OPAM.flags opam2)
   in
-  if avoid1 = avoid2 then OpamPackage.Version.compare v1 v2
+  if avoid1 = avoid2 then
+    if t.prefer_oldest then OpamPackage.Version.compare v2 v1
+    else OpamPackage.Version.compare v1 v2
   else if avoid1 then -1
   else 1
 
@@ -101,7 +104,7 @@ let candidates t name =
           in
           let user_constraints = user_restrictions t name in
           OpamPackage.Version.Map.bindings versions
-          |> List.fast_sort version_compare
+          |> List.fast_sort (version_compare t)
           |> List.rev_map (fun (v, opam) ->
                  match user_constraints with
                  | Some test
@@ -196,6 +199,6 @@ let read_packages ?acc:(result_acc = OpamPackage.Name.Map.empty) store commit =
                result_acc)
 
 let create ?(test = OpamPackage.Name.Set.empty)
-    ?(pins = OpamPackage.Name.Map.empty) ~constraints ~env ~packages
-    ~with_beta_remote () =
-  { env; packages; pins; constraints; test; with_beta_remote }
+    ?(pins = OpamPackage.Name.Map.empty) ?(prefer_oldest = false) ~constraints
+    ~env ~packages ~with_beta_remote () =
+  { env; packages; pins; constraints; test; with_beta_remote; prefer_oldest }

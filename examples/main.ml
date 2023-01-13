@@ -71,6 +71,7 @@ let run_client ~package ~version ~ocaml_version ~opam_commit service =
         root_pkgs = [ (pv, opam_file) ];
         pinned_pkgs = [];
         platforms = [ (platform.os, platform) ];
+        prefer_oldest = false;
       }
   in
   let job = Buffer.create 100 in

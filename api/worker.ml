@@ -39,6 +39,7 @@ module Solve_request = struct
     pinned_pkgs : (string * string) list;
         (** Name and contents of other pinned opam files. *)
     platforms : (string * Vars.t) list;  (** Possible build platforms, by ID. *)
+    prefer_oldest : bool;  (** Solve for the oldest possible versions instead of newest. *)
   }
   [@@deriving yojson]
 end

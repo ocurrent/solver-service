@@ -51,6 +51,7 @@ let make_requests limit =
               pinned_pkgs = [];
               platforms =
                 [ ("macOS", vars); ("linux", vars); ("windows", vars) ];
+              prefer_oldest = false;
             }
         in
         (request :: requests, nth + 1))
