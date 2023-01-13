@@ -12,7 +12,7 @@ type t = {
       (* User-provided constraints *)
   test : OpamPackage.Name.Set.t;
   with_beta_remote : bool;
-  prefer_oldest : bool;
+  lower_bound : bool;
 }
 
 let ocaml_beta_pkg = OpamPackage.of_string "ocaml-beta.enabled"
@@ -74,7 +74,7 @@ let version_compare t (v1, opam1) (v2, opam2) =
     List.mem OpamTypes.Pkgflag_AvoidVersion (OpamFile.OPAM.flags opam2)
   in
   if avoid1 = avoid2 then
-    if t.prefer_oldest then OpamPackage.Version.compare v2 v1
+    if t.lower_bound then OpamPackage.Version.compare v2 v1
     else OpamPackage.Version.compare v1 v2
   else if avoid1 then -1
   else 1
@@ -199,6 +199,6 @@ let read_packages ?acc:(result_acc = OpamPackage.Name.Map.empty) store commit =
                result_acc)
 
 let create ?(test = OpamPackage.Name.Set.empty)
-    ?(pins = OpamPackage.Name.Map.empty) ?(prefer_oldest = false) ~constraints
+    ?(pins = OpamPackage.Name.Map.empty) ?(lower_bound = false) ~constraints
     ~env ~packages ~with_beta_remote () =
-  { env; packages; pins; constraints; test; with_beta_remote; prefer_oldest }
+  { env; packages; pins; constraints; test; with_beta_remote; lower_bound }

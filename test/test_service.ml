@@ -51,7 +51,7 @@ let test_good_packages _sw () =
         root_pkgs = [];
         pinned_pkgs = [];
         platforms = [];
-        prefer_oldest = false;
+        lower_bound = false;
       }
   in
   let+ process =
@@ -77,7 +77,7 @@ let test_error _sw () =
         root_pkgs = [];
         pinned_pkgs = [];
         platforms = [];
-        prefer_oldest = false;
+        lower_bound = false;
       }
   in
   let+ process =
@@ -109,7 +109,7 @@ let test_e2e _sw () =
         root_pkgs = [ ("yaml.3.0.0", "") ];
         pinned_pkgs = [];
         platforms = [ (os_id, vars) ];
-        prefer_oldest = false;
+        lower_bound = false;
       }
   in
   let* service = Service.v ~n_workers:1 ~create_worker in
