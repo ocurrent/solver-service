@@ -113,8 +113,12 @@ let test_e2e _sw () =
       }
   in
   let* service = Service.v ~n_workers:1 ~create_worker in
-  let+ response =
+  let* response =
     Solver_service_api.Solver.solve ~log:(job_log log) service req
+  in
+  let req_lower_bound = { req with lower_bound = true } in
+  let+ response_lower_bound =
+    Solver_service_api.Solver.solve ~log:(job_log log) service req_lower_bound
   in
   Alcotest.(check solver_response)
     "Same solve reponse"
@@ -127,7 +131,19 @@ let test_e2e _sw () =
            commits;
          };
        ])
-    response
+    response;
+  Alcotest.(check solver_response)
+    "Same solve reponse"
+    (Ok
+       [
+         {
+           id = os_id;
+           packages = [ "lwt.5.5.0"; "yaml.3.0.0" ];
+           compat_pkgs = [ "yaml.3.0.0" ];
+           commits;
+         };
+       ])
+    response_lower_bound
 
 let tests =
   Alcotest_lwt.
