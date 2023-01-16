@@ -66,7 +66,7 @@ let filter_available t pkg opam =
         (OpamFilter.to_string available);
       Error Unavailable
 
-let version_compare t (v1, opam1) (v2, opam2) =
+let version_compare lower_bound (v1, opam1) (v2, opam2) =
   let avoid1 =
     List.mem OpamTypes.Pkgflag_AvoidVersion (OpamFile.OPAM.flags opam1)
   in
@@ -74,7 +74,7 @@ let version_compare t (v1, opam1) (v2, opam2) =
     List.mem OpamTypes.Pkgflag_AvoidVersion (OpamFile.OPAM.flags opam2)
   in
   if avoid1 = avoid2 then
-    if t.lower_bound then OpamPackage.Version.compare v2 v1
+    if lower_bound then OpamPackage.Version.compare v2 v1
     else OpamPackage.Version.compare v1 v2
   else if avoid1 then -1
   else 1
@@ -104,7 +104,7 @@ let candidates t name =
           in
           let user_constraints = user_restrictions t name in
           OpamPackage.Version.Map.bindings versions
-          |> List.fast_sort (version_compare t)
+          |> List.fast_sort (version_compare t.lower_bound)
           |> List.rev_map (fun (v, opam) ->
                  match user_constraints with
                  | Some test
