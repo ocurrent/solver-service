@@ -110,6 +110,7 @@ let pipeline ~cluster vars () =
         root_pkgs = opamfiles;
         pinned_pkgs = [];
         platforms = [ ("os", vars) ];
+        lower_bound = false;
       }
   in
   let selection =

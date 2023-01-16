@@ -145,6 +145,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
         platforms;
         root_pkgs;
         pinned_pkgs;
+        lower_bound = _;
       } =
         request
       in
