@@ -51,17 +51,6 @@ let open_store ?(repo_url = default_repo_url) () =
   | Error e ->
       Fmt.failwith "Failed to open %a: %a" Fpath.pp path Store.pp_error e
 
-let is_path_in_repo repo_url path =
-  let clone_path = repo_url_to_clone_path repo_url in
-  match Unix.lstat Fpath.(clone_path / path |> to_string) with
-  | _ -> true
-  | exception _ -> false
-
-let partition_paths_by_repo commits paths =
-  commits
-  |> List.map (fun (repo_url, hash) ->
-         ((repo_url, hash), paths |> List.filter (is_path_in_repo repo_url)))
-
 let oldest_commit_with ~repo_url ~from paths =
   let clone_path = repo_url_to_clone_path repo_url |> Fpath.to_string in
   let cmd =
@@ -87,8 +76,8 @@ let oldest_commits_with ~from pkgs =
            let version = OpamPackage.version_to_string pkg in
            Printf.sprintf "packages/%s/%s.%s" name name version)
   in
-  partition_paths_by_repo from paths
-  |> Lwt_list.map_p (fun ((repo_url, hash), paths) ->
+  from
+  |> Lwt_list.map_p (fun (repo_url, hash) ->
          Lwt.bind (oldest_commit_with ~repo_url ~from:hash paths) (fun commit ->
              Lwt.return (repo_url, commit)))
 
