@@ -11,7 +11,7 @@ val solve_to_custom :
 val solve_of_custom :
   Solver_service_api.Raw.Reader.pointer_t Cluster_api.Custom.t ->
   (Solver_service_api.Worker.Solve_request.t, string) result
-(** [solve_of_custom c] tries to read the custom job specifcation as a solver
+(** [solve_of_custom c] tries to read the custom job specification as a solver
     request. *)
 
 val solve :

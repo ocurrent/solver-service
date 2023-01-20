@@ -208,7 +208,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                   Log.info log "-> @[<hov>%a@]"
                     Fmt.(list ~sep:sp string)
                     result.Selection.packages;
-                  Log.info log "(valid since opam-repository commit(s) :@[%a@])"
+                  Log.info log "(valid since opam-repository commit(s): @[%a@])"
                     Fmt.(list ~sep:semi (pair ~sep:comma string string))
                     result.Selection.commits;
                   Some result

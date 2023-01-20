@@ -121,7 +121,7 @@ let test_e2e _sw () =
     Solver_service_api.Solver.solve ~log:(job_log log) service req_lower_bound
   in
   Alcotest.(check solver_response)
-    "Same solve reponse"
+    "Same solve response"
     (Ok
        [
          {
@@ -133,7 +133,7 @@ let test_e2e _sw () =
        ])
     response;
   Alcotest.(check solver_response)
-    "Same solve reponse"
+    "Same solve response"
     (Ok
        [
          {
