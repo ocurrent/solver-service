@@ -1,7 +1,7 @@
 open Lwt.Syntax
 
 (* A small analysis step to get some opam files that the user specifies.
-   This is a more manual and simple version of OCaml-CI's anaylsis step. *)
+   This is a more manual and simple version of OCaml-CI's analysis step. *)
 let pool = Current.Pool.create ~label:"analyse" 2
 
 module Raw = struct
