@@ -24,10 +24,10 @@ let check_status cmd = function
   | status -> Fmt.failwith "%a %a" pp_cmd cmd pp_status status
 
 let exec cmd =
-  let proc = Lwt_process.open_process_none cmd in
-  proc#status >|= check_status cmd
+  Lwt_process.with_process_none cmd (fun proc ->
+      proc#status >|= check_status cmd)
 
 let pread cmd =
-  let proc = Lwt_process.open_process_in cmd in
-  Lwt_io.read proc#stdout >>= fun output ->
-  proc#status >|= check_status cmd >|= fun () -> output
+  Lwt_process.with_process_in cmd (fun proc ->
+      Lwt_io.read proc#stdout >>= fun output ->
+      proc#status >|= check_status cmd >|= fun () -> output)
