@@ -45,8 +45,13 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
     let dispose (worker : Lwt_process.process) =
       let pid = worker#pid in
       Fmt.epr "Terminating worker %d@." pid;
-      worker#terminate;
-      worker#status >|= fun _ -> Fmt.epr "Worker %d finished@." pid
+      worker#close >|= function
+      | Unix.WEXITED code ->
+          Fmt.epr "Worker %d finished@. Exited with code %d" pid code
+      | Unix.WSIGNALED code ->
+          Fmt.epr "Worker %d finished@. Killed  by signal %d" pid code
+      | Unix.WSTOPPED code ->
+          Fmt.epr "Worker %d finished@. Stopped by signal %d" pid code
 
     let update_opam_repository_to_commit commit =
       let repo_url = commit.Remote_commit.repo in
