@@ -45,6 +45,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
     let dispose (worker : Lwt_process.process) =
       let pid = worker#pid in
       Fmt.epr "Terminating worker %d@." pid;
+      worker#terminate;
       worker#close >|= function
       | Unix.WEXITED code ->
           Fmt.epr "Worker %d finished@. Exited with code %d" pid code
