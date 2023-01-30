@@ -30,9 +30,8 @@ let remote_solve cluster job request =
 
 let ocaml_package_name = "ocaml-base-compiler"
 let ocaml_version = "4.14.0"
-let opam_repository_commit = "a9fb5a379794b0d5d7f663ff3a3bed5d4672a5d3"
 
-let make_request vars opam_package =
+let make_request vars opam_package opam_repository_commit =
   let package, opamfile = opam_package in
   Solver_service_api.Worker.Solve_request.
     {
@@ -142,7 +141,7 @@ end
 module Analysis_current = Current_cache.Generic (Analysis)
 module Packages_current = Current_cache.Generic (Packages)
 
-let opam_packages limit =
+let opam_packages limit opam_repository_commit =
   Current.component "Opam-packages: %d" limit
   |> let> () = Current.return () in
      Packages_current.run Packages.No_context
@@ -154,21 +153,26 @@ let analyze cluster request package =
   |> let> () = Current.return () in
      Analysis_current.run cluster package request
 
-let pipeline cluster limit () =
+let pipeline cluster limit opam_repository_commit () =
   Current.component "Analysis"
-  |> let** packages = opam_packages limit in
+  |> let** packages = opam_packages limit opam_repository_commit in
      let vars = packages.vars in
      packages.packages
      |> List.map (fun opam_pkg ->
             Current.ignore_value
-            @@ analyze cluster (make_request vars opam_pkg) (fst opam_pkg))
+            @@ analyze cluster
+                 (make_request vars opam_pkg opam_repository_commit)
+                 (fst opam_pkg))
      |> Current.all
 
-let main config mode submission_uri limit =
+let main config mode submission_uri limit opam_repository_commit =
   let vat = Capnp_rpc_unix.client_only_vat () in
   let submission_cap = Capnp_rpc_unix.Vat.import_exn vat submission_uri in
   let cluster = Current_ocluster.Connection.create submission_cap in
-  let engine = Current.Engine.create ~config (pipeline cluster limit) in
+  let engine =
+    Current.Engine.create ~config
+      (pipeline cluster limit opam_repository_commit)
+  in
   let site =
     Current_web.Site.(v ~has_role:allow_all)
       ~name:"submit-stress-analysis"
@@ -178,6 +182,12 @@ let main config mode submission_uri limit =
     (Lwt.choose [ Current.Engine.thread engine; Current_web.run ~mode site ])
 
 open Cmdliner
+
+let opam_repository_commit =
+  Arg.value
+  @@ Arg.opt Arg.string "a9fb5a379794b0d5d7f663ff3a3bed5d4672a5d3"
+  @@ Arg.info ~doc:"The hash commit of opam-repository." ~docv:"COMMIT"
+       [ "opam-repository" ]
 
 let submission_service =
   Arg.required
@@ -200,6 +210,7 @@ let cmd =
         $ Current.Config.cmdliner
         $ Current_web.cmdliner
         $ submission_service
-        $ request_limit))
+        $ request_limit
+        $ opam_repository_commit))
 
 let () = Cmd.(exit @@ eval cmd)
