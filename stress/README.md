@@ -15,8 +15,9 @@ $ dune exec -- stress/stress.exe capnp://...
 Use this to submit stress tests to a possibly remote scheduler handling a solver-worker.
 By default the number of request is limited to 30 (--limit). Make sure, the
 cache of the solver-worker is reset. It means using `rm -r var/solver` by finding where `var` directory is
-stored if solver-worker use it(`--state-dir=var`) and restart solver-worker.
+stored if solver-worker use it(`--state-dir=var`) and restart solver-worker. It is also possible to
+variate the opam-repository commit without removing solver-worker cache each time.
 
 ```
-$ dune exec -- stress/stress_submit.exe --submission-service submission.cap --limit N
+$ dune exec -- stress/stress_submit.exe --submission-service submission.cap --limit N [--opam-repository COMMIT]
 ```
