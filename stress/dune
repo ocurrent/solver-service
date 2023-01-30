@@ -3,5 +3,13 @@
 (tests
  (names stress stress_submit)
  (package solver-worker)
- (libraries solver-worker current_ocluster logs.cli logs.fmt fmt.cli)
+ (libraries
+  solver-worker
+  current_ocluster
+  current_web
+  logs.cli
+  logs.fmt
+  fmt.cli)
+ (preprocess
+  (pps ppx_deriving_yojson))
  (action (progn)))
