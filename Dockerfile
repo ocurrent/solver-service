@@ -36,6 +36,7 @@ RUN opam pin add -yn current_docker.dev "./ocurrent" && \
 
 RUN opam install -y --deps-only .
 ADD --chown=opam . .
+RUN opam exec -- dune subst
 RUN opam exec -- dune build ./_build/install/default/bin/solver-service
 RUN opam exec -- dune build ./_build/install/default/bin/solver-worker
 
