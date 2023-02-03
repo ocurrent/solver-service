@@ -19,7 +19,7 @@ let exec ~label ~log ~switch ?env ?(stdin = "") ?(stderr = `FD_copy Unix.stdout)
   Log.info (fun f ->
       f "Exec(%s): %a" label Fmt.(list ~sep:sp (quote string)) cmd);
   let cmd = ("", Array.of_list cmd) in
-  let proc = Lwt_process.open_process ?env ~stderr cmd in
+  Lwt_process.with_process ?env ~stderr cmd @@ fun proc ->
   Lwt_switch.add_hook_or_exec (Some switch) (fun () ->
       if Lwt.state proc#status = Lwt.Sleep then (
         Log.info (fun f -> f "Cancelling %s job..." label);
