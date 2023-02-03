@@ -7,6 +7,7 @@
   solver-worker
   current_ocluster
   current_web
+  ocaml-ci-service
   logs.cli
   logs.fmt
   fmt.cli)
