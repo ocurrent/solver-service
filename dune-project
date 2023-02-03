@@ -22,7 +22,7 @@
   (lwt (>= 5.6.1))
   logs
   fmt
-  ocaml-version
+  (ocaml-version (>= "3.6.0"))
   (solver-service-api (= :version))
   conf-libev
   (opam-0install (>= "0.4.3"))
