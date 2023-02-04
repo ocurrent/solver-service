@@ -119,7 +119,8 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
         Ocaml_version.of_string_exn
           (OpamPackage.Version.to_string ocaml_version)
       in
-      Ocaml_version.Configure_options.is_multicore v
+      Ocaml_version.compare v Ocaml_version.Releases.v5_0_0 >= 0
+      || Ocaml_version.Configure_options.is_multicore v
 
     (* If a local package has a literal constraint on OCaml's version and it doesn't match
        the platform, we just remove that package from the set to test, so other packages
