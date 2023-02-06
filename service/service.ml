@@ -5,6 +5,10 @@ module Log = Solver_service_api.Solver.Log
 module Selection = Worker.Selection
 module Store = Git_unix.Store
 
+let oldest_commit = Lwt_pool.create 180 @@ fun _ -> Lwt.return_unit
+(* we are using at most 360 pipes at the same time and that's enough to keep the current
+ * performance and prevent some jobs to fail because of file descriptors exceed the limit.*)
+
 module Make (Opam_repo : Opam_repository_intf.S) = struct
   module Epoch : sig
     type t
@@ -202,8 +206,9 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                  let repo_packages =
                    OpamPackage.of_string "odoc.2.1.1" :: repo_packages
                  in
-                 Opam_repo.oldest_commits_with repo_packages
-                   ~from:opam_repository_commits
+                 ( Lwt_pool.use oldest_commit @@ fun () ->
+                   Opam_repo.oldest_commits_with repo_packages
+                     ~from:opam_repository_commits )
                  >|= fun commits ->
                  let compat_pkgs = List.map fst compatible_root_pkgs in
                  (id, Ok { Worker.Selection.id; compat_pkgs; packages; commits }))
