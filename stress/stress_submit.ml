@@ -46,7 +46,6 @@ let make_request opam_package opam_repository_commit =
 let platforms = Ocaml_ci_service.Conf.fetch_platforms ~include_macos:false ()
 
 module Packages = struct
-
   let id = "opam-packages"
 
   type t = No_context
@@ -61,7 +60,7 @@ module Packages = struct
 
   module Outcome = struct
     type t = (string * string) list [@@deriving yojson]
-          (** package name and opam file content*)
+    (** package name and opam file content*)
 
     let marshal t = to_yojson t |> Yojson.Safe.to_string
 
@@ -107,12 +106,12 @@ module Analysis = struct
   end
 
   module Outcome = struct
-    type t = Worker.Solve_response.t
+    type t = Worker.Selection.t list [@@deriving yojson]
 
-    let marshal t = Worker.Solve_response.to_yojson t |> Yojson.Safe.to_string
+    let marshal t = to_yojson t |> Yojson.Safe.to_string
 
-    let unmarshal t =
-      match Yojson.Safe.from_string t |> Worker.Solve_response.of_yojson with
+    let unmarshal s =
+      match Yojson.Safe.from_string s |> of_yojson with
       | Ok x -> x
       | Error e -> failwith e
   end
@@ -124,7 +123,7 @@ module Analysis = struct
     match
       Worker.Solve_response.of_yojson (Yojson.Safe.from_string response)
     with
-    | Ok x -> Lwt_result.return x
+    | Ok x -> Lwt.return x
     | Error ex -> failwith ex
 
   let auto_cancel = true
@@ -134,12 +133,10 @@ end
 module Analysis_current = Current_cache.Generic (Analysis)
 module Packages_current = Current_cache.Generic (Packages)
 
-let opam_packages limit opam_repository_commit =
+let opam_packages limit =
   Current.component "Opam-packages: %d" limit
   |> let> () = Current.return () in
-     Packages_current.run Packages.No_context
-       (String.cat "opam-repository." opam_repository_commit)
-       limit
+     Packages_current.run Packages.No_context (string_of_int limit) limit
 
 let analyze cluster request package =
   Current.component "Analyse@.%s" package
@@ -150,26 +147,25 @@ let pipeline cluster opam_repository_commit packages =
   Current.with_context packages @@ fun () ->
   Current.with_context platforms @@ fun () ->
   Current.component "Make-requests"
-  |> let** packages = packages
-     and* platforms = platforms in
+  |> let** packages = packages and* platforms = platforms in
      let platforms =
-       List.map (fun (p:Ocaml_ci.Platform.t) ->
-           (Ocaml_ci.Variant.to_string p.variant,p.vars)) platforms
+       List.map
+         (fun (p : Ocaml_ci.Platform.t) ->
+           (Ocaml_ci.Variant.to_string p.variant, p.vars))
+         platforms
      in
      let make_request opam_pkg =
-       make_request opam_pkg opam_repository_commit
-       |> fun req -> {req with platforms}
+       make_request opam_pkg opam_repository_commit |> fun req ->
+       { req with platforms }
      in
      packages
      |> List.map (fun opam_pkg ->
             Current.ignore_value
-            @@ analyze cluster
-                 (make_request opam_pkg)
-                 (fst opam_pkg))
+            @@ analyze cluster (make_request opam_pkg) (fst opam_pkg))
      |> Current.all
 
-let v  cluster limit  opam_repository_commit () =
-  let packages = opam_packages limit opam_repository_commit in
+let v cluster limit opam_repository_commit () =
+  let packages = opam_packages limit in
   pipeline cluster opam_repository_commit packages
 
 let main config mode submission_uri limit opam_repository_commit =
@@ -177,8 +173,7 @@ let main config mode submission_uri limit opam_repository_commit =
   let submission_cap = Capnp_rpc_unix.Vat.import_exn vat submission_uri in
   let cluster = Current_ocluster.Connection.create submission_cap in
   let engine =
-    Current.Engine.create ~config
-      (v cluster limit opam_repository_commit)
+    Current.Engine.create ~config (v cluster limit opam_repository_commit)
   in
   let site =
     Current_web.Site.(v ~has_role:allow_all)
