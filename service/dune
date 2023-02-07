@@ -11,6 +11,7 @@
   capnp-rpc-unix
   git-unix
   ocaml-version
+  dune-build-info
   str
   fmt.cli
   fmt.tty)

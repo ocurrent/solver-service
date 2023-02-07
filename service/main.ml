@@ -149,9 +149,14 @@ let sockpath =
           will use stdin."
        ~docv:"SOCKPATH" [ "sockpath" ]
 
+let version =
+  match Build_info.V1.version () with
+  | None -> "n/a"
+  | Some v -> Build_info.V1.Version.to_string v
+
 let cmd =
   let doc = "Solver for ocaml-ci" in
-  let info = Cmd.info "solver-service" ~doc in
+  let info = Cmd.info "solver-service" ~doc ~version in
   Cmd.v info
     Term.(
       const main
