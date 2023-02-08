@@ -36,13 +36,15 @@ RUN opam pin add -yn current_docker.dev "./ocurrent" && \
 
 RUN opam install -y --deps-only .
 ADD --chown=opam . .
-RUN opam exec -- dune subst
-RUN opam exec -- dune build ./_build/install/default/bin/solver-service
-RUN opam exec -- dune build ./_build/install/default/bin/solver-worker
+RUN opam config exec -- dune build -p solver-service,solver-service-api,solver-worker @install
+RUN opam config exec -- dune install --prefix=/usr/local --destdir=pkg --section=bin --relocatable solver-worker solver-service
 
 FROM ubuntu:22.04
 RUN apt-get update && apt-get install docker.io libev4 curl gnupg2 git libsqlite3-dev ca-certificates netbase -y --no-install-recommends
 WORKDIR /var/lib/ocluster-worker
 ENTRYPOINT ["/usr/local/bin/solver-worker"]
 ENV PROGRESS_NO_TRUNC=1
-COPY --from=build /src/_build/install/default/bin/solver-worker /src/_build/install/default/bin/solver-service /usr/local/bin/
+COPY --from=build \
+    /src/pkg/usr/local/bin/solver-worker \
+    /src/pkg/usr/local/bin/solver-service \
+    /usr/local/bin/
