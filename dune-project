@@ -26,10 +26,10 @@
   (solver-service-api (= :version))
   conf-libev
   (opam-0install (>= "0.4.3"))
-  (git-unix (>= 3.2.0))
+  (git-unix (>= 3.12.0))
   (capnp-rpc-unix (>= 1.2)))
  (conflicts (carton (< 0.4.2))))
- 
+
 (package
  (name solver-service-api)
  (synopsis "Cap'n Proto API for the solver service")
@@ -41,7 +41,7 @@
   capnp-rpc-lwt
   ppx_deriving
   ppx_deriving_yojson))
- 
+
 (package
  (name solver-worker)
  (synopsis "An OCluster worker that can solve opam constraints")

@@ -57,3 +57,4 @@ let open_store ?repo_url:_ () =
 let clone ?repo_url:_ () = Lwt.return ()
 let oldest_commits_with ~from:_ _pkgs = commits
 let fetch ?repo_url:_ () = Lwt.return ()
+let close_store store = Git_unix.Store.close_pack_files store
