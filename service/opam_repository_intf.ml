@@ -5,7 +5,7 @@ module type S = sig
       defaults to ocaml/opam-repository on GitHub. *)
 
   val close_store : Git_unix.Store.t -> unit Lwt.t
-  (** [close_store t] close all file descriptors used by t *)
+  (** [close_store t] closes all file descriptors used by [t] *)
 
   val clone : ?repo_url:string -> unit -> unit Lwt.t
   (** [clone ()] ensures that a local clone of the specified repo exists. If
