@@ -7,6 +7,11 @@ module type S = sig
   val close_store : Git_unix.Store.t -> unit Lwt.t
   (** [close_store t] closes all file descriptors used by [t] *)
 
+  val with_store :
+    ?repo_url:string -> (Git_unix.Store.t -> 'a Lwt.t) -> 'a Lwt.t
+  (** [with_store f] ensures that after [f] the store that being opened is
+      closed *)
+
   val clone : ?repo_url:string -> unit -> unit Lwt.t
   (** [clone ()] ensures that a local clone of the specified repo exists. If
       not, it clones it. If repo_url is unspecified, it defaults to
