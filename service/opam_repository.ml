@@ -51,6 +51,8 @@ let open_store ?(repo_url = default_repo_url) () =
   | Error e ->
       Fmt.failwith "Failed to open %a: %a" Fpath.pp path Store.pp_error e
 
+let close_store store = Git_unix.Store.close_pack_files store
+
 let oldest_commit_with ~repo_url ~from paths =
   let clone_path = repo_url_to_clone_path repo_url |> Fpath.to_string in
   let cmd =

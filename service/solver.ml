@@ -1,7 +1,6 @@
 module Worker = Solver_service_api.Worker
 module Solver = Opam_0install.Solver.Make (Git_context)
 module Store = Git_unix.Store
-open Lwt.Syntax
 
 let env (vars : Worker.Vars.t) v =
   Opam_0install.Dir_context.std_env ~arch:vars.arch ~os:vars.os
@@ -36,6 +35,7 @@ let solve ~packages ~pins ~root_pkgs ~lower_bound (vars : Worker.Vars.t) =
   | Error diagnostics -> Error (Solver.diagnostics diagnostics)
 
 let main commits =
+  let open Lwt.Infix in
   let packages =
     Lwt_main.run
       (* Read all the package from all the given opam-repository repos,
@@ -44,8 +44,9 @@ let main commits =
          (fun acc commit ->
            let repo_url = commit.Remote_commit.repo in
            let hash = Store.Hash.of_hex commit.Remote_commit.hash in
-           let* store = Opam_repository.open_store ~repo_url () in
-           Git_context.read_packages ~acc store hash)
+           Opam_repository.open_store ~repo_url () >>= fun store ->
+           Git_context.read_packages ~acc store hash >>= fun packages ->
+           Opam_repository.close_store store >>= fun () -> Lwt.return packages)
          OpamPackage.Name.Map.empty commits)
   in
   let rec aux () =

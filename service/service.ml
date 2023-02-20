@@ -62,16 +62,19 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
       let repo_url = commit.Remote_commit.repo in
       let hash = Store.Hash.of_hex commit.Remote_commit.hash in
       Opam_repo.open_store ~repo_url () >>= fun store ->
-      Store.mem store hash >>= function
-      | true -> Lwt.return_unit
-      | false -> (
-          Fmt.pr "Need to update %s to get new commit %a@." repo_url
-            Store.Hash.pp hash;
-          Opam_repo.fetch ~repo_url () >>= fun () ->
-          Opam_repo.open_store ~repo_url () >>= fun new_store ->
-          Store.mem new_store hash >>= function
-          | false -> Fmt.failwith "Still missing commit after update!"
-          | true -> Lwt.return_unit)
+      Store.mem store hash >>= fun r ->
+      Opam_repo.close_store store >>= fun () ->
+      if r then Lwt.return_unit
+      else (
+        Fmt.pr "Need to update %s to get new commit %a@." repo_url Store.Hash.pp
+          hash;
+        Opam_repo.fetch ~repo_url () >>= fun () ->
+        Opam_repo.open_store ~repo_url () >>= fun new_store ->
+        Store.mem new_store hash >>= fun r ->
+        Opam_repo.close_store new_store >>= fun () ->
+        if r then Lwt.return_unit
+        else Fmt.failwith "Still missing commit after update!")
+    (*Closing the store after usage is necessary to prevent file descriptor leaks*)
 
     let create ~n_workers ~create_worker commits =
       Lwt_list.iter_p update_opam_repository_to_commit commits >|= fun () ->
