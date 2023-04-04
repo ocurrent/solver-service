@@ -200,6 +200,11 @@ let loop ~switch t queue =
   in
   loop ()
 
+(* Respond to update requests by doing nothing, on the assumption that the
+   admin has updated the local package version. *)
+let update_normal () =
+  Lwt.return (fun () -> Lwt.return ())
+
 let run ?switch ?prune_threshold ~build ~capacity ~name ~state_dir
     registration_service =
   (match prune_threshold with
@@ -236,7 +241,7 @@ let run ?switch ?prune_threshold ~build ~capacity ~name ~state_dir
         let queue =
           let api =
             Cluster_api.Worker.local ~metrics ~self_update:(fun () ->
-                Lwt.return_ok ())
+                Lwt.return_ok ()) ()
           in
           let queue =
             Cluster_api.Registration.register reg ~name ~capacity api
