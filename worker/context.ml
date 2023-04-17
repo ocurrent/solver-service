@@ -63,18 +63,18 @@ module Repo = struct
   let fetch ~switch ~log t =
     let local_repo = local_copy t in
     (if dir_exists local_repo then Lwt_result.return ()
-    else
-      Process.check_call ~label:"git-init" ~switch ~log
-        [ "git"; "init"; local_repo ]
-      >>!= fun () ->
-      let config k v =
-        Process.check_call ~label:"git-config" ~switch ~log
-          [ "git"; "-C"; local_repo; "config"; "--add"; k; v ]
-      in
-      config "remote.origin.url" (Uri.to_string t.url) >>!= fun () ->
-      config "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*"
-      >>!= fun () ->
-      config "remote.origin.fetch" "+refs/pull/*:refs/remotes/pull/*")
+     else
+       Process.check_call ~label:"git-init" ~switch ~log
+         [ "git"; "init"; local_repo ]
+       >>!= fun () ->
+       let config k v =
+         Process.check_call ~label:"git-config" ~switch ~log
+           [ "git"; "-C"; local_repo; "config"; "--add"; k; v ]
+       in
+       config "remote.origin.url" (Uri.to_string t.url) >>!= fun () ->
+       config "remote.origin.fetch" "+refs/heads/*:refs/remotes/origin/*"
+       >>!= fun () ->
+       config "remote.origin.fetch" "+refs/pull/*:refs/remotes/pull/*")
     >>!= fun () ->
     Process.check_call ~label:"git-submodule-update" ~switch ~log
       [ "git"; "-C"; local_repo; "submodule"; "update" ]
