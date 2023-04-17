@@ -6,9 +6,9 @@ authors: ["talex5@gmail.com" "patrick@sirref.org"]
 homepage: "https://github.com/ocurrent/solver-service"
 bug-reports: "https://github.com/ocurrent/solver-service/issues"
 depends: [
-  "dune" {>= "3.6"}
-  "ocaml" {>= "4.14.0"}
-  "alcotest-lwt" {with-test}
+  "dune" {>= "3.7"}
+  "ocaml" {>= "4.14.1"}
+  "alcotest-lwt" {>= "1.7.0" & with-test}
   "current_web" {with-test}
   "current_github" {with-test}
   "current_ocluster" {with-test}
@@ -18,12 +18,12 @@ depends: [
   "lwt" {>= "5.6.1"}
   "logs"
   "fmt"
-  "ocaml-version" {>= "3.6.0"}
+  "ocaml-version" {>= "3.6.1"}
   "solver-service-api" {= version}
   "conf-libev"
   "opam-0install" {>= "0.4.3"}
   "git-unix" {>= "3.12.0"}
-  "capnp-rpc-unix" {>= "1.2"}
+  "capnp-rpc-unix" {>= "1.2.3"}
   "odoc" {with-doc}
 ]
 conflicts: [

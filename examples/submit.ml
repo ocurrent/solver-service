@@ -77,7 +77,7 @@ module Current_solve = struct
   let solve t pool request =
     let open Current.Syntax in
     Current.component "custom cluster solver"
-    |> let> request = request in
+    |> let> request in
        BC.run t pool request
 end
 

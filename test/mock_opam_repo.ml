@@ -48,7 +48,7 @@ let setup_store path =
           store)
 
 let open_store ?repo_url:_ () =
-  let* clone_path = clone_path in
+  let* clone_path in
   let+ store = Git_unix.Store.v clone_path in
   match store with
   | Ok store -> store
