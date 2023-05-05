@@ -21,13 +21,15 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
       t Lwt.t
 
     val process :
+      switch:Lwt_switch.t ->
       log:Log.X.t Capability.t ->
       id:string ->
       Worker.Solve_request.t ->
-      < stdin : Lwt_io.output_channel ; stdout : Lwt_io.input_channel ; .. > ->
+      Lwt_process.process ->
       (string list, string) result Lwt.t
 
     val handle :
+      switch:Lwt_switch.t ->
       log:Solver_service_api.Solver.Log.t ->
       Worker.Solve_request.t ->
       t ->
@@ -79,42 +81,50 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
       Lwt_pool.create n_workers ~validate ~dispose (fun () ->
           Lwt.return (create_worker commits))
 
-    let dispose = Lwt_pool.clear
-
     (* Send [request] to [worker] and read the reply. *)
-    let process ~log ~id request worker =
+    let process ~switch ~log ~id request worker =
       let request_str =
         Worker.Solve_request.to_yojson request |> Yojson.Safe.to_string
       in
       let request_str =
         Printf.sprintf "%d\n%s" (String.length request_str) request_str
       in
-      Lwt_io.write worker#stdin request_str >>= fun () ->
-      Lwt_io.read_line worker#stdout >>= fun time ->
-      Lwt_io.read_line worker#stdout >>= fun len ->
-      match Astring.String.to_int len with
-      | None -> Fmt.failwith "Bad frame from worker: time=%S len=%S" time len
-      | Some len -> (
-          let buf = Bytes.create len in
-          Lwt_io.read_into_exactly worker#stdout buf 0 len >|= fun () ->
-          let results = Bytes.unsafe_to_string buf in
-          match results.[0] with
-          | '+' ->
-              Log.info log "%s: found solution in %s s" id time;
-              let packages =
-                Astring.String.with_range ~first:1 results
-                |> Astring.String.cuts ~sep:" "
-              in
-              Ok packages
-          | '-' ->
-              Log.info log "%s: eliminated all possibilities in %s s" id time;
-              let msg = results |> Astring.String.with_range ~first:1 in
-              Error msg
-          | '!' ->
-              let msg = results |> Astring.String.with_range ~first:1 in
-              Fmt.failwith "BUG: solver worker failed: %s" msg
-          | _ -> Fmt.failwith "BUG: bad output: %s" results)
+      let process =
+        Lwt_io.write worker#stdin request_str >>= fun () ->
+        Lwt_io.read_line worker#stdout >>= fun time ->
+        Lwt_io.read_line worker#stdout >>= fun len ->
+        match Astring.String.to_int len with
+        | None -> Fmt.failwith "Bad frame from worker: time=%S len=%S" time len
+        | Some len -> (
+            let buf = Bytes.create len in
+            Lwt_io.read_into_exactly worker#stdout buf 0 len >|= fun () ->
+            let results = Bytes.unsafe_to_string buf in
+            match results.[0] with
+            | '+' ->
+                Log.info log "%s: found solution in %s s" id time;
+                let packages =
+                  Astring.String.with_range ~first:1 results
+                  |> Astring.String.cuts ~sep:" "
+                in
+                Ok packages
+            | '-' ->
+                Log.info log "%s: eliminated all possibilities in %s s" id time;
+                let msg = results |> Astring.String.with_range ~first:1 in
+                Error msg
+            | '!' ->
+                let msg = results |> Astring.String.with_range ~first:1 in
+                Fmt.failwith "BUG: solver worker failed: %s" msg
+            | _ -> Fmt.failwith "BUG: bad output: %s" results)
+      in
+      ( Lwt_switch.add_hook (Some switch) @@ fun () ->
+        (*We kill the process when there's no response from the worker*)
+        if Lwt.state process = Lwt.Sleep then (
+          Lwt.cancel process;
+          dispose worker)
+        else Lwt.return_unit );
+      process
 
+    let dispose = Lwt_pool.clear
     let ocaml = OpamPackage.Name.of_string "ocaml"
 
     (* If a local package has a literal constraint on OCaml's version and it doesn't match
@@ -131,7 +141,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
         OpamFormula.eval check_ocaml filter
       else true
 
-    let handle ~log request t =
+    let handle ~switch ~log request t =
       let {
         Worker.Solve_request.opam_repository_commits;
         platforms;
@@ -171,7 +181,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                else compatible_root_pkgs
              in
              let slice = { request with platforms = [ p ]; root_pkgs } in
-             Lwt_pool.use t (process ~log ~id slice) >>= function
+             Lwt_pool.use t (process ~switch ~log ~id slice) >>= function
              | Error _ as e -> Lwt.return (id, e)
              | Ok packages ->
                  let repo_packages =
@@ -209,12 +219,12 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
   end
 
   (* Handle a request by distributing it among the worker processes and then aggregating their responses. *)
-  let handle t ~log (request : Worker.Solve_request.t) =
+  let handle ~switch t ~log (request : Worker.Solve_request.t) =
     let commits =
       request.opam_repository_commits
       |> List.map (fun (repo, hash) -> Remote_commit.v ~repo ~hash)
     in
-    Epoch_lock.with_epoch t commits (Epoch.handle ~log request)
+    Epoch_lock.with_epoch t commits (Epoch.handle ~switch ~log request)
 
   let v ~n_workers ~create_worker =
     let create commits = Epoch.create ~n_workers ~create_worker commits in
@@ -245,7 +255,9 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                        (Capnp_rpc.Error.exn "Bad JSON in request: %s" msg))
                | Ok request ->
                    Lwt.catch
-                     (fun () -> handle t ~log request >|= Result.ok)
+                     (fun () ->
+                       handle t ~switch:(Lwt_switch.create ()) ~log request
+                       >|= Result.ok)
                      (function
                        | Failure msg -> Lwt_result.fail (`Msg msg)
                        | ex -> Lwt.return (Fmt.error_msg "%a" Fmt.exn ex))

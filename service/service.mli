@@ -1,15 +1,34 @@
 module Make (_ : Opam_repository_intf.S) : sig
   module Epoch : sig
+    type t
+    (* An Epoch handles all requests for a single opam-repository HEAD commit. *)
+
+    val create :
+      n_workers:int ->
+      create_worker:(Remote_commit.t list -> Lwt_process.process) ->
+      Remote_commit.t list ->
+      t Lwt.t
+
     val process :
+      switch:Lwt_switch.t ->
       log:Solver_service_api.Solver.Log.X.t Capnp_rpc_lwt.Capability.t ->
       id:string ->
       Solver_service_api.Worker.Solve_request.t ->
-      < stdin : Lwt_io.output_channel ; stdout : Lwt_io.input_channel ; .. > ->
+      Lwt_process.process ->
       (string list, string) result Lwt.t
     (** [process ~log ~id request process] will write the [request] to the stdin
         of [procress] and read [stdout] returning the packages. Information is
         logged into [log] with [id]. *)
+
+    val dispose : t -> unit Lwt.t
   end
+
+  val handle :
+    switch:Lwt_switch.t ->
+    (Epoch.t, Remote_commit.t list) Epoch_lock.t ->
+    log:Solver_service_api.Solver.Log.X.t Capnp_rpc_lwt.Capability.t ->
+    Solver_service_api.Worker.Solve_request.t ->
+    Solver_service_api.Worker.Selection.t list Lwt.t
 
   val v :
     n_workers:int ->

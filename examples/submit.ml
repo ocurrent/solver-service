@@ -125,7 +125,8 @@ let pipeline ~cluster vars () =
             let packages = selection.packages in
             Logs.info (fun f -> f "%s" (String.concat " " packages))
         | Ok [] -> failwith "No packages found"
-        | Error (`Msg m) -> failwith m)
+        | Error (`Msg m) -> failwith m
+        | Error `Cancelled -> Fmt.failwith "Job cancelled")
     | Error m -> failwith m
   in
   selection
