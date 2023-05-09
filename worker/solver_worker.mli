@@ -34,15 +34,6 @@ val solve_of_custom :
     request. *)
 
 val solve :
-  solver:Solver_service_api.Solver.X.t Capnp_rpc_lwt.Capability.t ->
-  switch:Lwt_switch.t ->
-  log:Log_data.t ->
-  Solver_service_api.Raw.Reader.pointer_t Cluster_api.Custom.t ->
-  (string, 'b) result Lwt.t
-(** [solve ~solver ~switch ~log c] interprets [c] as a solver request and solves
-    it using [solver]. *)
-
-val solve_request :
   solver:Solver_request.t ->
   switch:Lwt_switch.t ->
   log:Log_data.t ->

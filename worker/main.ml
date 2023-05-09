@@ -8,7 +8,7 @@ let setup_log style_renderer level =
 let or_die = function Ok x -> x | Error (`Msg m) -> failwith m
 
 let build ~solver ~switch ~log ~src:_ ~secrets:_ c =
-  Solver_worker.solve_request ~solver ~switch ~log c
+  Solver_worker.solve ~solver ~switch ~log c
 
 let main () registration_path capacity internal_workers name state_dir =
   Lwt_main.run

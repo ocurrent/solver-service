@@ -95,21 +95,7 @@ let cluster_worker_log log =
          Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
      end
 
-let solve ~solver ~switch:_ ~log c =
-  match solve_of_custom c with
-  | Error m -> failwith m
-  | Ok s ->
-      let+ response =
-        Solver_service_api.Solver.solve ~log:(cluster_worker_log log) solver s
-      in
-      let response =
-        Yojson.Safe.to_string
-        @@ Solver_service_api.Worker.Solve_response.to_yojson response
-      in
-      Log_data.write log response;
-      Ok response
-
-let solve_request ~solver ~switch ~log c =
+let solve ~solver ~switch ~log c =
   match solve_of_custom c with
   | Error m -> failwith m
   | Ok request ->
