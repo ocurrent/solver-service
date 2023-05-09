@@ -36,16 +36,17 @@ module Solver_request = struct
     Solver_service.Epoch_lock.v ~create ~dispose:Service.Epoch.dispose ()
 
   let solve t ~switch ~log ~request =
-    let open Lwt.Infix in
-    Lwt.catch
-      (fun () ->
-        Capability.with_ref log @@ fun log ->
-        Service.handle ~switch t ~log request >|= Result.ok)
-      (function
-        | Failure msg -> Lwt_result.fail (`Msg msg)
-        | Lwt.Canceled -> Lwt_result.fail `Cancelled
-        | ex -> Lwt.return (Fmt.error_msg "%a" Fmt.exn ex))
-    >|= fun selections ->
+    let+ selections =
+      Lwt.catch
+        (fun () ->
+          Capability.with_ref log @@ fun log ->
+          let+ request = Service.handle ~switch t ~log request in
+          Result.ok request)
+        (function
+          | Failure msg -> Lwt_result.fail (`Msg msg)
+          | Lwt.Canceled -> Lwt_result.fail `Cancelled
+          | ex -> Lwt.return (Fmt.error_msg "%a" Fmt.exn ex))
+    in
     match selections with
     | Ok _ ->
         let response =
