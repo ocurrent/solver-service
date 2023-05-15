@@ -6,6 +6,58 @@ module Context = Context
 module Log = Log
 module Process = Process
 
+module Solver_request = struct
+  open Capnp_rpc_lwt
+  module Worker = Solver_service_api.Worker
+  module Log = Solver_service_api.Solver.Log
+  module Selection = Worker.Selection
+  module Service = Solver_service.Service.Make (Solver_service.Opam_repository)
+
+  type t =
+    ( Service.Epoch.t,
+      Solver_service.Remote_commit.t list )
+    Solver_service.Epoch_lock.t
+
+  let create ~n_workers () =
+    let create_worker commits =
+      let cmd =
+        ( "",
+          [|
+            "solver-service";
+            "--worker";
+            Solver_service.Remote_commit.list_to_string commits;
+          |] )
+      in
+      Lwt_process.open_process cmd
+    in
+    let create commits =
+      Service.Epoch.create ~n_workers ~create_worker commits
+    in
+    Solver_service.Epoch_lock.v ~create ~dispose:Service.Epoch.dispose ()
+
+  let solve t ~switch ~log ~request =
+    let+ selections =
+      Lwt.catch
+        (fun () ->
+          Capability.with_ref log @@ fun log ->
+          let+ request = Service.handle ~switch t ~log request in
+          Result.ok request)
+        (function
+          | Failure msg -> Lwt_result.fail (`Msg msg)
+          | Lwt.Canceled -> Lwt_result.fail `Cancelled
+          | ex -> Lwt.return (Fmt.error_msg "%a" Fmt.exn ex))
+    in
+    match selections with
+    | Ok _ ->
+        let response =
+          Yojson.Safe.to_string
+          @@ Solver_service_api.Worker.Solve_response.to_yojson selections
+        in
+        Solver_service_api.Solver.Log.info log "%s" response;
+        Ok response
+    | Error _ as error -> error
+end
+
 let solve_to_custom req =
   let open Cluster_api.Raw in
   let params =
@@ -29,8 +81,6 @@ let solve_of_custom c =
   Solver_service_api.Worker.Solve_request.of_yojson
   @@ Yojson.Safe.from_string request
 
-module Service = Solver_service.Service.Make (Solver_service.Opam_repository)
-
 let cluster_worker_log log =
   let module L = Solver_service_api.Raw.Service.Log in
   L.local
@@ -45,77 +95,8 @@ let cluster_worker_log log =
          Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
      end
 
-let solve ~solver ~switch:_ ~log c =
+let solve ~solver ~switch ~log c =
   match solve_of_custom c with
   | Error m -> failwith m
-  | Ok s ->
-      let+ response =
-        Solver_service_api.Solver.solve ~log:(cluster_worker_log log) solver s
-      in
-      let response =
-        Yojson.Safe.to_string
-        @@ Solver_service_api.Worker.Solve_response.to_yojson response
-      in
-      Log_data.write log response;
-      Ok response
-
-let temp_file_name prefix suffix =
-  let temp_dir = Filename.get_temp_dir_name () in
-  let rnd = Random.(State.bits (get_state ())) land 0xFFFFFF in
-  Filename.concat temp_dir (Printf.sprintf "%s%06x%s" prefix rnd suffix)
-
-let spawn_local ?solver_dir ~internal_workers () : Solver_service_api.Solver.t =
-  let name = temp_file_name "solver-worker" ".sock" in
-  Logs.info (fun f -> f "Setting up solver %s…" name);
-  let listener = Unix.socket ~cloexec:true PF_UNIX SOCK_STREAM 0 in
-  (try Unix.unlink name with Unix.Unix_error (Unix.ENOENT, _, _) -> ());
-  Unix.bind listener (ADDR_UNIX name);
-  Unix.listen listener 1;
-  let solver_dir =
-    match solver_dir with
-    | None -> Fpath.to_string (Current.state_dir "solver")
-    | Some x -> x
-  in
-  let cmd =
-    ( "",
-      [|
-        "solver-service";
-        "--internal-workers";
-        string_of_int internal_workers;
-        "--sockpath";
-        name;
-      |] )
-  in
-  let _child =
-    Lwt_process.open_process_none ~cwd:solver_dir ~stdin:`Close cmd
-  in
-  let switch = Lwt_switch.create () in
-  let p, _ =
-    match Unix.select [ listener ] [] [] 1. with
-    | [ listener' ], [], [] when listener = listener' ->
-        Unix.accept ~cloexec:true listener
-    | _ -> failwith "Solver process didn't start correctly"
-    | exception (Unix.Unix_error (Unix.EINTR, _, _) as exn) ->
-        prerr_endline "Solver process didn't start correctly";
-        raise exn
-  in
-  Unix.close listener;
-  Unix.unlink name;
-  let p =
-    Lwt_unix.of_unix_file_descr p
-    |> Capnp_rpc_unix.Unix_flow.connect ~switch
-    |> Capnp_rpc_net.Endpoint.of_flow
-         (module Capnp_rpc_unix.Unix_flow)
-         ~peer_id:Capnp_rpc_net.Auth.Digest.insecure ~switch
-  in
-  let conn =
-    Capnp_rpc_unix.CapTP.connect ~restore:Capnp_rpc_net.Restorer.none p
-  in
-  let solver =
-    Capnp_rpc_unix.CapTP.bootstrap conn
-      (Capnp_rpc_net.Restorer.Id.public "solver")
-  in
-  solver
-  |> Capnp_rpc_lwt.Capability.when_broken (fun ex ->
-         Fmt.failwith "Solver process failed: %a" Capnp_rpc.Exception.pp ex);
-  solver
+  | Ok request ->
+      Solver_request.solve solver ~switch ~log:(cluster_worker_log log) ~request

@@ -84,6 +84,7 @@ let run_client ~package ~version ~ocaml_version ~opam_commit service =
   | Error (`Msg m) ->
       print_endline (Buffer.contents job);
       Fmt.failwith "Solver service failed with: %s" m
+  | Error `Cancelled -> Fmt.failwith "Job Cancelled"
 
 let connect package version ocaml_version opam_commit uri =
   Lwt_main.run

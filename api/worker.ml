@@ -50,5 +50,6 @@ module Solve_response = struct
   type ('a, 'b) result = ('a, 'b) Stdlib.result = Ok of 'a | Error of 'b
   [@@deriving yojson]
 
-  type t = (Selection.t list, [ `Msg of string ]) result [@@deriving yojson]
+  type t = (Selection.t list, [ `Cancelled | `Msg of string ]) result
+  [@@deriving yojson]
 end

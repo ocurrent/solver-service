@@ -55,7 +55,8 @@ let test_good_packages _sw () =
       }
   in
   let+ process =
-    Service.Epoch.process ~log:(job_log log) ~id:"unique-id" req proc
+    let switch = Lwt_switch.create () in
+    Service.Epoch.process ~switch ~log:(job_log log) ~id:"unique-id" req proc
   in
   Alcotest.(check (result (list string) string))
     "Same packages"
@@ -81,7 +82,8 @@ let test_error _sw () =
       }
   in
   let+ process =
-    Service.Epoch.process ~log:(job_log log) ~id:"unique-id" req proc
+    let switch = Lwt_switch.create () in
+    Service.Epoch.process ~switch ~log:(job_log log) ~id:"unique-id" req proc
   in
   Alcotest.(check (result (list string) string))
     "Same packages" (Error msg) process

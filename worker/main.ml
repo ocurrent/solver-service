@@ -15,7 +15,7 @@ let main () registration_path capacity internal_workers name state_dir =
     (let vat = Capnp_rpc_unix.client_only_vat () in
      let sr = Capnp_rpc_unix.Cap_file.load vat registration_path |> or_die in
      let solver =
-       Solver_worker.spawn_local ~solver_dir:state_dir ~internal_workers ()
+       Solver_worker.Solver_request.create ~n_workers:internal_workers ()
      in
      Worker.run ~build:(build ~solver) ~capacity ~name ~state_dir sr)
 
