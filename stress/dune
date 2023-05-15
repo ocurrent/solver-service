@@ -1,15 +1,15 @@
 ; No-op test to attach stress.exe to the solver-service package
 
 (tests
- (names stress stress_submit)
+ (names stress stress_submit stress_submit_auto_cancel)
  (package solver-worker)
  (libraries
   solver-worker
   current_ocluster
   current_web
-  ocaml-ci-service
   logs.cli
   logs.fmt
+  ocaml-version
   fmt.cli)
  (preprocess
   (pps ppx_deriving_yojson))

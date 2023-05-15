@@ -19,5 +19,13 @@ stored if solver-worker use it(`--state-dir=var`) and restart solver-worker. It 
 variate the opam-repository commit without removing solver-worker cache each time.
 
 ```
-$ dune exec -- stress/stress_submit.exe --submission-service submission.cap --limit N [--opam-repository COMMIT]
+$ dune exec -- stress/stress_submit.exe --submission-service submission.cap --limit N [--opam-repository-commit COMMIT]
+```
+
+To stress test the solver-worker against different opam-repository commits changing in time: almost same as previous
+the difference is the timing (by default `--time=80` seconds) of a particular opam-repository (how long it remains before change)
+and the list of opam-repository commits by default there's a list of 3 different commits.
+
+```
+$ dune exec -- stress/stress_auto_cancel_submit.exe --submission-service submission.cap --limit N --timing N [--opam-repository-commits=COMMITS]
 ```
