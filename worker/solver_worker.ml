@@ -7,10 +7,8 @@ module Log = Log
 module Process = Process
 
 module Solver_request = struct
-  open Capnp_rpc_lwt
   module Worker = Solver_service_api.Worker
   module Log = Solver_service_api.Solver.Log
-  module Selection = Worker.Selection
   module Service = Solver_service.Service.Make (Solver_service.Opam_repository)
 
   type t =
@@ -36,26 +34,14 @@ module Solver_request = struct
     Solver_service.Epoch_lock.v ~create ~dispose:Service.Epoch.dispose ()
 
   let solve t ~switch ~log ~request =
-    let+ selections =
-      Lwt.catch
-        (fun () ->
-          Capability.with_ref log @@ fun log ->
-          let+ request = Service.handle ~switch t ~log request in
-          Result.ok request)
-        (function
-          | Failure msg -> Lwt_result.fail (`Msg msg)
-          | Lwt.Canceled -> Lwt_result.fail `Cancelled
-          | ex -> Lwt.return (Fmt.error_msg "%a" Fmt.exn ex))
-    in
-    match selections with
-    | Ok _ ->
-        let response =
-          Yojson.Safe.to_string
-          @@ Solver_service_api.Worker.Solve_response.to_yojson selections
-        in
-        Solver_service_api.Solver.Log.info log "%s" response;
-        Ok response
-    | Error _ as error -> error
+    Lwt.catch
+      (fun () ->
+        let+ request = Service.handle ~switch t ~log request in
+        Result.ok request)
+      (function
+        | Failure msg -> Lwt_result.fail (`Msg msg)
+        | Lwt.Canceled -> Lwt_result.fail `Cancelled
+        | ex -> Lwt.return (Fmt.error_msg "%a" Fmt.exn ex))
 end
 
 let solve_to_custom req =
@@ -98,5 +84,18 @@ let cluster_worker_log log =
 let solve ~solver ~switch ~log c =
   match solve_of_custom c with
   | Error m -> failwith m
-  | Ok request ->
-      Solver_request.solve solver ~switch ~log:(cluster_worker_log log) ~request
+  | Ok request -> (
+      let log = cluster_worker_log log in
+      let+ selections =
+        Capnp_rpc_lwt.Capability.with_ref log @@ fun log ->
+        Solver_request.solve solver ~switch ~log ~request
+      in
+      match selections with
+      | Ok _ ->
+          let response =
+            Yojson.Safe.to_string
+            @@ Solver_service_api.Worker.Solve_response.to_yojson selections
+          in
+          Solver_service_api.Solver.Log.info log "%s" response;
+          Ok response
+      | Error _ as error -> error)
