@@ -16,7 +16,7 @@ module Solver_request : sig
     switch:Lwt_switch.t ->
     log:Solver_service_api.Solver.Log.X.t Capnp_rpc_lwt.Capability.t ->
     request:Solver_service_api.Worker.Solve_request.t ->
-    (string, [ `Cancelled | `Msg of string ]) Lwt_result.t
+    Solver_service_api.Worker.Solve_response.t Lwt.t
   (**[solve t ~switch ~log ~request] will solve the [request] using the pool
      [t], the [request] will be distributed among the internal-workers of the
      pool.*)
