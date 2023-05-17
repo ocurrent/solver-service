@@ -22,6 +22,7 @@
   (lwt (>= 5.6.1))
   logs
   fmt
+  (dune-build-info (>= 3.7))
   (ocaml-version (>= "3.6.1"))
   (solver-service-api (= :version))
   conf-libev
