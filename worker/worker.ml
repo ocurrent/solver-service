@@ -130,9 +130,8 @@ let build ~switch ~log t descr =
       Log.info (fun f -> f "Job succeeded");
       (Ok output, "ok")
   | Error (`Msg msg) ->
-      Log_data.write log (msg ^ "\n");
       Log.info (fun f -> f "Job failed: %s" msg);
-      (Error (`Msg "Build failed"), "fail")
+      (Error (`Msg msg), "build failed")
 
 let loop ~switch t queue =
   let rec loop () =
