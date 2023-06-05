@@ -11,13 +11,14 @@ let build ~solver ~switch ~log ~src:_ ~secrets:_ c =
   Solver_worker.solve ~solver ~switch ~log c
 
 let main () registration_path capacity internal_workers name state_dir =
-  Lwt_main.run
-    (let vat = Capnp_rpc_unix.client_only_vat () in
-     let sr = Capnp_rpc_unix.Cap_file.load vat registration_path |> or_die in
-     let solver =
-       Solver_worker.Solver_request.create ~n_workers:internal_workers ()
-     in
-     Worker.run ~build:(build ~solver) ~capacity ~name ~state_dir sr)
+  Lwt_main.run begin
+      let vat = Capnp_rpc_unix.client_only_vat () in
+      let sr = Capnp_rpc_unix.Cap_file.load vat registration_path |> or_die in
+      let solver =
+        Solver_worker.Solver_request.create ~n_workers:internal_workers ()
+      in
+      Worker.run ~build:(build ~solver) ~capacity ~name ~state_dir sr
+    end
 
 open Cmdliner
 
@@ -67,7 +68,7 @@ let version =
   | Some v -> Build_info.V1.Version.to_string v
 
 let cmd =
-  let doc = "An OCluster worker for solving opam dependencies" in
+  let doc = "An OCluster worker for solving opam dependencies." in
   let man =
     [
       `P
