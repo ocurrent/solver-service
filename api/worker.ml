@@ -1,7 +1,8 @@
-(** Solver API types for communication between solver clients and solver workers.
+(** Solver API types for communication between solver clients and solver
+    workers.
 
-    Where solver clients are any CI system that submits solver requests to be processed.
-*)
+    Where solver clients are any CI system that submits solver requests to be
+    processed. *)
 
 (** Variables describing a build environment. *)
 module Vars = struct

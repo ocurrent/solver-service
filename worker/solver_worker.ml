@@ -1,7 +1,6 @@
 (* Workers that can also solve opam jobs *)
 
 open Lwt.Syntax
-
 module Log_data = Log_data
 module Context = Context
 module Log = Log

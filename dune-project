@@ -24,6 +24,7 @@
   (fmt (>= 0.9.0))
   (ocaml-version (>= 3.6.1))
   (solver-service-api (= :version))
+  (dune-build-info (>= 3.8.0))
   conf-libev
   (opam-0install (>= 0.4.3))
   (git-unix (>= 3.12.0))

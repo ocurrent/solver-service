@@ -1,4 +1,5 @@
-(** An OCluster worker that can solve requests being submitted to OCluster as a custom job specification. *)
+(** An OCluster worker that can solve requests being submitted to OCluster as a
+    custom job specification. *)
 
 module Log_data = Log_data
 module Context = Context

@@ -3,7 +3,8 @@
 type t = {
   repo : string; (* The url of the repo from which to pull *)
   hash : string; (* Hash of the branch master *)
-} [@@deriving yojson]
+}
+[@@deriving yojson]
 
 val v : repo:string -> hash:string -> t
 val repo : t -> string
