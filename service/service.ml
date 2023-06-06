@@ -159,7 +159,6 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
         platforms;
         root_pkgs;
         pinned_pkgs;
-        lower_bound = _;
       } =
         request
       in
@@ -213,7 +212,15 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                      ~from:opam_repository_commits )
                  >|= fun commits ->
                  let compat_pkgs = List.map fst compatible_root_pkgs in
-                 (id, Ok { Worker.Selection.id; compat_pkgs; packages; commits }))
+                 ( id,
+                   Ok
+                     {
+                       Worker.Selection.id;
+                       compat_pkgs;
+                       packages;
+                       commits;
+                       lower_bound = vars.lower_bound;
+                     } ))
       >|= List.filter_map (fun (id, result) ->
               Log.info log "= %s =" id;
               match result with
