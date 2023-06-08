@@ -8,12 +8,6 @@ let send_to ch contents =
     (fun () -> Lwt_result.return ())
     (fun ex -> Lwt.return (Fmt.error_msg "%a" Fmt.exn ex))
 
-let pp_signal f x =
-  let open Sys in
-  if x = sigkill then Fmt.string f "kill"
-  else if x = sigterm then Fmt.string f "term"
-  else Fmt.int f x
-
 let exec ~label ~log ~switch ?env ?(stdin = "") ?(stderr = `FD_copy Unix.stdout)
     ?(is_success = ( = ) 0) cmd =
   Log.info (fun f ->
@@ -38,9 +32,10 @@ let exec ~label ~log ~switch ?env ?(stdin = "") ?(stderr = `FD_copy Unix.stdout)
       | Error (`Msg msg) ->
           Fmt.error_msg "Failed sending input to %s: %s" label msg)
   | Unix.WEXITED n -> Error (`Exit_code n)
-  | Unix.WSIGNALED x -> Fmt.error_msg "%s failed with signal %d" label x
+  | Unix.WSIGNALED x ->
+      Fmt.error_msg "%s failed with signal %a" label Fmt.Dump.signal x
   | Unix.WSTOPPED x ->
-      Fmt.error_msg "%s stopped with signal %a" label pp_signal x
+      Fmt.error_msg "%s stopped with signal %a" label Fmt.Dump.signal x
 
 let check_call ~label ~log ~switch ?env ?stdin ?stderr ?is_success cmd =
   exec ~label ~log ~switch ?env ?stdin ?stderr ?is_success cmd >|= function

@@ -54,11 +54,13 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
       worker#terminate;
       worker#close >|= function
       | Unix.WEXITED code ->
-          Fmt.epr "Worker %d finished@. Exited with code %d" pid code
+          Fmt.epr "Worker %d finished. Exited with code %d@." pid code
       | Unix.WSIGNALED code ->
-          Fmt.epr "Worker %d finished@. Killed  by signal %d" pid code
+          Fmt.epr "Worker %d finished. Killed by signal %a@." pid
+            Fmt.Dump.signal code
       | Unix.WSTOPPED code ->
-          Fmt.epr "Worker %d finished@. Stopped by signal %d" pid code
+          Fmt.epr "Worker %d finished. Stopped by signal %a@." pid
+            Fmt.Dump.signal code
 
     let update_opam_repository_to_commit commit =
       let repo_url = commit.Remote_commit.repo in
