@@ -1,0 +1,44 @@
+version: "3.8"
+services:
+
+  scheduler:
+    image: ocurrent/ocluster-scheduler:live
+    command:
+      - --secrets-dir=/capnp-secrets
+      - --capnp-secret-key-file=/capnp-secrets/key.cap
+      - --capnp-listen-address=tcp:0.0.0.0:9000
+      - --capnp-public-address=tcp:scheduler:9000
+      - --state-dir=/var/lib/ocluster-scheduler
+      - --pools=solver
+    init: true
+    ports:
+      - "9000:9000"
+    volumes:
+      - 'scheduler-data:/var/lib/ocluster-scheduler'
+      - 'capnp-secrets:/capnp-secrets'
+
+  solver-worker:
+    # image: ocurrent/ocluster-worker:live
+    build:
+      dockerfile: Dockerfile
+      context: .
+    command:
+      - --connect=/capnp-secrets/pool-solver.cap
+      - --name=solver-1
+      - --capacity=10  # The number of builds that can run in parallel
+      - --internal-workers=15 # The number of internal-workers that handle solve per platform
+      - --state-dir=/var/lib/ocluster
+      - --verbose
+    init: true
+    restart: on-failure         # (wait for the scheduler to write the pool cap)
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - 'worker-data:/var/lib/ocluster'
+      - 'capnp-secrets:/capnp-secrets:ro'
+    environment:
+      - DOCKER_BUILDKIT=1
+
+volumes:
+  worker-data:
+  scheduler-data:
+  capnp-secrets:

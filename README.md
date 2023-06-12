@@ -55,3 +55,61 @@ $ dune exec -- examples/submit.exe --submission-service=capnp-secrets/submission
 ```
 
 You should then be able to watch the pipeline in action at `http://localhost:8080`.
+
+### A solver worker by docker-compose
+
+Start a solver-worker connected to a scheduler.
+
+```
+$ docker-compose -f docker-compose.yml up
+```
+
+To reach the scheduler, we need to add its hostname in `/etc/hosts` file.
+```
+$ cat /etc/hosts
+127.0.0.1   localhost
+127.0.0.1   scheduler
+```
+
+Get the `Mountpoint` by inspecting the capnp-secrets volume.
+```
+$ docker volume inspect solver-service_capnp-secrets
+[
+    {
+        "CreatedAt": "2023-06-02T17:00:23+02:00",
+        "Driver": "local",
+        "Labels": {
+            "com.docker.compose.project": "solver-service",
+            "com.docker.compose.version": "1.29.2",
+            "com.docker.compose.volume": "capnp-secrets"
+        },
+        "Mountpoint": "/var/lib/docker/volumes/solver-service_capnp-secrets/_data",
+        "Name": "solver-service_capnp-secrets",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+```
+
+Be in root to get the `admin.cap` file form `Mountpoint` path. In macOs the command is `sudo su`.
+
+```
+$ mkdir capnp-secrets
+$ sudo -i
+
+# cd /var/lib/docker/volumes/solver-service_capnp-secrets/_data
+# cat admin.cap
+capnp://sha-256:rMn7cNJxSE...
+# exit
+
+$ echo "capnp://sha-256:rMn7cNJxSE..." > capnp-secrets/admin.cap
+```
+
+The scheduler and a solver worker is already started, we can now, get the `submission.cap` file. W could only use it for submitting solve builds.
+
+```
+$ ocluster-admin --connect capnp-secrets/admin.cap add-client solver > capnp-secrets/submission.cap
+```
+
+We can use `submission.cap` file to submit jobs using `examples/submit.exe` or use
+[ocaml-ci-service](https://github.com/ocurrent/ocaml-ci) by passing the file via `--submission-solver-service`.
