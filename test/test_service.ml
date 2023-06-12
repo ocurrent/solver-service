@@ -14,31 +14,36 @@ let job_log job =
          Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
      end
 
-module Process = struct
-  let const_response ~response : Lwt_process.process =
-    object
-      val std_out =
-        let time = 1000 in
-        let length = String.length response in
-        let output = Fmt.str "%i\n%d\n%s" time length response in
-        Lwt_io.of_bytes ~mode:Input (Lwt_bytes.of_string output)
+let const_response ~response : Lwt_process.process =
+  object
+    val std_out =
+      let time = 1000 in
+      let length = String.length response in
+      let output = Fmt.str "%i\n%d\n%s" time length response in
+      Lwt_io.of_bytes ~mode:Input (Lwt_bytes.of_string output)
 
-      method pid = 10
-      method rusage = Lwt.return Lwt_unix.{ ru_utime = 0.; ru_stime = 0. }
-      method state = Lwt_process.Running
-      method stdin = Lwt_io.null
-      method stdout = std_out
-      method terminate = ()
-      method status = Lwt.return (Unix.WEXITED 0)
-      method close = Lwt.return (Unix.WEXITED 0)
-      method kill _i = ()
-    end
-end
+    method pid = 10
+    method rusage = Lwt.return Lwt_unix.{ ru_utime = 0.; ru_stime = 0. }
+    method state = Lwt_process.Running
+    method stdin = Lwt_io.null
+    method stdout = std_out
+    method terminate = ()
+    method status = Lwt.return (Unix.WEXITED 0)
+    method close = Lwt.return (Unix.WEXITED 0)
+    method kill _i = ()
+  end
+
+let create_proc ~response =
+  {
+    Solver_service.Internal_worker.Worker_process.process =
+      const_response ~response;
+    state = Available;
+  }
 
 module Service = Solver_service.Service.Make (Mock_opam_repo)
 
 let test_good_packages _sw () =
-  let proc = Process.const_response ~response:"+lwt.5.5.0 yaml.3.0.0" in
+  let proc = create_proc ~response:"+lwt.5.5.0 yaml.3.0.0" in
   let log = Buffer.create 100 in
   let req =
     Solver_service_api.Worker.Solve_request.
@@ -65,7 +70,7 @@ let test_good_packages _sw () =
 
 let test_error _sw () =
   let msg = "Something went wrong!" in
-  let proc = Process.const_response ~response:("-" ^ msg) in
+  let proc = create_proc ~response:("-" ^ msg) in
   let log = Buffer.create 100 in
   let req =
     Solver_service_api.Worker.Solve_request.
@@ -100,9 +105,7 @@ let test_e2e _sw () =
   let* vars =
     Utils.get_vars ~ocaml_package_name:"ocaml" ~ocaml_version:"4.13.1" ()
   in
-  let create_worker _hash =
-    Process.const_response ~response:"+lwt.5.5.0 yaml.3.0.0"
-  in
+  let create_worker _hash = create_proc ~response:"+lwt.5.5.0 yaml.3.0.0" in
   let log = Buffer.create 100 in
   let req =
     Solver_service_api.Worker.Solve_request.
@@ -135,7 +138,7 @@ let test_e2e _sw () =
        ])
     response;
   Alcotest.(check solver_response)
-    "Same solve response"
+    "Same solve response lower bound"
     (Ok
        [
          {

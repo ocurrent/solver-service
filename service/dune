@@ -22,6 +22,7 @@
   opam_repository_intf
   process
   remote_commit
+  internal_worker
   service
   solver
   solver_service))

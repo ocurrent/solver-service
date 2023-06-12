@@ -10,6 +10,7 @@ module Solver_request = struct
   module Worker = Solver_service_api.Worker
   module Log = Solver_service_api.Solver.Log
   module Service = Solver_service.Service.Make (Solver_service.Opam_repository)
+  module Worker_process = Solver_service.Internal_worker.Worker_process
 
   type t =
     ( Service.Epoch.t,
@@ -26,7 +27,7 @@ module Solver_request = struct
             Solver_service.Remote_commit.list_to_string commits;
           |] )
       in
-      Lwt_process.open_process cmd
+      Worker_process.create cmd
     in
     let create commits =
       Service.Epoch.create ~n_workers ~create_worker commits
