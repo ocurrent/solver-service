@@ -122,15 +122,15 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                 Fmt.failwith "BUG: solver worker failed: %s" msg
             | _ -> Fmt.failwith "BUG: bad output: %s" results)
       in
-      ( Lwt_switch.add_hook (Some switch) @@ fun () ->
+      ( Lwt_switch.add_hook_or_exec (Some switch) @@ fun () ->
         (* Release the worker before cancelling the promise of the request, in order to prevent the
          * workers's pool choosing the worker for another processing.*)
         if Lwt.state process = Lwt.Sleep then (
           Worker_process.release worker;
           Lwt.cancel process;
           dispose worker)
-        else Lwt.return_unit );
-      process
+        else Lwt.return_unit )
+      >>= fun () -> process
 
     let dispose = Lwt_pool.clear
     let ocaml = OpamPackage.Name.of_string "ocaml"
