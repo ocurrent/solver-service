@@ -3,8 +3,8 @@
 
 (generate_opam_files true)
 (source (github ocurrent/solver-service))
-(authors "talex5@gmail.com" "patrick@sirref.org")
-(maintainers "tim@tarides.com" "alpha@tarides.com")
+(authors "Thomas Leonard <talex5@gmail.com>" "Patrick Ferris <patrick@sirref.org>")
+(maintainers "alpha@tarides.com" "Tim McGilchrist <timmcgil@gmail.com>")
 
 (package
  (name solver-service)
