@@ -1,3 +1,5 @@
+(** Helper functions for Lwt process handling. *)
+
 open Lwt.Infix
 
 let pp_args =

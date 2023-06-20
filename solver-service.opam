@@ -14,13 +14,13 @@ depends: [
   "current_ocluster" {with-test}
   "ppx_deriving_yojson" {>= "3.6.1"}
   "ppx_deriving" {>= "5.1"}
-  "yojson"
+  "yojson" {>= "2.1.0"}
   "lwt" {>= "5.6.1"}
-  "logs"
-  "fmt"
-  "dune-build-info" {>= "3.7"}
+  "logs" {>= "0.7.0"}
+  "fmt" {>= "0.9.0"}
   "ocaml-version" {>= "3.6.1"}
   "solver-service-api" {= version}
+  "dune-build-info" {>= "3.8.0"}
   "conf-libev"
   "opam-0install" {>= "0.4.3"}
   "git-unix" {>= "3.12.0"}

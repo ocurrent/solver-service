@@ -67,7 +67,7 @@ let version =
   | Some v -> Build_info.V1.Version.to_string v
 
 let cmd =
-  let doc = "An OCluster worker for solving opam dependencies" in
+  let doc = "An OCluster worker for solving opam dependencies." in
   let man =
     [
       `P

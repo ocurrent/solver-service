@@ -1,6 +1,9 @@
+(** Solver API for CapnP RPC. *)
+
 open Lwt.Syntax
 open Capnp_rpc_lwt
 
+(** Logger for writing to a running {!solve} request. *)
 module Log = struct
   module X = Raw.Client.Log
 
@@ -34,7 +37,12 @@ end
 module X = Raw.Client.Solver
 
 type t = X.t Capability.t
+(** CapnP Capability to call {!Raw.Client.Solver}. *)
 
+(** Runs a solve for request {!Worker.Solve_request.t} returning the results as
+    {!Worker.Solve_response.t}.
+
+    Errors are reported as [Failure] exceptions. *)
 let solve t ~log reqs =
   let open X.Solve in
   let request, params = Capability.Request.create Params.init_pointer in
