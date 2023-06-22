@@ -4,11 +4,15 @@ module Worker = Solver_service_api.Worker
 module Log = Solver_service_api.Solver.Log
 module Selection = Worker.Selection
 module Store = Git_unix.Store
-module Worker_process = Internal_worker.Worker_process
+module Solver_process = Internal_worker.Solver_process
 
 let oldest_commit = Lwt_pool.create 180 @@ fun _ -> Lwt.return_unit
 (* we are using at most 360 pipes at the same time and that's enough to keep the current
  * performance and prevent some jobs to fail because of file descriptors exceed the limit.*)
+
+let rand_state = Random.State.make [||]
+let get_uid () = Uuidm.v4_gen rand_state () |> Uuidm.to_string
+(* Uid for each request in order to verify, we're getting right the result from solver_process *)
 
 module Make (Opam_repo : Opam_repository_intf.S) = struct
   module Epoch : sig
@@ -17,7 +21,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
 
     val create :
       n_workers:int ->
-      create_worker:(Remote_commit.t list -> Worker_process.t) ->
+      create_worker:(Remote_commit.t list -> Solver_process.t) ->
       Remote_commit.t list ->
       t Lwt.t
 
@@ -25,8 +29,9 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
       switch:Lwt_switch.t ->
       log:Log.X.t Capability.t ->
       id:string ->
+      request_uid:string ->
       Worker.Solve_request.t ->
-      Worker_process.t ->
+      Solver_process.t ->
       (string list, string) result Lwt.t
 
     val handle :
@@ -38,27 +43,27 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
 
     val dispose : t -> unit Lwt.t
   end = struct
-    type t = Worker_process.t Lwt_pool.t
+    type t = Solver_process.t Lwt_pool.t
 
-    let validate (worker : Worker_process.t) =
-      match Worker_process.state worker with
+    let validate (worker : Solver_process.t) =
+      match Solver_process.state worker with
       | Available -> Lwt.return true
       | Released ->
           Format.eprintf
             "Worker %d is released - closing and removing from pool@."
-            (Worker_process.pid worker);
+            (Solver_process.pid worker);
           Lwt.return false
       | Closed status ->
           Format.eprintf "Worker %d is closed (%a) - removing from pool@."
-            (Worker_process.pid worker)
+            (Solver_process.pid worker)
             Process.pp_status status;
           Lwt.return false
       | Failed ex -> Lwt.fail ex
 
-    let dispose (worker : Worker_process.t) =
-      let pid = Worker_process.pid worker in
+    let dispose (worker : Solver_process.t) =
+      let pid = Solver_process.pid worker in
       Fmt.epr "Terminating worker %d@." pid;
-      Worker_process.close worker >|= function
+      Solver_process.close worker >|= function
       | Unix.WEXITED code ->
           Fmt.epr "Worker %d finished. Exited with code %d@." pid code
       | Unix.WSIGNALED code ->
@@ -90,21 +95,30 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
           Lwt.return (create_worker commits))
 
     (* Send [request] to [worker] and read the reply. *)
-    let process ~switch ~log ~id request worker =
+    let process ~switch ~log ~id ~request_uid request worker =
       let request_str =
         Worker.Solve_request.to_yojson request |> Yojson.Safe.to_string
       in
       let request_str =
-        Printf.sprintf "%d\n%s" (String.length request_str) request_str
+        Printf.sprintf "%s\n%d\n%s" request_uid
+          (String.length request_str)
+          request_str
       in
       let process =
-        Worker_process.write worker request_str >>= fun () ->
-        Worker_process.read_line worker >>= fun time ->
-        Worker_process.read_line worker >>= fun len ->
+        Solver_process.write worker request_str >>= fun () ->
+        Solver_process.read_line worker >>= fun time ->
+        Solver_process.read_line worker >>= fun uid ->
+        Solver_process.read_line worker >>= fun len ->
         match Astring.String.to_int len with
         | None -> Fmt.failwith "Bad frame from worker: time=%S len=%S" time len
+        | Some _ when not (String.equal request_uid uid) ->
+            Fmt.failwith
+              "BUG: reliability issue, taking the wrong result from \
+               solver_process, the request_uid is different to uid from \
+               solver_process: %s != %s"
+              request_uid uid
         | Some len -> (
-            Worker_process.read_into worker len >|= fun results ->
+            Solver_process.read_into worker len >|= fun results ->
             match results.[0] with
             | '+' ->
                 Log.info log "%s: found solution in %s s" id time;
@@ -126,7 +140,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
         (* Release the worker before cancelling the promise of the request, in order to prevent the
          * workers's pool choosing the worker for another processing.*)
         if Lwt.state process = Lwt.Sleep then (
-          Worker_process.release worker;
+          Solver_process.release worker;
           Lwt.cancel process;
           dispose worker)
         else Lwt.return_unit )
@@ -150,6 +164,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
       else true
 
     let handle ~switch ~log request t =
+      let request_uid = get_uid () in
       let {
         Worker.Solve_request.opam_repository_commits;
         platforms;
@@ -189,7 +204,8 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                else compatible_root_pkgs
              in
              let slice = { request with platforms = [ p ]; root_pkgs } in
-             Lwt_pool.use t (process ~switch ~log ~id slice) >>= function
+             Lwt_pool.use t (process ~switch ~log ~id ~request_uid slice)
+             >>= function
              | Error _ as e -> Lwt.return (id, e)
              | Ok packages ->
                  let repo_packages =
@@ -264,8 +280,8 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                | Ok request ->
                    Lwt.catch
                      (fun () ->
-                       handle t ~switch:(Lwt_switch.create ()) ~log request
-                       >|= Result.ok)
+                       Lwt_switch.with_switch @@ fun switch ->
+                       handle t ~switch ~log request >|= Result.ok)
                      (function
                        | Failure msg -> Lwt_result.fail (`Msg msg)
                        | ex -> Lwt.return (Fmt.error_msg "%a" Fmt.exn ex))

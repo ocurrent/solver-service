@@ -1,4 +1,4 @@
-module Worker_process : sig
+module Solver_process : sig
   type state =
     | Available
     | Released
@@ -11,6 +11,7 @@ module Worker_process : sig
   val pid : t -> int
   val state : t -> state
   val read_line : t -> String.t Lwt.t
+  val write_line : t -> string -> unit Lwt.t
   val write : t -> string -> unit Lwt.t
   val read_into : t -> int -> string Lwt.t
   val release : t -> unit

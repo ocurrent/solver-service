@@ -5,7 +5,7 @@ module Make (_ : Opam_repository_intf.S) : sig
 
     val create :
       n_workers:int ->
-      create_worker:(Remote_commit.t list -> Internal_worker.Worker_process.t) ->
+      create_worker:(Remote_commit.t list -> Internal_worker.Solver_process.t) ->
       Remote_commit.t list ->
       t Lwt.t
 
@@ -13,8 +13,9 @@ module Make (_ : Opam_repository_intf.S) : sig
       switch:Lwt_switch.t ->
       log:Solver_service_api.Solver.Log.X.t Capnp_rpc_lwt.Capability.t ->
       id:string ->
+      request_uid:string ->
       Solver_service_api.Worker.Solve_request.t ->
-      Internal_worker.Worker_process.t ->
+      Internal_worker.Solver_process.t ->
       (string list, string) result Lwt.t
     (** [process ~log ~id request process] will write the [request] to the stdin
         of [procress] and read [stdout] returning the packages. Information is
@@ -32,7 +33,7 @@ module Make (_ : Opam_repository_intf.S) : sig
 
   val v :
     n_workers:int ->
-    create_worker:(Remote_commit.t list -> Internal_worker.Worker_process.t) ->
+    create_worker:(Remote_commit.t list -> Internal_worker.Solver_process.t) ->
     Solver_service_api.Solver.t Lwt.t
   (** [v ~n_workers ~create_worker] is a solver service that distributes work to
       up to [n_workers] subprocesses, using [create_worker hash] to spawn new

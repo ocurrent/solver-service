@@ -1,6 +1,6 @@
 open Lwt.Infix
 
-module Worker_process = struct
+module Solver_process = struct
   type state =
     | Available
     | Released
@@ -28,6 +28,7 @@ module Worker_process = struct
     status
 
   let read_line t = Lwt_io.read_line t.process#stdout
+  let write_line t msg = Lwt_io.write_line t.process#stdin msg
   let write t msg = Lwt_io.write t.process#stdin msg
 
   let read_into t len =

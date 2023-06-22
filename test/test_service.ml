@@ -1,4 +1,5 @@
 open Lwt.Syntax
+module Solver_process = Solver_service.Internal_worker.Solver_process
 
 let job_log job =
   let module L = Solver_service_api.Raw.Service.Log in
@@ -14,12 +15,13 @@ let job_log job =
          Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
      end
 
-let const_response ~response : Lwt_process.process =
+let const_response ~response uid : Lwt_process.process =
   object
     val std_out =
+      let uid = uid in
       let time = 1000 in
       let length = String.length response in
-      let output = Fmt.str "%i\n%d\n%s" time length response in
+      let output = Fmt.str "%i\n%s\n%d\n%s" time uid length response in
       Lwt_io.of_bytes ~mode:Input (Lwt_bytes.of_string output)
 
     method pid = 10
@@ -35,8 +37,21 @@ let const_response ~response : Lwt_process.process =
 
 let create_proc ~response =
   {
-    Solver_service.Internal_worker.Worker_process.process =
-      const_response ~response;
+    Solver_process.process = const_response ~response "uniq-uid";
+    state = Available;
+  }
+
+let create_proc_e2e ~response =
+  {
+    Solver_process.process =
+      const_response ~response "b009ff5e-a6a5-4ad2-b6d7-5a286b025a1d";
+    state = Available;
+  }
+
+let create_proc_e2e_lower_bound ~response =
+  {
+    Solver_process.process =
+      const_response ~response "8bf149f4-77c2-4d92-b925-7a8a45b9919a";
     state = Available;
   }
 
@@ -61,7 +76,8 @@ let test_good_packages _sw () =
   in
   let+ process =
     let switch = Lwt_switch.create () in
-    Service.Epoch.process ~switch ~log:(job_log log) ~id:"unique-id" req proc
+    Service.Epoch.process ~switch ~log:(job_log log) ~id:"unique-id"
+      ~request_uid:"uniq-uid" req proc
   in
   Alcotest.(check (result (list string) string))
     "Same packages"
@@ -88,7 +104,8 @@ let test_error _sw () =
   in
   let+ process =
     let switch = Lwt_switch.create () in
-    Service.Epoch.process ~switch ~log:(job_log log) ~id:"unique-id" req proc
+    Service.Epoch.process ~switch ~log:(job_log log) ~id:"unique-id"
+      ~request_uid:"uniq-uid" req proc
   in
   Alcotest.(check (result (list string) string))
     "Same packages" (Error msg) process
@@ -105,7 +122,10 @@ let test_e2e _sw () =
   let* vars =
     Utils.get_vars ~ocaml_package_name:"ocaml" ~ocaml_version:"4.13.1" ()
   in
-  let create_worker _hash = create_proc ~response:"+lwt.5.5.0 yaml.3.0.0" in
+  let create_worker _hash = create_proc_e2e ~response:"+lwt.5.5.0 yaml.3.0.0" in
+  let create_worker_lower_bound _hash =
+    create_proc_e2e_lower_bound ~response:"+lwt.5.5.0 yaml.3.0.0"
+  in
   let log = Buffer.create 100 in
   let req =
     Solver_service_api.Worker.Solve_request.
@@ -118,12 +138,16 @@ let test_e2e _sw () =
       }
   in
   let* service = Service.v ~n_workers:1 ~create_worker in
+  let* service_lower_bound =
+    Service.v ~n_workers:1 ~create_worker:create_worker_lower_bound
+  in
   let* response =
     Solver_service_api.Solver.solve ~log:(job_log log) service req
   in
   let req_lower_bound = { req with lower_bound = true } in
   let+ response_lower_bound =
-    Solver_service_api.Solver.solve ~log:(job_log log) service req_lower_bound
+    Solver_service_api.Solver.solve ~log:(job_log log) service_lower_bound
+      req_lower_bound
   in
   Alcotest.(check solver_response)
     "Same solve response"

@@ -13,6 +13,7 @@
   ocaml-version
   dune-build-info
   str
+  uuidm
   fmt.cli
   fmt.tty)
  (modules

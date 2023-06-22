@@ -52,41 +52,48 @@ let main commits =
   let rec aux () =
     match input_line stdin with
     | exception End_of_file -> ()
-    | len ->
-        let len = int_of_string len in
-        let data = really_input_string stdin len in
-        let request =
-          Worker.Solve_request.of_yojson (Yojson.Safe.from_string data)
-          |> Result.get_ok
-        in
-        let {
-          Worker.Solve_request.opam_repository_commits;
-          root_pkgs;
-          pinned_pkgs;
-          platforms;
-          lower_bound;
-        } =
-          request
-        in
-        assert (
-          List.for_all
-            (fun (repo, hash) -> List.mem (Remote_commit.v ~repo ~hash) commits)
-            opam_repository_commits);
-        let root_pkgs = List.map parse_opam root_pkgs in
-        let pinned_pkgs = List.map parse_opam pinned_pkgs in
-        let pins = root_pkgs @ pinned_pkgs |> OpamPackage.Name.Map.of_list in
-        let root_pkgs = List.map fst root_pkgs in
-        platforms
-        |> List.iter (fun (_id, platform) ->
-               let msg =
-                 match
-                   solve ~packages ~pins ~root_pkgs ~lower_bound platform
-                 with
-                 | Ok packages -> "+" ^ String.concat " " packages
-                 | Error msg -> "-" ^ msg
-               in
-               Printf.printf "%d\n%s%!" (String.length msg) msg);
-        aux ()
+    | request_uid -> (
+        match input_line stdin with
+        | exception End_of_file -> ()
+        | len ->
+            let len = int_of_string len in
+            let data = really_input_string stdin len in
+            let request =
+              Worker.Solve_request.of_yojson (Yojson.Safe.from_string data)
+              |> Result.get_ok
+            in
+            let {
+              Worker.Solve_request.opam_repository_commits;
+              root_pkgs;
+              pinned_pkgs;
+              platforms;
+              lower_bound;
+            } =
+              request
+            in
+            assert (
+              List.for_all
+                (fun (repo, hash) ->
+                  List.mem (Remote_commit.v ~repo ~hash) commits)
+                opam_repository_commits);
+            let root_pkgs = List.map parse_opam root_pkgs in
+            let pinned_pkgs = List.map parse_opam pinned_pkgs in
+            let pins =
+              root_pkgs @ pinned_pkgs |> OpamPackage.Name.Map.of_list
+            in
+            let root_pkgs = List.map fst root_pkgs in
+            platforms
+            |> List.iter (fun (_id, platform) ->
+                   let msg =
+                     match
+                       solve ~packages ~pins ~root_pkgs ~lower_bound platform
+                     with
+                     | Ok packages -> "+" ^ String.concat " " packages
+                     | Error msg -> "-" ^ msg
+                   in
+                   Printf.printf "%s\n%d\n%s%!" request_uid (String.length msg)
+                     msg);
+            aux ())
   in
   aux ()
 
