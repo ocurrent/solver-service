@@ -4,6 +4,7 @@ module Worker = Solver_service_api.Worker
 module Log = Solver_service_api.Solver.Log
 module Selection = Worker.Selection
 module Store = Git_unix.Store
+module Worker_process = Internal_worker.Worker_process
 
 let oldest_commit = Lwt_pool.create 180 @@ fun _ -> Lwt.return_unit
 (* we are using at most 360 pipes at the same time and that's enough to keep the current
@@ -16,7 +17,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
 
     val create :
       n_workers:int ->
-      create_worker:(Remote_commit.t list -> Lwt_process.process) ->
+      create_worker:(Remote_commit.t list -> Worker_process.t) ->
       Remote_commit.t list ->
       t Lwt.t
 
@@ -25,7 +26,7 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
       log:Log.X.t Capability.t ->
       id:string ->
       Worker.Solve_request.t ->
-      Lwt_process.process ->
+      Worker_process.t ->
       (string list, string) result Lwt.t
 
     val handle :
@@ -37,22 +38,27 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
 
     val dispose : t -> unit Lwt.t
   end = struct
-    type t = Lwt_process.process Lwt_pool.t
+    type t = Worker_process.t Lwt_pool.t
 
-    let validate (worker : Lwt_process.process) =
-      match Lwt.state worker#status with
-      | Lwt.Sleep -> Lwt.return true
-      | Lwt.Fail ex -> Lwt.fail ex
-      | Lwt.Return status ->
-          Format.eprintf "Worker %d is dead (%a) - removing from pool@."
-            worker#pid Process.pp_status status;
+    let validate (worker : Worker_process.t) =
+      match Worker_process.state worker with
+      | Available -> Lwt.return true
+      | Released ->
+          Format.eprintf
+            "Worker %d is released - closing and removing from pool@."
+            (Worker_process.pid worker);
           Lwt.return false
+      | Closed status ->
+          Format.eprintf "Worker %d is closed (%a) - removing from pool@."
+            (Worker_process.pid worker)
+            Process.pp_status status;
+          Lwt.return false
+      | Failed ex -> Lwt.fail ex
 
-    let dispose (worker : Lwt_process.process) =
-      let pid = worker#pid in
+    let dispose (worker : Worker_process.t) =
+      let pid = Worker_process.pid worker in
       Fmt.epr "Terminating worker %d@." pid;
-      worker#terminate;
-      worker#close >|= function
+      Worker_process.close worker >|= function
       | Unix.WEXITED code ->
           Fmt.epr "Worker %d finished. Exited with code %d@." pid code
       | Unix.WSIGNALED code ->
@@ -92,15 +98,13 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
         Printf.sprintf "%d\n%s" (String.length request_str) request_str
       in
       let process =
-        Lwt_io.write worker#stdin request_str >>= fun () ->
-        Lwt_io.read_line worker#stdout >>= fun time ->
-        Lwt_io.read_line worker#stdout >>= fun len ->
+        Worker_process.write worker request_str >>= fun () ->
+        Worker_process.read_line worker >>= fun time ->
+        Worker_process.read_line worker >>= fun len ->
         match Astring.String.to_int len with
         | None -> Fmt.failwith "Bad frame from worker: time=%S len=%S" time len
         | Some len -> (
-            let buf = Bytes.create len in
-            Lwt_io.read_into_exactly worker#stdout buf 0 len >|= fun () ->
-            let results = Bytes.unsafe_to_string buf in
+            Worker_process.read_into worker len >|= fun results ->
             match results.[0] with
             | '+' ->
                 Log.info log "%s: found solution in %s s" id time;
@@ -118,13 +122,15 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
                 Fmt.failwith "BUG: solver worker failed: %s" msg
             | _ -> Fmt.failwith "BUG: bad output: %s" results)
       in
-      ( Lwt_switch.add_hook (Some switch) @@ fun () ->
-        (*We kill the process when there's no response from the worker*)
+      ( Lwt_switch.add_hook_or_exec (Some switch) @@ fun () ->
+        (* Release the worker before cancelling the promise of the request, in order to prevent the
+         * workers's pool choosing the worker for another processing.*)
         if Lwt.state process = Lwt.Sleep then (
+          Worker_process.release worker;
           Lwt.cancel process;
           dispose worker)
-        else Lwt.return_unit );
-      process
+        else Lwt.return_unit )
+      >>= fun () -> process
 
     let dispose = Lwt_pool.clear
     let ocaml = OpamPackage.Name.of_string "ocaml"

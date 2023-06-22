@@ -1,6 +1,7 @@
 open Solver_service
 open Lwt.Syntax
 module Service = Service.Make (Opam_repository)
+module Worker_process = Internal_worker.Worker_process
 
 let pp_timestamp f x =
   let open Unix in
@@ -70,7 +71,7 @@ let start_server address ~n_workers =
     let cmd =
       ("", [| Sys.argv.(0); "--worker"; Remote_commit.list_to_string commits |])
     in
-    Lwt_process.open_process cmd
+    Worker_process.create cmd
   in
   let* service = Service.v ~n_workers ~create_worker in
   let restore = Capnp_rpc_net.Restorer.single service_id service in
@@ -103,7 +104,7 @@ let main () hash address sockpath n_workers =
                  Sys.argv.(0); "--worker"; Remote_commit.list_to_string commits;
                |] )
            in
-           Lwt_process.open_process cmd
+           Worker_process.create cmd
          in
          let* service = Service.v ~n_workers ~create_worker in
          export service ~on:socket)

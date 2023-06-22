@@ -5,3 +5,4 @@ module Process = Process
 module Service = Service
 module Solver = Solver
 module Remote_commit = Remote_commit
+module Internal_worker = Internal_worker
