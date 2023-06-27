@@ -78,9 +78,11 @@ let run_client ~package ~version ~ocaml_version ~opam_commit service =
   Capnp_rpc_lwt.Capability.with_ref (job_log stderr) @@ fun log ->
   let+ response = Solver_service_api.Solver.solve service ~log request in
   match response with
-  | Ok selection ->
-      let packages = (List.hd @@ selection).packages in
-      Fmt.pr "opam install %a" Fmt.(list ~sep:(Fmt.any " ") string) packages
+  | Ok selections ->
+    selections |> List.iter (fun selection ->
+        let packages = selection.Solver_service_api.Worker.Selection.packages in
+        Fmt.pr "opam install %a" Fmt.(list ~sep:(Fmt.any " ") string) packages
+      )
   | Error (`Msg m) ->
       Fmt.failwith "Solver service failed with: %s" m
   | Error `Cancelled -> Fmt.failwith "Job Cancelled"
