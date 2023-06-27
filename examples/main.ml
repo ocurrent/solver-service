@@ -108,7 +108,7 @@ let ocaml_version =
 
 let opam_commit =
   Arg.value
-  @@ Arg.(opt string "61c80509aec809b94b4ff7a505235f1ba605c756")
+  @@ Arg.(opt string "68755fe0f8ed7cc42b6403f77d0f7c01b4a6133b")
   @@ Arg.info [ "commit" ] ~docv:"COMMIT"
        ~doc:"The commit SHA to use for opam-repository"
 
