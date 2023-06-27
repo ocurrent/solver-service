@@ -1,7 +1,7 @@
 (* This example assumes the solver service to be running *)
 open Lwt.Syntax
 
-let job_log job =
+let job_log ch =
   let module L = Solver_service_api.Raw.Service.Log in
   L.local
   @@ object
@@ -11,7 +11,8 @@ let job_log job =
          let open L.Write in
          release_param_caps ();
          let msg = Params.msg_get params in
-         Buffer.add_string job msg;
+         output_string ch msg;
+         flush ch;
          Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
      end
 
@@ -74,15 +75,13 @@ let run_client ~package ~version ~ocaml_version ~opam_commit service =
         lower_bound = false;
       }
   in
-  let job = Buffer.create 100 in
-  Capnp_rpc_lwt.Capability.with_ref (job_log job) @@ fun log ->
+  Capnp_rpc_lwt.Capability.with_ref (job_log stderr) @@ fun log ->
   let+ response = Solver_service_api.Solver.solve service ~log request in
   match response with
   | Ok selection ->
       let packages = (List.hd @@ selection).packages in
       Fmt.pr "opam install %a" Fmt.(list ~sep:(Fmt.any " ") string) packages
   | Error (`Msg m) ->
-      print_endline (Buffer.contents job);
       Fmt.failwith "Solver service failed with: %s" m
   | Error `Cancelled -> Fmt.failwith "Job Cancelled"
 
