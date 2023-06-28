@@ -11,9 +11,11 @@ depends: [
   "dune" {>= "3.7"}
   "ocaml" {>= "4.14.1"}
   "alcotest-lwt" {>= "1.7.0" & with-test}
-  "current_web" {with-test}
-  "current_github" {with-test}
-  "current_ocluster" {with-test}
+  "current_web" {>= "0.6.4" & with-test}
+  "current_git" {>= "0.6.4" & with-test}
+  "current_github" {>= "0.6.4" & with-test}
+  "current_ocluster" {>= "0.2.1" & with-test}
+  "ocluster-api" {>= "0.2.1" & with-test}
   "ppx_deriving_yojson" {>= "3.6.1"}
   "ppx_deriving" {>= "5.1"}
   "yojson" {>= "2.1.0"}
