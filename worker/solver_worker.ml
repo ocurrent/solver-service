@@ -1,102 +1,177 @@
-(* Workers that can also solve opam jobs *)
+(* This could is largely borrowed from the OCluster worker. Along
+   with some parts of the solver-worker library. See the LICENSE file for the
+   full license. *)
 
-open Lwt.Syntax
-module Log_data = Log_data
-module Context = Context
-module Log = Log
-module Process = Process
+open Lwt.Infix
+open Capnp_rpc_lwt
 
-module Solver_request = struct
-  module Worker = Solver_service_api.Worker
-  module Log = Solver_service_api.Solver.Log
-  module Service = Solver_service.Service.Make (Solver_service.Opam_repository)
-  module Worker_process = Solver_service.Internal_worker.Worker_process
+let min_reconnect_time = 10.0
+(* Don't try to connect more than once per 10 seconds *)
 
-  type t =
-    ( Service.Epoch.t,
-      Solver_service.Remote_commit.t list )
-    Solver_service.Epoch_lock.t
+module Metrics = struct
+  open Prometheus
 
-  let create ~n_workers () =
-    let create_worker commits =
-      let cmd =
-        ( "",
-          [|
-            "solver-service";
-            "--worker";
-            Solver_service.Remote_commit.list_to_string commits;
-          |] )
-      in
-      Worker_process.create cmd
-    in
-    let create commits =
-      Service.Epoch.create ~n_workers ~create_worker commits
-    in
-    Solver_service.Epoch_lock.v ~create ~dispose:Service.Epoch.dispose ()
+  let namespace = "ocluster"
+  let subsystem = "worker"
 
-  let solve t ~switch ~log ~request =
-    Lwt.catch
-      (fun () ->
-        let+ request = Service.handle ~switch t ~log request in
-        Result.ok request)
-      (function
-        | Failure msg -> Lwt_result.fail (`Msg msg)
-        | Lwt.Canceled -> Lwt_result.fail `Cancelled
-        | ex -> Lwt.return (Fmt.error_msg "%a" Fmt.exn ex))
+  let jobs_accepted =
+    let help = "Number of jobs accepted in total" in
+    Counter.v ~help ~namespace ~subsystem "jobs_accepted_total"
+
+  let job_time =
+    let help = "Time jobs ran for" in
+    Summary.v_label ~label_name:"result" ~help ~namespace ~subsystem
+      "job_time_seconds"
+
+  let running_jobs =
+    let help = "Number of jobs currently running" in
+    Gauge.v ~help ~namespace ~subsystem "running_jobs"
 end
 
-let solve_to_custom req =
-  let open Cluster_api.Raw in
-  let params =
-    Yojson.Safe.to_string
-    @@ Solver_service_api.Worker.Solve_request.to_yojson req
-  in
-  let custom = Builder.Custom.init_root () in
-  let builder = Builder.Custom.payload_get custom in
-  let request =
-    Solver_service_api.Raw.Builder.Solver.Solve.Params.init_pointer builder
-  in
-  Solver_service_api.Raw.Builder.Solver.Solve.Params.request_set request params;
-  let r = Reader.Custom.of_builder custom in
-  Reader.Custom.payload_get r
+type t = {
+  solver : Solver_service.Solver.t;
+  name : string;
+  registration_service : Cluster_api.Raw.Client.Registration.t Sturdy_ref.t;
+  capacity : int;
+  mutable in_use : int; (* Number of active builds *)
+  cond : unit Lwt_condition.t;
+  (* Fires when a build finishes (or switch turned off) *)
+}
 
-let solve_of_custom c =
-  let open Solver_service_api.Raw in
-  let payload = Cluster_api.Custom.payload c in
-  let r = Reader.of_pointer payload in
-  let request = Reader.Solver.Solve.Params.request_get r in
-  Solver_service_api.Worker.Solve_request.of_yojson
-  @@ Yojson.Safe.from_string request
+let metrics = function
+  | `Agent ->
+    let open Lwt.Infix in
+    let content_type = "text/plain; version=0.0.4; charset=utf-8" in
+    Prometheus.CollectorRegistry.(collect default) >>= fun data ->
+    Lwt_result.return
+      ( content_type,
+        Fmt.to_to_string Prometheus_app.TextFormat_0_0_4.output data )
+  | `Host ->
+    failwith "No host metrics from solver service"
 
-let cluster_worker_log log =
-  let module L = Solver_service_api.Raw.Service.Log in
-  L.local
-  @@ object
-       inherit L.service
+let build ~log t descr =
+  let module R = Cluster_api.Raw.Reader.JobDescr in
+  (match Cluster_api.Submission.get_action descr with
+   | Custom_build c ->
+     Log.info (fun f ->
+         f "Got request to build a job of kind \"%s\""
+           (Cluster_api.Custom.kind c));
+     Lwt_eio.run_eio @@ fun () ->
+     Ok (Custom.solve ~solver:t.solver ~log c)
+   | _ -> Lwt.fail (invalid_arg "Only custom builds are supported"))
+  >|= function
+  | Error `Cancelled ->
+    Log_data.write log "Job cancelled\n";
+    Log.info (fun f -> f "Job cancelled");
+    (Error (`Msg "Build cancelled"), "cancelled")
+  | Ok output ->
+    Log_data.write log "Job succeeded\n";
+    Log.info (fun f -> f "Job succeeded");
+    (Ok output, "ok")
+  | Error (`Msg msg) ->
+    Log.info (fun f -> f "Job failed: %s" msg);
+    (Error (`Msg msg), "build failed")
 
-       method write_impl params release_param_caps =
-         let open L.Write in
-         release_param_caps ();
-         let msg = Params.msg_get params in
-         Log_data.write log msg;
-         Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
-     end
-
-let solve ~solver ~switch ~log c =
-  match solve_of_custom c with
-  | Error m -> failwith m
-  | Ok request -> (
-      let log = cluster_worker_log log in
-      let+ selections =
-        Capnp_rpc_lwt.Capability.with_ref log @@ fun log ->
-        Solver_request.solve solver ~switch ~log ~request
+let loop t queue =
+  let rec loop () =
+    if t.in_use >= t.capacity then (
+      Log.info (fun f ->
+          f "At capacity. Waiting for a build to finish before requesting \
+             more...");
+      Lwt_condition.wait t.cond >>= loop)
+    else
+      let outcome, set_outcome = Lwt.wait () in
+      let log = Log_data.create () in
+      Log.info (fun f -> f "Requesting a new job...");
+      let switch = Lwt_switch.create () in
+      let pop =
+        Capability.with_ref
+          (Cluster_api.Job.local ~switch ~outcome
+             ~stream_log_data:(Log_data.stream log))
+        @@ fun job -> Cluster_api.Queue.pop queue job
       in
-      match selections with
-      | Ok _ ->
-          let response =
-            Yojson.Safe.to_string
-            @@ Solver_service_api.Worker.Solve_response.to_yojson selections
-          in
-          Solver_service_api.Solver.Log.info log "%s" response;
-          Ok response
-      | Error _ as error -> error)
+      pop >>= fun request ->
+      t.in_use <- t.in_use + 1;
+      Prometheus.Gauge.set Metrics.running_jobs (float_of_int t.in_use);
+      Prometheus.Counter.inc_one Metrics.jobs_accepted;
+      Lwt.async (fun () ->
+          Lwt.finalize
+            (fun () ->
+               let t0 = Unix.gettimeofday () in
+               Lwt.try_bind
+                 (fun () ->
+                    Log_data.info log "Building on %s" t.name;
+                    build ~log t request)
+                 (fun (outcome, metric_label) ->
+                    let t1 = Unix.gettimeofday () in
+                    Prometheus.Summary.observe
+                      (Metrics.job_time metric_label)
+                      (t1 -. t0);
+                    Log_data.close log;
+                    Lwt.wakeup set_outcome outcome;
+                    Lwt.return_unit)
+                 (fun ex ->
+                    let t1 = Unix.gettimeofday () in
+                    Prometheus.Summary.observe (Metrics.job_time "error")
+                      (t1 -. t0);
+                    Log.warn (fun f -> f "Build failed: %a" Fmt.exn ex);
+                    Log_data.write log
+                      (Fmt.str "Uncaught exception: %a@." Fmt.exn ex);
+                    Log_data.close log;
+                    Lwt.wakeup_exn set_outcome ex;
+                    Lwt.return_unit))
+            (fun () ->
+               t.in_use <- t.in_use - 1;
+               Prometheus.Gauge.set Metrics.running_jobs
+                 (float_of_int t.in_use);
+               Lwt_switch.turn_off switch >>= fun () ->
+               Lwt_condition.broadcast t.cond ();
+               Lwt.return_unit));
+      loop ()
+  in
+  loop ()
+
+let self_update () = failwith "TODO: Self-update"
+
+let run ~name ~capacity solver registration_service =
+  Lwt_eio.run_lwt @@ fun () ->
+  let t = {
+    solver;
+    name;
+    registration_service;
+    cond = Lwt_condition.create ();
+    capacity;
+    in_use = 0;
+  } in
+  let rec reconnect () =
+    let connect_time = Unix.gettimeofday () in
+    Lwt.catch
+      (fun () ->
+         Sturdy_ref.connect_exn t.registration_service >>= fun reg ->
+         Capability.with_ref reg @@ fun reg ->
+         let queue =
+           let api = Cluster_api.Worker.local ~metrics ~self_update () in
+           let queue = Cluster_api.Registration.register reg ~name ~capacity api in
+           Capability.dec_ref api;
+           queue
+         in
+         Capability.with_ref queue @@ fun queue ->
+         Lwt.catch
+           (fun () -> loop t queue)
+           (fun ex ->
+              Lwt.pause () >>= fun () ->
+              match Capability.problem queue with
+              | Some problem ->
+                Log.info (fun f -> f "Worker loop failed (probably because queue connection failed): %a" Fmt.exn ex);
+                Lwt.fail (Failure (Fmt.to_to_string Capnp_rpc.Exception.pp problem))    (* Will retry *)
+              | None ->
+                raise ex
+           )
+      )
+      (fun ex ->
+         let delay = max 0.0 (connect_time +. min_reconnect_time -. Unix.gettimeofday ()) in
+         Log.info (fun f -> f "Lost connection to scheduler (%a). Will retry in %.1fs…" Fmt.exn ex delay);
+         Lwt_unix.sleep delay >>= reconnect
+      )
+  in
+  reconnect ()

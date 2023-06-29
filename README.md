@@ -1,56 +1,82 @@
 # Solver Service
 
-*Status: WIP & Experimental*
-
 A standalone, OCurrent service for solving opam dependencies extracted and modified from [OCaml-CI](https://github.com/ocurrent/ocaml-ci). This repostory contains:
 
  - `src/solver-service-api`: The Capnp solver service API, the defines the format for sending requests and receiving responses from a service.
- - `src/solver-service`: The core functionality of completing a solver request using `opam-0install` is contained here. There are binaries for running a `solver-service` which can communicate over `stdin/stdout` or over the network.
+ - `src/solver-service`: The core functionality of completing a solver request using `opam-0install` is contained here. There are binaries for running a `solver-service` which can communicate over `stdin` or over the network.
  - `src/solver-worker`: An OCluster worker that can solve requests being submitted to OCluster as a custom job specification.
 
 ## Example
 
 ### A solver service
 
-The `./examples` directory contains a small CLI tool for testing the solver service over a TCP connection. It requires a package name and version to solve for (note it will use `opam` to fetch the opam file information). To test it, you first must install and run the solver service. It spawns workers by recursively calling itself (using `Sys.argv.(0)`) so it is important to run it using its proper name rather than with `dune exec --`.
+The `./examples` directory contains a small CLI tool for testing the solver service over a TCP connection. It requires a package name and version to solve for (note it will use `opam` to fetch the opam file information). To test it, you first must install and run the solver service.
 
 ```sh
-$ solver-service --address=tcp:127.0.0.1:7000
-Solver service running at: <capnp-address>
+$ mkdir capnp-secrets
+$ dune exec -- solver-service run-service \
+    --cache-dir=./cache \
+    --capnp-secret-key-file=server.pem \
+    --capnp-listen-address=tcp:127.0.0.1:7000 \
+    --cap-file=./capnp-secrets/solver.cap
+Wrote solver service's address to "./capnp-secrets/solver.cap"
 ```
 
-Copy the `<capnp-address>` and run the example binary passing in the address.
+Then run the example client to test it:
 
 ```sh
-$ dune exec -- ./examples/main.exe --package=yaml --version=3.0.0 <capnp-address>
+$ dune exec -- ./examples/main.exe --package=yaml --version=3.0.0 ./capnp-secrets/solver.cap
 ```
 
-### A solver worker
+For a more thorough test, you can use the stress tester:
+
+```sh
+$ dune exec -- ./stress/stress.exe service ./capnp-secrets/solver.cap --count=10
+Solved warm-up requests in: 9.85s
+Running another 10 solves...
+10/10 complete
+Solved 10 requests in 4.79s (0.48s/iter)
+```
+
+### An OCluster worker
 
 The solver worker can join an existing pool on a scheduler and solve request jobs sent as a custom job type. The example [`submit.ml`](examples/submit.ml) will send such a job to a scheduler (you need to supply the submission cap file).
 
 To try this example locally, first get the scheduler up and running.
 
 ```
-$ mkdir capnp-secrets
-$ ocluster-scheduler --capnp-secret-key-file=capnp-secrets/key.cap --capnp-listen-address=tcp:127.0.0.1:9000 --pools=solver --state-dir=var --default-clients=demo --verbosity=info
+$ ocluster-scheduler --capnp-secret-key-file=capnp-secrets/scheduler-key.cap --capnp-listen-address=tcp:127.0.0.1:9000 --pools=solver --state-dir=var --default-clients=demo
 ```
 
 This will write a `submit-demo.cap` file into `capnp-secrets`.
 
 Now, we need to connect our solver worker to the pool. In a new terminal connect the worker using the pool registration cap file.
 
-```
-$ dune exec -- solver-worker --connect=capnp-secrets/pool-solver.cap --name=solver-1 --state-dir=var --verbosity=info
+```sh
+$ dune exec -- solver-service run-cluster \
+    --connect=capnp-secrets/pool-solver.cap \
+    --name=solver-1 \
+    --cache-dir=./cache \
+    --verbosity=info
 ```
 
 With this running we can use the example submission pipeline to solve the dependencies for the [obuilder](https://github.com/ocurrent/obuilder) repository on Github.
 
-```
+You should then be able to watch the pipeline in action at `http://localhost:8080`.
+
+```sh
 $ dune exec -- examples/submit.exe --submission-service=capnp-secrets/submit-demo.cap -v
 ```
 
-You should then be able to watch the pipeline in action at `http://localhost:8080`.
+You can also run the stress tests against the cluster:
+
+```sh
+$ dune exec -- ./stress/stress.exe cluster ./capnp-secrets/submit-demo.cap --count=10
+Solved warm-up requests in: 10.01s
+Running another 10 solves...
+10/10 complete
+Solved 10 requests in 5.19s (0.52s/iter)
+```
 
 ### A solver worker by docker-compose
 
@@ -58,13 +84,6 @@ Start a solver-worker connected to a scheduler.
 
 ```
 $ docker-compose -f docker-compose.yml up
-```
-
-To reach the scheduler, we need to add its hostname in `/etc/hosts` file.
-```
-$ cat /etc/hosts
-127.0.0.1   localhost
-127.0.0.1   scheduler
 ```
 
 Get the `Mountpoint` by inspecting the capnp-secrets volume.
@@ -94,5 +113,21 @@ $ mkdir capnp-secrets
 $ sudo cat /var/lib/docker/volumes/solver-service_capnp-secrets/_data/submit-demo.cap > ./capnp-secrets/submit-docker.cap
 ```
 
-We can use the `submit-docker.cap` file to submit jobs using `examples/submit.exe` or use
-[ocaml-ci-service](https://github.com/ocurrent/ocaml-ci) by passing the file via `--submission-solver-service`.
+To reach the scheduler,
+you can either edit the `.cap` file to replace `scheduler` with `127.0.0.1`, or
+you can add `scheduler` to your `/etc/hosts` file:
+```
+$ cat /etc/hosts
+127.0.0.1   localhost
+127.0.0.1   scheduler
+```
+
+We can use the `submit-docker.cap` file to submit jobs:
+
+```sh
+$ dune exec -- ./stress/stress.exe cluster ./capnp-secrets/submit-docker.cap --count=10
+Solved warm-up requests in: 9.97s
+Running another 10 solves...
+10/10 complete
+Solved 10 requests in 5.09s (0.51s/iter)
+```

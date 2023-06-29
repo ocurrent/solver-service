@@ -1,99 +1,160 @@
+open Eio.Std
 module Worker = Solver_service_api.Worker
-module Solver = Opam_0install.Solver.Make (Git_context)
-module Store = Git_unix.Store
+module Log = Solver_service_api.Solver.Log
+module Selection = Worker.Selection
 
-let env (vars : Worker.Vars.t) v =
-  Opam_0install.Dir_context.std_env ~arch:vars.arch ~os:vars.os
-    ~os_distribution:vars.os_distribution ~os_version:vars.os_version
-    ~os_family:vars.os_family ~opam_version:vars.opam_version () v
+let (let*!) = Result.bind
+
+type t = {
+  pool : (Domain_worker.request, Domain_worker.reply) Pool.t;
+  stores : Stores.t;
+}
+
+let ocaml = OpamPackage.Name.of_string "ocaml"
+
+(* If a local package has a literal constraint on OCaml's version and it doesn't match
+   the platform, we just remove that package from the set to test, so other packages
+   can still be tested. *)
+let compatible_with ~ocaml_version (dep_name, filter) =
+  let check_ocaml = function
+    | OpamTypes.Constraint (op, OpamTypes.FString v) ->
+        let v = OpamPackage.Version.of_string v in
+        OpamFormula.eval_relop op ocaml_version v
+    | _ -> true
+  in
+  if OpamPackage.Name.equal dep_name ocaml then
+    OpamFormula.eval check_ocaml filter
+  else true
+
+let solve_for_platform t ~log ~opam_repository_commits ~packages ~root_pkgs ~pinned_pkgs ~pins ~vars id =
+  let ocaml_version = OpamPackage.Version.of_string vars.Worker.Vars.ocaml_version in
+  let compatible_root_pkgs =
+    root_pkgs
+    |> List.filter (fun (_name, (_version, opam)) ->
+        let deps = OpamFile.OPAM.depends opam in
+        OpamFormula.eval (compatible_with ~ocaml_version) deps)
+  in
+  (* If some packages are compatible but some aren't, just solve for the compatible ones.
+     Otherwise, try to solve for everything to get a suitable error. *)
+  let root_pkgs =
+    if compatible_root_pkgs = [] then root_pkgs
+    else compatible_root_pkgs
+  in
+  let slice = { Domain_worker.vars; root_pkgs; packages; pinned_pkgs } in
+  match Pool.use t.pool slice with
+  | Error (`Msg m) -> Error (`Msg m)
+  | Ok (results, time) ->
+    match results with
+    | Error e ->
+      Log.info log "%s: eliminated all possibilities in %f s" id time;
+      Error (`No_solution e)
+    | Ok packages ->
+      Log.info log "%s: found solution in %f s" id time;
+      let repo_packages =
+        packages
+        |> List.filter_map (fun (pkg : OpamPackage.t) ->
+            if OpamPackage.Name.Set.mem pkg.name pins then None
+            else Some pkg)
+      in
+      (* Hack: ocaml-ci sometimes also installs odoc, but doesn't tell us about it.
+         Make sure we have at least odoc 2.1.1 available, otherwise it won't work on OCaml 5.0. *)
+      let repo_packages =
+        OpamPackage.of_string "odoc.2.1.1" :: repo_packages
+      in
+      let commits = Stores.oldest_commits_with t.stores repo_packages ~from:opam_repository_commits in
+      let compat_pkgs =
+        let to_string (name, (version,_)) = OpamPackage.to_string (OpamPackage.create name version) in
+        List.map to_string compatible_root_pkgs
+      in
+      let packages = List.map OpamPackage.to_string packages in
+      let lower_bound = vars.lower_bound in
+      Ok { Worker.Selection.id; compat_pkgs; packages; commits; lower_bound }
+
+let pp_exn f = function
+  | Failure msg -> Fmt.string f msg
+  | ex -> Eio.Exn.pp f ex
 
 let parse_opam (name, contents) =
-  let pkg = OpamPackage.of_string name in
-  let opam = OpamFile.OPAM.read_from_string contents in
-  (OpamPackage.name pkg, (OpamPackage.version pkg, opam))
-
-let solve ~packages ~pins ~root_pkgs (vars : Worker.Vars.t) =
-  let ocaml_package = OpamPackage.Name.of_string vars.ocaml_package in
-  let ocaml_version = OpamPackage.Version.of_string vars.ocaml_version in
-  let context =
-    Git_context.create () ~packages ~pins ~env:(env vars)
-      ~constraints:
-        (OpamPackage.Name.Map.singleton ocaml_package (`Eq, ocaml_version))
-      ~test:(OpamPackage.Name.Set.of_list root_pkgs)
-      ~with_beta_remote:
-        Ocaml_version.(Releases.is_dev (of_string_exn vars.ocaml_version))
-      ~lower_bound:vars.lower_bound
-  in
-  let t0 = Unix.gettimeofday () in
-  let r = Solver.solve context (ocaml_package :: root_pkgs) in
-  let t1 = Unix.gettimeofday () in
-  Printf.printf "%.2f\n" (t1 -. t0);
-  match r with
-  | Ok sels ->
-      let pkgs = Solver.packages_of_result sels in
-      Ok (List.map OpamPackage.to_string pkgs)
-  | Error diagnostics -> Error (Solver.diagnostics diagnostics)
-
-let main commits =
-  let open Lwt.Infix in
-  let packages =
-    Lwt_main.run
-      (* Read all the package from all the given opam-repository repos,
-       * and collate them into a single Map. *)
-      (Lwt_list.fold_left_s
-         (fun acc commit ->
-           let repo_url = commit.Remote_commit.repo in
-           let hash = Store.Hash.of_hex commit.Remote_commit.hash in
-           Opam_repository.open_store ~repo_url () >>= fun store ->
-           Git_context.read_packages ~acc store hash >>= fun packages ->
-           Opam_repository.close_store store >>= fun () -> Lwt.return packages)
-         OpamPackage.Name.Map.empty commits)
-  in
-  let rec aux () =
-    match input_line stdin with
-    | exception End_of_file -> ()
-    | len ->
-        let len = int_of_string len in
-        let data = really_input_string stdin len in
-        let request =
-          Worker.Solve_request.of_yojson (Yojson.Safe.from_string data)
-          |> Result.get_ok
-        in
-        let {
-          Worker.Solve_request.opam_repository_commits;
-          root_pkgs;
-          pinned_pkgs;
-          platforms;
-        } =
-          request
-        in
-        assert (
-          List.for_all
-            (fun (repo, hash) -> List.mem (Remote_commit.v ~repo ~hash) commits)
-            opam_repository_commits);
-        let root_pkgs = List.map parse_opam root_pkgs in
-        let pinned_pkgs = List.map parse_opam pinned_pkgs in
-        let pins = root_pkgs @ pinned_pkgs |> OpamPackage.Name.Map.of_list in
-        let root_pkgs = List.map fst root_pkgs in
-        platforms
-        |> List.iter (fun (_id, platform) ->
-               let msg =
-                 match solve ~packages ~pins ~root_pkgs platform with
-                 | Ok packages -> "+" ^ String.concat " " packages
-                 | Error msg -> "-" ^ msg
-               in
-               Printf.printf "%d\n%s%!" (String.length msg) msg);
-        aux ()
-  in
-  aux ()
-
-let main commit =
-  try main commit
+  try
+    let pkg = OpamPackage.of_string name in
+    let opam = OpamFile.OPAM.read_from_string contents in
+    Ok (OpamPackage.name pkg, (OpamPackage.version pkg, opam))
   with ex ->
-    Fmt.epr "solver bug: %a@." Fmt.exn ex;
-    let msg =
-      match ex with Failure msg -> msg | ex -> Printexc.to_string ex
-    in
-    let msg = "!" ^ msg in
-    Printf.printf "0.0\n%d\n%s%!" (String.length msg) msg;
-    raise ex
+    Fmt.error_msg "Error parsing %s: %a" name pp_exn ex
+
+let rec parse_opams = function
+  | [] -> Ok []
+  | x :: xs ->
+    let*! x = parse_opam x in
+    let*! xs = parse_opams xs in
+    Ok (x :: xs)
+
+(* Handle a request by distributing it among the worker processes and then aggregating their responses. *)
+let solve t ~log request =
+  let {
+    Worker.Solve_request.opam_repository_commits;
+    platforms;
+    root_pkgs;
+    pinned_pkgs;
+  } =
+    request
+  in
+  let*! () = Stores.fetch_commits t.stores opam_repository_commits in
+  let root_pkgs = List.map fst root_pkgs in
+  let pinned_pkgs = List.map fst pinned_pkgs in
+  let pins =
+    root_pkgs @ pinned_pkgs
+    |> List.map (fun pkg -> OpamPackage.name (OpamPackage.of_string pkg))
+    |> OpamPackage.Name.Set.of_list
+  in
+  Log.info log "Solving for %a" Fmt.(list ~sep:comma string) root_pkgs;
+  let serious_errors = ref [] in
+  let*! root_pkgs = parse_opams request.root_pkgs in
+  let*! pinned_pkgs = parse_opams request.pinned_pkgs in
+  let*! packages = Stores.packages t.stores opam_repository_commits in
+  let results =
+    platforms
+    |> Fiber.List.map (fun (id, vars) ->
+        let result =
+          solve_for_platform t id
+            ~log
+            ~opam_repository_commits
+            ~packages
+            ~root_pkgs
+            ~pinned_pkgs
+            ~pins
+            ~vars
+        in
+        (id, result)
+      )
+    |> List.filter_map (fun (id, result) ->
+        Log.info log "= %s =" id;
+        match result with
+        | Ok result ->
+          Log.info log "-> @[<hov>%a@]"
+            Fmt.(list ~sep:sp string)
+            result.Selection.packages;
+          Log.info log "(valid since opam-repository commit(s): @[%a@])"
+            Fmt.(list ~sep:semi (pair ~sep:comma string string))
+            result.Selection.commits;
+          Some result
+        | Error (`No_solution msg) ->
+          Log.info log "%s" msg;
+          None
+        | Error (`Msg msg) ->
+          Log.info log "%s" msg;
+          serious_errors := msg :: !serious_errors;
+          None
+      )
+  in
+  match !serious_errors with
+  | [] -> Ok results
+  | errors -> Fmt.error_msg "@[<v>%a@]" Fmt.(list ~sep:cut string) errors
+
+let create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers =
+  let stores = Stores.create ~process_mgr ~cache_dir in
+  let pool = Pool.create ~sw ~domain_mgr ~n_workers Domain_worker.solve in
+  {
+    stores;
+    pool;
+  }

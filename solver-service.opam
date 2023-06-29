@@ -9,25 +9,28 @@ homepage: "https://github.com/ocurrent/solver-service"
 bug-reports: "https://github.com/ocurrent/solver-service/issues"
 depends: [
   "dune" {>= "3.7"}
-  "ocaml" {>= "4.14.1"}
-  "alcotest-lwt" {>= "1.7.0" & with-test}
+  "ocaml" {>= "5.0.0"}
   "current_web" {>= "0.6.4" & with-test}
   "current_git" {>= "0.6.4" & with-test}
   "current_github" {>= "0.6.4" & with-test}
   "current_ocluster" {>= "0.2.1" & with-test}
-  "ocluster-api" {>= "0.2.1" & with-test}
   "ppx_deriving_yojson" {>= "3.6.1"}
   "ppx_deriving" {>= "5.1"}
   "yojson" {>= "2.1.0"}
   "lwt" {>= "5.6.1"}
+  "eio" {>= "0.11"}
+  "eio_main" {>= "0.11"}
+  "lwt_eio" {>= "0.4"}
   "logs" {>= "0.7.0"}
   "fmt" {>= "0.9.0"}
   "ocaml-version" {>= "3.6.1"}
   "solver-service-api" {= version}
   "dune-build-info" {>= "3.8.0"}
-  "conf-libev"
   "opam-0install" {>= "0.4.3"}
   "git-unix" {>= "3.12.0"}
+  "ocluster-api" {>= "0.2.1"}
+  "prometheus-app" {>= "1.2"}
+  "capnp-rpc-net" {>= "1.2.3"}
   "capnp-rpc-unix" {>= "1.2.3"}
   "odoc" {with-doc}
 ]
@@ -49,3 +52,7 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/ocurrent/solver-service.git"
+pin-depends: [
+  ["lwt_eio.0.4" "git+https://github.com/talex5/lwt_eio.git#27688ec6aa551b9e510cd6a13747880d97451dc4"]
+  ["lwt.dev" "git+https://github.com/talex5/lwt.git#52596733b92b12458fcae701d5051d984c26ed5d"]
+]

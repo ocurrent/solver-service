@@ -4,16 +4,16 @@
  (names main submit)
  (package solver-service)
  (libraries
-  current_git
   capnp-rpc-unix
-  solver-service-api
-  solver-service
-  logs.cli
-  logs.fmt
-  fmt.cli
-  opam-0install
-  ocluster-api
+  current_git
   current_github
   current_ocluster
-  fmt.tty)
+  eio_main
+  lwt_eio
+  fmt.cli
+  fmt.tty
+  logs.cli
+  logs.fmt
+  ocluster-api
+  solver-service-api)
  (action (progn)))

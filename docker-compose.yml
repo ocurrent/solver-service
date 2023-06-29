@@ -24,21 +24,20 @@ services:
       dockerfile: Dockerfile
       context: .
     command:
+      - run-cluster
       - --connect=/capnp-secrets/pool-solver.cap
       - --name=solver-1
       - --capacity=10  # The number of builds that can run in parallel
-      - --internal-workers=15 # The number of internal-workers that handle solve per platform
-      - --state-dir=/var/lib/ocluster
+      #- --internal-workers=15 # The number of internal-workers that handle solve per platform
+      - --cache-dir=/var/lib/solver-service
       - --verbose
     init: true
     restart: on-failure         # (wait for the scheduler to write the pool cap)
     volumes:
-      - 'worker-data:/var/lib/ocluster'
+      - 'worker-cache:/var/lib/solver-service'
       - 'capnp-secrets:/capnp-secrets:ro'
-    environment:
-      - DOCKER_BUILDKIT=1
 
 volumes:
-  worker-data:
+  worker-cache:
   scheduler-data:
   capnp-secrets:
