@@ -33,14 +33,10 @@ To try this example locally, first get the scheduler up and running.
 
 ```
 $ mkdir capnp-secrets
-$ ocluster-scheduler --capnp-secret-key-file=capnp-secrets/key.cap --capnp-listen-address=tcp:127.0.0.1:9000 --pools=solver --state-dir=var --verbosity=info
+$ ocluster-scheduler --capnp-secret-key-file=capnp-secrets/key.cap --capnp-listen-address=tcp:127.0.0.1:9000 --pools=solver --state-dir=var --default-clients=demo --verbosity=info
 ```
 
-This will write an `admin.cap` file into `capnp-secrets`. We can use this to add a new client and get a submission capability file.
-
-```
-$ ocluster-admin --connect ./capnp-secrets/admin.cap add-client solver > capnp-secrets/submission.cap
-```
+This will write a `submit-demo.cap` file into `capnp-secrets`.
 
 Now, we need to connect our solver worker to the pool. In a new terminal connect the worker using the pool registration cap file.
 
@@ -51,7 +47,7 @@ $ dune exec -- solver-worker --connect=capnp-secrets/pool-solver.cap --name=solv
 With this running we can use the example submission pipeline to solve the dependencies for the [obuilder](https://github.com/ocurrent/obuilder) repository on Github.
 
 ```
-$ dune exec -- examples/submit.exe --submission-service=capnp-secrets/submission.cap
+$ dune exec -- examples/submit.exe --submission-service=capnp-secrets/submit-demo.cap -v
 ```
 
 You should then be able to watch the pipeline in action at `http://localhost:8080`.
@@ -91,25 +87,12 @@ $ docker volume inspect solver-service_capnp-secrets
 ]
 ```
 
-Be in root to get the `admin.cap` file form `Mountpoint` path. In macOs the command is `sudo su`.
+Be root to get the `submit-docker.cap` file from the `Mountpoint` path:
 
 ```
 $ mkdir capnp-secrets
-$ sudo -i
-
-# cd /var/lib/docker/volumes/solver-service_capnp-secrets/_data
-# cat admin.cap
-capnp://sha-256:rMn7cNJxSE...
-# exit
-
-$ echo "capnp://sha-256:rMn7cNJxSE..." > capnp-secrets/admin.cap
+$ sudo cat /var/lib/docker/volumes/solver-service_capnp-secrets/_data/submit-demo.cap > ./capnp-secrets/submit-docker.cap
 ```
 
-The scheduler and a solver worker is already started, we can now, get the `submission.cap` file. W could only use it for submitting solve builds.
-
-```
-$ ocluster-admin --connect capnp-secrets/admin.cap add-client solver > capnp-secrets/submission.cap
-```
-
-We can use `submission.cap` file to submit jobs using `examples/submit.exe` or use
+We can use the `submit-docker.cap` file to submit jobs using `examples/submit.exe` or use
 [ocaml-ci-service](https://github.com/ocurrent/ocaml-ci) by passing the file via `--submission-solver-service`.
