@@ -13,9 +13,11 @@
   (ocaml (>= 4.14.1))
   (alcotest-lwt (and (>= 1.7.0) :with-test))
   ; Examples dependencies
-  (current_web :with-test)
-  (current_github :with-test)
-  (current_ocluster :with-test)
+  (current_web (and (>= 0.6.4) :with-test))
+  (current_git (and (>= 0.6.4) :with-test))
+  (current_github (and (>= 0.6.4) :with-test))
+  (current_ocluster (and (>= 0.2.1) :with-test))
+  (ocluster-api (and (>= 0.2.1) :with-test))
   (ppx_deriving_yojson (>= 3.6.1))
   (ppx_deriving (>= 5.1))
   (yojson (>= 2.1.0))
@@ -37,7 +39,6 @@
  (depends
   (ocaml (>= 4.14.1))
   (alcotest-lwt (and (>= 1.7.0) :with-test))
-  current_rpc                   ; Version pinned by git submodule
   (capnp (>= 3.5.0))
   (capnp-rpc-lwt (>= 1.2.3))
   (ppx_deriving_yojson (>= 3.6.1))
@@ -49,8 +50,8 @@
  (depends
   (ocaml (>= 4.14.1))
   (alcotest-lwt (and (>= 1.7.0) :with-test))
-  ocluster-api
-  current                       ; Version pinned by git submodule
+  (current_ocluster (and (>= 0.2.1) :with-test))
+  (ocluster-api (>= 0.2.1))
   (prometheus-app (>= 1.2))
   (logs (>= 0.7.0))
   (fmt (>= 0.9.0))

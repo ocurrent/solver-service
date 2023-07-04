@@ -10,6 +10,7 @@ services:
       - --capnp-public-address=tcp:scheduler:9000
       - --state-dir=/var/lib/ocluster-scheduler
       - --pools=solver
+      - --default-clients=docker
     init: true
     ports:
       - "9000:9000"
@@ -32,7 +33,6 @@ services:
     init: true
     restart: on-failure         # (wait for the scheduler to write the pool cap)
     volumes:
-      - '/var/run/docker.sock:/var/run/docker.sock'
       - 'worker-data:/var/lib/ocluster'
       - 'capnp-secrets:/capnp-secrets:ro'
     environment:

@@ -91,46 +91,50 @@ module Make (Opam_repo : Opam_repository_intf.S) = struct
 
     (* Send [request] to [worker] and read the reply. *)
     let process ~switch ~log ~id request worker =
-      let request_str =
-        Worker.Solve_request.to_yojson request |> Yojson.Safe.to_string
-      in
-      let request_str =
-        Printf.sprintf "%d\n%s" (String.length request_str) request_str
-      in
-      let process =
-        Worker_process.write worker request_str >>= fun () ->
-        Worker_process.read_line worker >>= fun time ->
-        Worker_process.read_line worker >>= fun len ->
-        match Astring.String.to_int len with
-        | None -> Fmt.failwith "Bad frame from worker: time=%S len=%S" time len
-        | Some len -> (
-            Worker_process.read_into worker len >|= fun results ->
-            match results.[0] with
-            | '+' ->
-                Log.info log "%s: found solution in %s s" id time;
-                let packages =
-                  Astring.String.with_range ~first:1 results
-                  |> Astring.String.cuts ~sep:" "
-                in
-                Ok packages
-            | '-' ->
-                Log.info log "%s: eliminated all possibilities in %s s" id time;
-                let msg = results |> Astring.String.with_range ~first:1 in
-                Error msg
-            | '!' ->
-                let msg = results |> Astring.String.with_range ~first:1 in
-                Fmt.failwith "BUG: solver worker failed: %s" msg
-            | _ -> Fmt.failwith "BUG: bad output: %s" results)
-      in
-      ( Lwt_switch.add_hook_or_exec (Some switch) @@ fun () ->
-        (* Release the worker before cancelling the promise of the request, in order to prevent the
-         * workers's pool choosing the worker for another processing.*)
-        if Lwt.state process = Lwt.Sleep then (
-          Worker_process.release worker;
-          Lwt.cancel process;
-          dispose worker)
-        else Lwt.return_unit )
-      >>= fun () -> process
+      if not (Lwt_switch.is_on switch) then Lwt.fail Lwt.Canceled
+      else
+        let request_str =
+          Worker.Solve_request.to_yojson request |> Yojson.Safe.to_string
+        in
+        let request_str =
+          Printf.sprintf "%d\n%s" (String.length request_str) request_str
+        in
+        let process =
+          Worker_process.write worker request_str >>= fun () ->
+          Worker_process.read_line worker >>= fun time ->
+          Worker_process.read_line worker >>= fun len ->
+          match Astring.String.to_int len with
+          | None ->
+              Fmt.failwith "Bad frame from worker: time=%S len=%S" time len
+          | Some len -> (
+              Worker_process.read_into worker len >|= fun results ->
+              match results.[0] with
+              | '+' ->
+                  Log.info log "%s: found solution in %s s" id time;
+                  let packages =
+                    Astring.String.with_range ~first:1 results
+                    |> Astring.String.cuts ~sep:" "
+                  in
+                  Ok packages
+              | '-' ->
+                  Log.info log "%s: eliminated all possibilities in %s s" id
+                    time;
+                  let msg = results |> Astring.String.with_range ~first:1 in
+                  Error msg
+              | '!' ->
+                  let msg = results |> Astring.String.with_range ~first:1 in
+                  Fmt.failwith "BUG: solver worker failed: %s" msg
+              | _ -> Fmt.failwith "BUG: bad output: %s" results)
+        in
+        ( Lwt_switch.add_hook_or_exec (Some switch) @@ fun () ->
+          (* Release the worker before cancelling the promise of the request, in order to prevent the
+           * workers's pool choosing the worker for another processing.*)
+          if Lwt.state process = Lwt.Sleep then (
+            Worker_process.release worker;
+            Lwt.cancel process;
+            dispose worker)
+          else Lwt.return_unit )
+        >>= fun () -> process
 
     let dispose = Lwt_pool.clear
     let ocaml = OpamPackage.Name.of_string "ocaml"
