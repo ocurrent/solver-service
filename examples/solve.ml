@@ -101,7 +101,8 @@ let opam_template arch =
 |}
     arch
 
-let get_vars ~ocaml_package_name ~ocaml_version ?arch () =
+let get_vars ~ocaml_package_name ~ocaml_version ?arch ?(lower_bound = false) ()
+    =
   let+ vars =
     Lwt_process.pread ("", [| "opam"; "config"; "expand"; opam_template arch |])
   in
@@ -111,6 +112,7 @@ let get_vars ~ocaml_package_name ~ocaml_version ?arch () =
         `Assoc
           (("ocaml_package", `String ocaml_package_name)
           :: ("ocaml_version", `String ocaml_version)
+          :: ("lower_bound", `Bool lower_bound)
           :: items)
     | json ->
         Fmt.failwith "Unexpected JSON: %a"

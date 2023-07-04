@@ -40,7 +40,6 @@ let make_request opam_package opam_repository_commit =
       root_pkgs = [ (String.cat package ".opam", opamfile) ];
       pinned_pkgs = [];
       platforms = [];
-      lower_bound = false;
     }
 
 module Packages = struct
