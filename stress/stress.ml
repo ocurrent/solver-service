@@ -29,7 +29,6 @@ let package_to_custom vars package =
       root_pkgs = [ (package, opamfile) ];
       pinned_pkgs = [];
       platforms = [ ("macOS", vars); ("linux", vars); ("windows", vars) ];
-      lower_bound = false;
     }
 
 let requests log solver =

@@ -15,6 +15,7 @@ module Vars = struct
     ocaml_package : string;
     ocaml_version : string;
     opam_version : string;
+    lower_bound : bool;
   }
   [@@deriving yojson]
 end
@@ -29,6 +30,7 @@ module Selection = struct
     commits : (string * string) list; [@deriving yojson]
         (** The commits in each opam-repository to use. A pair of the repo URL
             and the commit hash*)
+    lower_bound : bool;  (** Is this a lower-bound selection? *)
   }
   [@@deriving yojson, ord]
 end
@@ -43,8 +45,6 @@ module Solve_request = struct
     pinned_pkgs : (string * string) list;
         (** Name and contents of other pinned opam files. *)
     platforms : (string * Vars.t) list;  (** Possible build platforms, by ID. *)
-    lower_bound : bool;
-        (** Solve for the oldest possible versions instead of newest. *)
   }
   [@@deriving yojson]
 end
