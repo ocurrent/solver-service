@@ -79,12 +79,15 @@ let run_client ~package ~version ~ocaml_version ~opam_commit service =
   let+ response = Solver_service_api.Solver.solve service ~log request in
   match response with
   | Ok selections ->
-    selections |> List.iter (fun selection ->
-        let packages = selection.Solver_service_api.Worker.Selection.packages in
-        Fmt.pr "opam install %a" Fmt.(list ~sep:(Fmt.any " ") string) packages
-      )
-  | Error (`Msg m) ->
-      Fmt.failwith "Solver service failed with: %s" m
+      selections
+      |> List.iter (fun selection ->
+             let packages =
+               selection.Solver_service_api.Worker.Selection.packages
+             in
+             Fmt.pr "opam install %a"
+               Fmt.(list ~sep:(Fmt.any " ") string)
+               packages)
+  | Error (`Msg m) -> Fmt.failwith "Solver service failed with: %s" m
   | Error `Cancelled -> Fmt.failwith "Job Cancelled"
 
 let connect package version ocaml_version opam_commit uri =
