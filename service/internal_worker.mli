@@ -1,4 +1,4 @@
-module Worker_process : sig
+module Solver_process : sig
   type state =
     | Available
     | Released

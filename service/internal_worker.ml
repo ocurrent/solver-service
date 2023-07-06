@@ -1,6 +1,6 @@
 open Lwt.Infix
 
-module Worker_process = struct
+module Solver_process = struct
   type state =
     | Available
     | Released

@@ -35,7 +35,7 @@ let const_response ~response : Lwt_process.process =
 
 let create_proc ~response =
   {
-    Solver_service.Internal_worker.Worker_process.process =
+    Solver_service.Internal_worker.Solver_process.process =
       const_response ~response;
     state = Available;
   }
