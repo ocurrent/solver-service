@@ -171,7 +171,7 @@ module Stress_cluster = struct
     let builder = Params.init_pointer builder in
     Params.request_set builder params
 
-  let solve_with_cluster sched request =
+  let solve_with_cluster ~pool sched request =
     let action =
       Cluster_api.Submission.custom_build
       @@ Cluster_api.Custom.v ~kind:"solve"
@@ -181,7 +181,7 @@ module Stress_cluster = struct
     Capability.with_ref (Cluster_api.Submission.submit sched
                            ~action
                            ~urgent:false
-                           ~pool:"solver"
+                           ~pool
                            ~cache_hint:"") @@ fun ticket ->
     Capability.with_ref (Cluster_api.Ticket.job ticket) @@ fun build_job ->
     Cluster_api.Job.result build_job >>= function
@@ -191,12 +191,12 @@ module Stress_cluster = struct
       | Error e -> failwith e
       | Ok x -> Lwt.return x
 
-  let main vat uri config =
+  let main vat uri pool config =
     let sr = Capnp_rpc_unix.Vat.import_exn vat uri in
     Lwt_eio.run_lwt @@ fun () ->
     Capnp_rpc_unix.with_cap_exn sr @@ fun sched ->
     Lwt_eio.run_eio @@ fun () ->
-    benchmark config (solve_with_cluster sched)
+    benchmark config (solve_with_cluster ~pool sched)
 end
 
 open Cmdliner
@@ -213,6 +213,12 @@ let submission_service =
   @@ Arg.info ~doc:"The submission.cap file for the build scheduler service"
     ~docv:"FILE" []
 
+let solver_pool =
+  Arg.value
+  @@ Arg.opt Arg.string "solver"
+  @@ Arg.info ~doc:"The OCluster pool to use for solves"
+    ~docv:"POOL" ["solver-pool"]
+
 let () =
   exit @@ Eio_main.run @@ fun env ->
   Lwt_eio.with_event_loop ~clock:env#clock @@ fun () ->
@@ -227,7 +233,7 @@ let () =
   let stress_cluster vat =
     let doc = "Submit solve jobs to a scheduler that handles a solver-worker" in
     let info = Cmd.info "cluster" ~doc in
-    Cmd.v info Term.(const (Stress_cluster.main vat) $ submission_service $ Config.term ~test_packages)
+    Cmd.v info Term.(const (Stress_cluster.main vat) $ submission_service $ solver_pool $ Config.term ~test_packages)
   in
   let doc = "stress test the solver" in
   let info = Cmd.info "stress" ~doc in
