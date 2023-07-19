@@ -199,6 +199,19 @@ let test_pinned t =
     ~commits:[opam_repo, opam_packages]
     ~platforms
 
+let test_cancel t =
+  let opam_repo = Opam_repo.create "opam-repo.git" in
+  let opam_packages = [
+    "ocaml-base-compiler.5.0", "";
+  ] in
+  let root_pkgs = [ "foo.dev", "" ] in
+  let cancelled = Promise.create_resolved () in
+  solve t "Solution using pinned packages"
+    ~cancelled
+    ~root_pkgs
+    ~commits:[opam_repo, opam_packages]
+    ~platforms
+
 let () =
   Eio_main.run @@ fun env ->
   let domain_mgr = env#domain_mgr in
@@ -216,6 +229,7 @@ let () =
     "Double fetch", test_double_fetch;
     "Multiple roots", test_multiple_roots;
     "Pinned", test_pinned;
+    "Cancel", test_cancel;
   ]
   |> List.iter (fun (name, fn) ->
       Fmt.pr "@.# %s@." name;

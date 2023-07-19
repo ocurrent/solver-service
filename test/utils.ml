@@ -134,7 +134,7 @@ let pp_response f = function
   | Error `Cancelled -> Fmt.string f "Cancelled"
   | Error `Msg m -> Fmt.pf f "Error: %s" m
 
-let solve ?(pinned_pkgs=[]) t label ~commits ~root_pkgs ~platforms = 
+let solve ?cancelled ?(pinned_pkgs=[]) t label ~commits ~root_pkgs ~platforms = 
   Fmt.pr "@.## %s ##@.@.commits: %a@.root_pkgs: %a@.platforms: %a@."
     label
     pp_commits commits
@@ -151,5 +151,5 @@ let solve ?(pinned_pkgs=[]) t label ~commits ~root_pkgs ~platforms =
               platforms;
             }
   in
-  let response = Solver_service.Solver.solve t ~log:stderr_log req in
+  let response = Solver_service.Solver.solve ?cancelled t ~log:stderr_log req in
   Fmt.pr "@[<v2>results:@,%a@]@." pp_response response

@@ -13,9 +13,10 @@ val solve_of_custom :
     request. *)
 
 val solve :
+  cancelled:unit Eio.Promise.t ->
   solver:Solver_service.Solver.t ->
   log:Log_data.t ->
   Solver_service_api.Raw.Reader.pointer_t Cluster_api.Custom.t ->
   string
-(** [solve ~solver ~log c] interprets [c] as a solver request and
+(** [solve ~cancelled ~solver ~log c] interprets [c] as a solver request and
     solves it using [solver]. *)

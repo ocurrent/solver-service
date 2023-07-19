@@ -2,6 +2,7 @@
    with some parts of the solver-worker library. See the LICENSE file for the
    full license. *)
 
+open Eio.Std
 open Lwt.Infix
 open Capnp_rpc_lwt
 
@@ -49,27 +50,21 @@ let metrics = function
   | `Host ->
     failwith "No host metrics from solver service"
 
-let build ~log t descr =
+let build ~cancelled ~log t descr =
   let module R = Cluster_api.Raw.Reader.JobDescr in
-  (match Cluster_api.Submission.get_action descr with
-   | Custom_build c ->
-     Log.info (fun f ->
-         f "Got request to build a job of kind \"%s\""
-           (Cluster_api.Custom.kind c));
-     Lwt_eio.run_eio @@ fun () ->
-     Ok (Custom.solve ~solver:t.solver ~log c)
-   | _ -> Lwt.fail (invalid_arg "Only custom builds are supported"))
-  >|= function
-  | Error `Cancelled ->
-    Log_data.write log "Job cancelled\n";
-    Log.info (fun f -> f "Job cancelled");
-    (Error (`Msg "Build cancelled"), "cancelled")
-  | Ok output ->
+  Lwt_eio.run_eio @@ fun () ->
+  match Cluster_api.Submission.get_action descr with
+  | Custom_build c ->
+    Log.info (fun f ->
+        f "Got request to build a job of kind \"%s\""
+          (Cluster_api.Custom.kind c));
+    (* Oddly, the protocol has us report cancellation and errors as "successful" jobs with the error inside! *)
+    let output = Custom.solve ~cancelled ~solver:t.solver ~log c in
     Log_data.write log "Job succeeded\n";
     Log.info (fun f -> f "Job succeeded");
     (Ok output, "ok")
-  | Error (`Msg msg) ->
-    Log.info (fun f -> f "Job failed: %s" msg);
+  | _ ->
+    let msg = "Only custom builds are supported" in
     (Error (`Msg msg), "build failed")
 
 let loop t queue =
@@ -84,6 +79,8 @@ let loop t queue =
       let log = Log_data.create () in
       Log.info (fun f -> f "Requesting a new job...");
       let switch = Lwt_switch.create () in
+      let cancelled, set_cancelled = Promise.create () in
+      Lwt_switch.add_hook (Some switch) (fun () -> Promise.resolve set_cancelled (); Lwt.return_unit);
       let pop =
         Capability.with_ref
           (Cluster_api.Job.local ~switch ~outcome
@@ -101,7 +98,7 @@ let loop t queue =
                Lwt.try_bind
                  (fun () ->
                     Log_data.info log "Building on %s" t.name;
-                    build ~log t request)
+                    build ~cancelled ~log t request)
                  (fun (outcome, metric_label) ->
                     let t1 = Unix.gettimeofday () in
                     Prometheus.Summary.observe

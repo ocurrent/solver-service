@@ -10,6 +10,9 @@ type request = {
 
   vars : Solver_service_api.Worker.Vars.t;
   (** Build platforms. *)
+
+  cancelled : unit Eio.Promise.t option;
+  (** If resolved, the result is not needed. *)
 }
 
 type reply = ((OpamPackage.t list, string) result * float, [`Msg of string]) result

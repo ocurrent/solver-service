@@ -26,7 +26,7 @@ let compatible_with ~ocaml_version (dep_name, filter) =
     OpamFormula.eval check_ocaml filter
   else true
 
-let solve_for_platform t ~log ~opam_repository_commits ~packages ~root_pkgs ~pinned_pkgs ~pins ~vars id =
+let solve_for_platform ?cancelled t ~log ~opam_repository_commits ~packages ~root_pkgs ~pinned_pkgs ~pins ~vars id =
   let ocaml_version = OpamPackage.Version.of_string vars.Worker.Vars.ocaml_version in
   let compatible_root_pkgs =
     root_pkgs
@@ -40,7 +40,7 @@ let solve_for_platform t ~log ~opam_repository_commits ~packages ~root_pkgs ~pin
     if compatible_root_pkgs = [] then root_pkgs
     else compatible_root_pkgs
   in
-  let slice = { Domain_worker.vars; root_pkgs; packages; pinned_pkgs } in
+  let slice = { Domain_worker.vars; root_pkgs; packages; pinned_pkgs; cancelled } in
   match Pool.use t.pool slice with
   | Error (`Msg m) -> Error (`Msg m)
   | Ok (results, time) ->
@@ -90,7 +90,7 @@ let rec parse_opams = function
     Ok (x :: xs)
 
 (* Handle a request by distributing it among the worker processes and then aggregating their responses. *)
-let solve t ~log request =
+let solve ?cancelled t ~log request =
   let {
     Worker.Solve_request.opam_repository_commits;
     platforms;
@@ -117,6 +117,7 @@ let solve t ~log request =
     |> Fiber.List.map (fun (id, vars) ->
         let result =
           solve_for_platform t id
+            ?cancelled
             ~log
             ~opam_repository_commits
             ~packages
@@ -147,9 +148,12 @@ let solve t ~log request =
           None
       )
   in
-  match !serious_errors with
-  | [] -> Ok results
-  | errors -> Fmt.error_msg "@[<v>%a@]" Fmt.(list ~sep:cut string) errors
+  match cancelled with
+  | Some p when Promise.is_resolved p -> Error `Cancelled
+  | _ ->
+    match !serious_errors with
+    | [] -> Ok results
+    | errors -> Fmt.error_msg "@[<v>%a@]" Fmt.(list ~sep:cut string) errors
 
 let create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers =
   let stores = Stores.create ~process_mgr ~cache_dir in

@@ -35,7 +35,7 @@ let cluster_worker_log log =
       Capnp_rpc_lwt.Service.return_empty ()
   end
 
-let solve ~solver ~log c =
+let solve ~cancelled ~solver ~log c =
   match solve_of_custom c with
   | Error m -> failwith m
   | Ok request ->
@@ -44,7 +44,7 @@ let solve ~solver ~log c =
       Lwt_eio.run_lwt @@ fun () ->
       Capnp_rpc_lwt.Capability.with_ref log @@ fun log ->
       Lwt_eio.run_eio @@ fun () ->
-      Solver_service.Solver.solve solver ~log request
+      Solver_service.Solver.solve ~cancelled solver ~log request
     in
     Yojson.Safe.to_string
     @@ Solver_service_api.Worker.Solve_response.to_yojson selections
