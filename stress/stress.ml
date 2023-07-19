@@ -132,6 +132,61 @@ let benchmark (config:Config.t) solve =
   Format.printf "@.Solved %d requests in %.2fs (%.2fs/iter)@."
     config.count time (time /. float config.count)
 
+let verbose = false
+
+let log =
+  let module L = Solver_service_api.Raw.Service.Log in
+  L.local @@ object
+    inherit L.service
+
+    method write_impl params release_param_caps =
+      let open L.Write in
+      release_param_caps ();
+      let msg = Params.msg_get params in
+      if verbose then output_string stderr msg;
+      Capnp_rpc_lwt.Service.(return (Response.create_empty ()))
+  end
+
+module Stress_local = struct
+  type config = {
+    cache_dir : string;
+    n_workers : int;
+  }
+
+  let main ~domain_mgr ~process_mgr local config =
+    Switch.run @@ fun sw ->
+    let solver =
+      Solver_service.Solver.create ~sw
+        ~domain_mgr
+        ~process_mgr
+        ~cache_dir:local.cache_dir
+        ~n_workers:local.n_workers
+    in
+    let service = Solver_service.Service.v solver in
+    benchmark config (fun request -> 
+        Lwt_eio.run_lwt @@ fun () ->
+        Solver_service_api.Solver.solve service ~log request
+      )
+
+  open Cmdliner
+
+  let internal_workers =
+    Arg.value
+    @@ Arg.opt Arg.int (Domain.recommended_domain_count () - 1)
+    @@ Arg.info ~doc:"The number of sub-process solving requests in parallel"
+      ~docv:"N" [ "internal-workers" ]
+
+  let cache_dir = 
+    Arg.required
+    @@ Arg.opt Arg.(some string) None
+    @@ Arg.info ~doc:"Path cached Git clones" ~docv:"DIR"
+      [ "cache-dir" ]
+
+  let config =
+    let make cache_dir n_workers = { cache_dir; n_workers } in
+    Term.(const make $ cache_dir $ internal_workers)
+end
+
 module Stress_service = struct
   let verbose = false
 
@@ -235,6 +290,13 @@ let () =
     let info = Cmd.info "cluster" ~doc in
     Cmd.v info Term.(const (Stress_cluster.main vat) $ submission_service $ solver_pool $ Config.term ~test_packages)
   in
+  let stress_local =
+    let doc = "Run jobs using an in-process solver" in
+    let info = Cmd.info "local" ~doc in
+    let domain_mgr = env#domain_mgr in
+    let process_mgr = env#process_mgr in
+    Cmd.v info Term.(const (Stress_local.main ~domain_mgr ~process_mgr) $ Stress_local.config $ Config.term ~test_packages)
+  in
   let doc = "stress test the solver" in
   let info = Cmd.info "stress" ~doc in
-  Cmd.eval @@ Cmd.group info [ stress_service vat; stress_cluster vat ]
+  Cmd.eval @@ Cmd.group info [ stress_local; stress_service vat; stress_cluster vat ]

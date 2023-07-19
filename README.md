@@ -131,3 +131,18 @@ Running another 10 solves...
 10/10 complete
 Solved 10 requests in 5.09s (0.51s/iter)
 ```
+
+### Testing
+
+The `test` directly contains various tests of the solver.
+Running `dune test` runs them and compares the output with the good copy in `./test/test.expected`.
+
+For more realistic testing, the stress tester can also run in `local` mode to run the solver in-process:
+
+```sh
+$ dune exec -- ./stress/stress.exe local --cache-dir=./cache --count=10
+Solved warm-up requests in: 8.63s
+Running another 10 solves...
+10/10 complete
+Solved 10 requests in 4.51s (0.45s/iter)
+```
