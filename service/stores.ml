@@ -5,20 +5,15 @@ module Store_map = Map.Make(String)
 
 let (let*!) = Result.bind
 
-let git_lock = Eio.Mutex.create ()
-(* Avoid running multiple git operations at a time.
-   This could be per-store, but we normally only have one anyway. *)
-
 type commit = string * string
 
 type t = {
   cache_dir : string;
-  stores_lock : Eio.Mutex.t;
-  mutable stores : Store.t Store_map.t;
+  mutable stores : Safe_store.t Store_map.t;
   process_mgr : Eio.Process.mgr;
 
   (* For now we only keep the most recent set of packages. *)
-  mutable index_cache : (commit list * Packages.t) option;
+  mutable index_cache : (commit list * Packages.t Promise.or_exn) option;
 }
 
 let git_command ?cwd args =
@@ -75,23 +70,22 @@ module Git_clone = struct
     let clone_parent = Fpath.parent clone_path |> Fpath.to_string in
     let clone_path_str = Fpath.to_string clone_path in
     match Unix.lstat clone_path_str with
-    | Unix.{ st_kind = S_DIR; _ } -> Ok ()
+    | Unix.{ st_kind = S_DIR; _ } -> ()
     | _ -> Fmt.failwith "%S is not a directory!" clone_path_str
     | exception Unix.Unix_error (Unix.ENOENT, _, _) ->
       mkdir_p clone_parent;
       try
-        run_git t ["clone"; "--bare"; repo_url; clone_path_str];
-        Ok ()
+        run_git t ["clone"; "--bare"; repo_url; clone_path_str]
       with Eio.Io _ as ex ->
-        Fmt.error_msg "Error cloning %S: %a" repo_url Fmt.exn ex
+        let bt = Printexc.get_raw_backtrace () in
+        Eio.Exn.reraise_with_context ex bt "cloning %S" repo_url
 
   let open_store t repo_url =
-    let*! () = clone t repo_url in
     let path = repo_url_to_clone_path t repo_url in
     match Lwt_eio.run_lwt (fun () -> Git_unix.Store.v ~dotgit:path path) with
-    | Ok _ as x -> x
+    | Ok x -> x
     | Error e ->
-      Fmt.error_msg "Failed to open %a: %a" Fpath.pp path Store.pp_error e
+      Fmt.failwith "Failed to open %a: %a" Fpath.pp path Store.pp_error e
 
   let oldest_commit_with t ~repo_url ~from paths =
     let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
@@ -120,10 +114,10 @@ module Git_clone = struct
   let fetch t repo_url =
     try
       let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
-      run_git t ~cwd:clone_path ["fetch"; "origin"];
-      Ok ()
+      run_git t ~cwd:clone_path ["fetch"; "origin"]
     with Eio.Io _ as ex ->
-      Fmt.error_msg "Error fetching %S: %a" repo_url Fmt.exn ex
+      let bt = Printexc.get_raw_backtrace () in
+      Eio.Exn.reraise_with_context ex bt "fetching %S" repo_url
 end
 
 let oldest_commit = Eio.Semaphore.make 180
@@ -131,40 +125,65 @@ let oldest_commit = Eio.Semaphore.make 180
  * performance and prevent some jobs to fail because of file descriptors exceed the limit.*)
 
 let get t repo_url =
-  Eio.Mutex.use_ro t.stores_lock @@ fun () ->
   match Store_map.find_opt repo_url t.stores with
   | Some x -> Ok x
   | None ->
-    let*! store = Git_clone.open_store t repo_url in
+    let store = Safe_store.create () in
     t.stores <- Store_map.add repo_url store t.stores;
-    Ok store
+    (* As a convenience, try opening/cloning the store now.
+       This avoids doing a git-fetch on start-up. *)
+    Switch.run (fun sw ->
+        let request = Safe_store.get ~sw store in
+        match Safe_store.upgrade request (fun () ->
+            Git_clone.clone t repo_url;
+            Git_clone.open_store t repo_url
+          )
+        with
+        | Ok () -> Ok store
+        | Error `Concurrent_upgrade -> Ok store (* Probably can't happen, but not a problem if it did *)
+        | Error `Exn ex -> Fmt.error_msg "%a" Eio.Exn.pp ex
+      )
 
 let mem store hash = Lwt_eio.run_lwt (fun () -> Store.mem store hash)
 
-let update_opam_repository_to_commit t (repo_url, hash) =
+let try_update_to_commit t commit =
+  Switch.run @@ fun sw ->
+  let (repo_url, hash) = commit in
   let*! store = get t repo_url in
-  Eio.Mutex.use_ro t.stores_lock @@ fun () ->
+  let request = Safe_store.get ~sw store in
   let hash = Store.Hash.of_hex hash in
-  if mem store hash then Ok ()
-  else (
-    Fmt.pr "Need to update %s to get new commit %a@." repo_url Store.Hash.pp hash;
-    Eio.Mutex.use_ro git_lock @@ fun () ->
-    let*! () = Git_clone.fetch t repo_url in
-    let old_store = store in
-    let*! new_store = Git_clone.open_store t repo_url in
-    t.stores <- Store_map.add repo_url new_store t.stores;
-    Lwt_eio.run_lwt (fun () -> Git_unix.Store.close_pack_files old_store);
-    if mem new_store hash then
-      Ok ()
-    else
-      Error (`Msg "Still missing commit after update!")
-  )
+  match Safe_store.get_store request with
+  | Ok store when mem store hash -> Ok ()
+  | _ ->
+    let*! () =
+      Safe_store.upgrade request (fun () ->
+          Fmt.pr "Need to update %s to get new commit %a@." repo_url Store.Hash.pp hash;
+          Git_clone.clone t repo_url;
+          Git_clone.fetch t repo_url;
+          Git_clone.open_store t repo_url
+        )
+    in
+    let request = Safe_store.get ~sw store in
+    match Safe_store.get_store request with
+    | Ok store ->
+      if mem store hash then Ok ()
+      else Error (`Msg "Still missing commit after update!")
+    | Error ex -> Error (`Exn ex)
+
+let rec update_to_commit t commit =
+  match try_update_to_commit t commit with
+  | Ok () -> Ok ()
+  | Error `Concurrent_upgrade ->
+    (* Retry using the new generation. *)
+    update_to_commit t commit
+  | Error `Exn ex ->
+    Fmt.error_msg "%a" Eio.Exn.pp ex
+  | Error `Msg _ as e -> e
 
 let create ~process_mgr ~cache_dir =
   {
     cache_dir;
     process_mgr = (process_mgr :> Eio.Process.mgr);
-    stores_lock = Eio.Mutex.create ();
     stores = Store_map.empty;
     index_cache = None;
   }
@@ -178,24 +197,33 @@ let oldest_commits_with t ~from repo_packages =
 let rec fetch_commits t = function
   | [] -> Ok ()
   | x :: xs ->
-    let*! () = update_opam_repository_to_commit t x in
+    let*! () = update_to_commit t x in
     fetch_commits t xs
 
 let packages t commits =
-  Eio.Mutex.use_ro git_lock @@ fun () ->
   match t.index_cache with
-  | Some (k, v) when k = commits -> Ok v
+  | Some (k, v) when k = commits -> Ok (Promise.await_exn v)
   | _ ->
     (* Read all the packages from all the given opam-repository repos,
        and collate them into a single Map. *)
     let rec overlay acc = function
-      | [] -> Ok acc
+      | [] -> acc
       | (repo_url, hash) :: xs ->
-        let*! store = get t repo_url in
-        let hash = Store.Hash.of_hex hash in
-        let acc = Packages.of_commit ~super:acc store hash in
-        overlay acc xs
+        match get t repo_url with
+        | Error `Msg m -> failwith m
+        | Ok store ->
+          let hash = Store.Hash.of_hex hash in
+          let acc = Packages.of_commit ~super:acc store hash in
+          overlay acc xs
     in
-    let*! v = overlay Packages.empty commits in
-    t.index_cache <- Some (commits, v);
-    Ok v
+    let p, r = Promise.create () in
+    t.index_cache <- Some (commits, p);
+    match overlay Packages.empty commits with
+    | packages ->
+      Promise.resolve_ok r packages;
+      Ok packages
+    | exception ex ->
+      let bt = Printexc.get_raw_backtrace () in
+      Promise.resolve_error r ex;
+      t.index_cache <- None;
+      Printexc.raise_with_backtrace ex bt

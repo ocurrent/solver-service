@@ -152,26 +152,27 @@ results:
 ## Invalid repository
 
 results:
-  Error: Error cloning "foo.git": Eio.Io Process Child_error Exited (code 128),
-  running command: git clone --bare foo.git cache/no_host/foo
+  Error: Eio.Io Process Child_error Exited (code 128),
+  running command: git clone --bare foo.git cache/no_host/foo,
+  cloning "foo.git"
 
 # Double fetch
 
 ## Concurrent fetches of invalid commit
 
 Need to update opam-repo.git to get new commit 17e66310c5c95560291a2d6499e7154d30f9aaaa
-results:
-  Error: Still missing commit after update!
 Need to update opam-repo.git to get new commit 17e66310c5c95560291a2d6499e7154d30f9aaaa
-results:
+a:
+  Error: Still missing commit after update!
+b:
   Error: Still missing commit after update!
 
 ## One bad, one good
 
 Need to update opam-repo.git to get new commit 17e66310c5c95560291a2d6499e7154d30f9aaaa
-results:
+a:
   Error: Still missing commit after update!
-results:
+b:
   [debian-12-ocaml-5:
      compat_pkgs: [app.dev]
      packages: [app.dev; ocaml-base-compiler.5.0]

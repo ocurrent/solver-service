@@ -5,7 +5,7 @@ val empty : t
 
 val of_commit :
   ?super:t ->
-  Git_unix.Store.t ->
+  Safe_store.t ->
   Git_unix.Store.Hash.t ->
   t
 (** [of_commit store commit] is an index of the opam files in [store] at [commit].

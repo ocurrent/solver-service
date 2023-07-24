@@ -1,4 +1,6 @@
-(** Manages a collection of local Git clones. *)
+(** Manages a collection of local Git clones.
+
+    This is only used from the main domain. *)
 
 type commit = string * string
 (** A [(repository_url, commit_hash)] pair,

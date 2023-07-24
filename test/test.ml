@@ -132,10 +132,7 @@ let test_double_fetch t =
   Fmt.pr "@.";
   let opam_repo = Opam_repo.create "opam-repo.git" in
   let root_pkgs = ["app.dev", Utils.add_opam_header ""] in
-  let test req =
-    let resp = Solver_service.Solver.solve t ~log:stderr_log req in
-    Fmt.pr "@[<v2>results:@,%a@]@." Utils.pp_response resp
-  in
+  let test req = Solver_service.Solver.solve t ~log:stderr_log req in
   let good_commit =
     Opam_repo.commit opam_repo [
       "ocaml-base-compiler.5.0", {|synopsis: "Force fetch"|};
@@ -158,10 +155,15 @@ let test_double_fetch t =
       platforms;
     }
   in
+  let both a b =
+    let a, b = Fiber.pair a b in
+    Fmt.pr "@[<v2>a:@,%a@]@." Utils.pp_response a;
+    Fmt.pr "@[<v2>b:@,%a@]@." Utils.pp_response b
+  in
   Fmt.pr "## Concurrent fetches of invalid commit@.@.";
-  Fiber.both test_bad test_bad;
+  both test_bad test_bad;
   Fmt.pr "@.## One bad, one good@.@.";
-  Fiber.both test_bad test_good
+  both test_bad test_good
 
 let test_multiple_roots t =
   let opam_repo = Opam_repo.create "opam-repo.git" in
