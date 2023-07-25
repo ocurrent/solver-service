@@ -61,7 +61,6 @@ let build ~cancelled ~log t descr =
     (* Oddly, the protocol has us report cancellation and errors as "successful" jobs with the error inside! *)
     let output = Custom.solve ~cancelled ~solver:t.solver ~log c in
     Log_data.write log "Job succeeded\n";
-    Log.info (fun f -> f "Job succeeded");
     (Ok output, "ok")
   | _ ->
     let msg = "Only custom builds are supported" in

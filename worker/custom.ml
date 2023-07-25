@@ -46,5 +46,13 @@ let solve ~cancelled ~solver ~log c =
       Lwt_eio.run_eio @@ fun () ->
       Solver_service.Solver.solve ~cancelled solver ~log request
     in
+    begin match selections with
+      | Ok sels ->
+        Log.info (fun f -> f "Job succeeded (found solutions for %d platforms)" (List.length sels));
+      | Error `Msg m ->
+        Log.info (fun f -> f "Job failed: %s" m);
+      | Error `Cancelled ->
+        Log.info (fun f -> f "Job cancelled");
+    end;
     Yojson.Safe.to_string
     @@ Solver_service_api.Worker.Solve_response.to_yojson selections
