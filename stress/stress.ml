@@ -39,6 +39,11 @@ module Config = struct
     count : int;
   }
 
+  let platforms = [
+    "linux", linux_vars;
+    "windows", windows_vars;
+  ]
+
   let make_request ~test_packages package =
     let ( / ) = Eio.Path.( / ) in
     let opamfile = Eio.Path.load (test_packages / (package ^ ".opam")) in
@@ -48,10 +53,7 @@ module Config = struct
           [ ("https://github.com/ocaml/opam-repository.git", opam_repository_commit) ];
         root_pkgs = [ (package, opamfile) ];
         pinned_pkgs = [];
-        platforms = [
-          "linux", linux_vars;
-          "windows", windows_vars;
-        ];
+        platforms;
       }
 
   let create ~test_packages count =
@@ -129,8 +131,9 @@ let benchmark (config:Config.t) solve =
         )
     );
   let time = Unix.gettimeofday () -. before in
-  Format.printf "@.Solved %d requests in %.2fs (%.2fs/iter)@."
+  Format.printf "@.Solved %d requests in %.2fs (%.2fs/iter) (%.2f solves/s)@."
     config.count time (time /. float config.count)
+    (float (config.count * List.length Config.platforms) /. time)
 
 let verbose = false
 
