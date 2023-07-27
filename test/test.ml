@@ -54,7 +54,7 @@ let test_overlay t =
     opam_repo, opam_packages;
     overlay_repo, overlay_packages;
   ];
-  solve t "Overlay not needed" ~platforms ~root_pkgs:[] ~commits:[
+  solve t "Overlay not needed" ~platforms ~root_pkgs:["app.dev", ""] ~commits:[
     opam_repo, opam_packages;
     overlay_repo, overlay_packages;
   ];

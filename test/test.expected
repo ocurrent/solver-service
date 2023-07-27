@@ -67,12 +67,12 @@ results:
 
 commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0]);
           (overlay.git, [foo.1.0])]
-root_pkgs: []
+root_pkgs: [app.dev]
 platforms: [debian-12-ocaml-5]
 results:
   [debian-12-ocaml-5:
-     compat_pkgs: []
-     packages: [ocaml-base-compiler.5.0]
+     compat_pkgs: [app.dev]
+     packages: [app.dev; ocaml-base-compiler.5.0]
      commits: [(opam-repo.git, daf78f787d9147faf890684079654e3c74be5adf)]
      lower_bound: false]
 

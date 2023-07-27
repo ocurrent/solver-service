@@ -28,47 +28,46 @@ let compatible_with ~ocaml_version (dep_name, filter) =
 
 let solve_for_platform ?cancelled t ~log ~opam_repository_commits ~packages ~root_pkgs ~pinned_pkgs ~pins ~vars id =
   let ocaml_version = OpamPackage.Version.of_string vars.Worker.Vars.ocaml_version in
-  let compatible_root_pkgs =
+  let root_pkgs =
     root_pkgs
     |> List.filter (fun (_name, (_version, opam)) ->
         let deps = OpamFile.OPAM.depends opam in
         OpamFormula.eval (compatible_with ~ocaml_version) deps)
   in
-  (* If some packages are compatible but some aren't, just solve for the compatible ones.
-     Otherwise, try to solve for everything to get a suitable error. *)
-  let root_pkgs =
-    if compatible_root_pkgs = [] then root_pkgs
-    else compatible_root_pkgs
-  in
-  let slice = { Domain_worker.vars; root_pkgs; packages; pinned_pkgs; cancelled } in
-  match Pool.use t.pool slice with
-  | Error (`Msg m) -> Error (`Msg m)
-  | Ok (results, time) ->
-    match results with
-    | Error e ->
-      Log.info log "%s: eliminated all possibilities in %f s" id time;
-      Error (`No_solution e)
-    | Ok packages ->
-      Log.info log "%s: found solution in %f s" id time;
-      let repo_packages =
-        packages
-        |> List.filter_map (fun (pkg : OpamPackage.t) ->
-            if OpamPackage.Name.Set.mem pkg.name pins then None
-            else Some pkg)
-      in
-      (* Hack: ocaml-ci sometimes also installs odoc, but doesn't tell us about it.
-         Make sure we have at least odoc 2.1.1 available, otherwise it won't work on OCaml 5.0. *)
-      let repo_packages =
-        OpamPackage.of_string "odoc.2.1.1" :: repo_packages
-      in
-      let commits = Stores.oldest_commits_with t.stores repo_packages ~from:opam_repository_commits in
-      let compat_pkgs =
-        let to_string (name, (version,_)) = OpamPackage.to_string (OpamPackage.create name version) in
-        List.map to_string compatible_root_pkgs
-      in
-      let packages = List.map OpamPackage.to_string packages in
-      let lower_bound = vars.lower_bound in
-      Ok { Worker.Selection.id; compat_pkgs; packages; commits; lower_bound }
+  if root_pkgs = [] then (
+    Log.info log "%s: not available for this platform" id;
+    Error (`No_solution "Not available for this platform")
+  ) else (
+    let slice = { Domain_worker.vars; root_pkgs; packages; pinned_pkgs; cancelled } in
+    match Pool.use t.pool slice with
+    | Error (`Msg m) -> Error (`Msg m)
+    | Ok (results, time) ->
+      match results with
+      | Error e ->
+        Log.info log "%s: eliminated all possibilities in %.2f s" id time;
+        Error (`No_solution e)
+      | Ok packages ->
+        Log.info log "%s: found solution in %.2f s" id time;
+        let repo_packages =
+          packages
+          |> List.filter_map (fun (pkg : OpamPackage.t) ->
+              if OpamPackage.Name.Set.mem pkg.name pins then None
+              else Some pkg)
+        in
+        (* Hack: ocaml-ci sometimes also installs odoc, but doesn't tell us about it.
+           Make sure we have at least odoc 2.1.1 available, otherwise it won't work on OCaml 5.0. *)
+        let repo_packages =
+          OpamPackage.of_string "odoc.2.1.1" :: repo_packages
+        in
+        let commits = Stores.oldest_commits_with t.stores repo_packages ~from:opam_repository_commits in
+        let compat_pkgs =
+          let to_string (name, (version,_)) = OpamPackage.to_string (OpamPackage.create name version) in
+          List.map to_string root_pkgs
+        in
+        let packages = List.map OpamPackage.to_string packages in
+        let lower_bound = vars.lower_bound in
+        Ok { Worker.Selection.id; compat_pkgs; packages; commits; lower_bound }
+  )
 
 let pp_exn f = function
   | Failure msg -> Fmt.string f msg
