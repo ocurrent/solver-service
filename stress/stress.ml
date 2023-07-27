@@ -39,10 +39,30 @@ module Config = struct
     count : int;
   }
 
+  let compilers =
+    [
+      "4.01.0";
+      "4.02.0";
+      "4.03.0";
+      "4.04.0";
+      "4.05.0";
+      "4.06.0";
+      "4.07.0";
+      "4.08.0";
+      "4.09.0";
+      "4.10.0";
+      "4.11.0";
+      "4.12.0";
+      "4.13.0";
+      "4.14.0";
+    ] |> List.map (fun v ->
+        v, { linux_vars with ocaml_version = v }
+      )
+
   let platforms = [
     "linux", linux_vars;
     "windows", windows_vars;
-  ]
+  ] @ compilers
 
   let make_request ~test_packages package =
     let ( / ) = Eio.Path.( / ) in
@@ -84,6 +104,8 @@ let pp_request f (x : Solver_service_api.Worker.Solve_request.t) =
 
 let expected_failures_on_windows = ["core_unix.v0.16.0"; "inotify.2.4.1"]
 
+let sel_id (sel : Solver_service_api.Worker.Selection.t) = sel.id
+
 let benchmark (config:Config.t) solve =
   (* Warm-up *)
   let before = Unix.gettimeofday () in
@@ -94,16 +116,17 @@ let benchmark (config:Config.t) solve =
         Format.printf "%a@."
           (Yojson.Safe.pretty_print ?std:None)
           (Solver_service_api.Worker.Solve_response.to_yojson resp);
-        let expected_failure = List.mem (fst (List.hd req.root_pkgs)) expected_failures_on_windows in
-        begin match resp with
-          | Ok [_; _] ->
-            if expected_failure then
-              Fmt.failwith "Warm-up solve should have failed for %a" pp_request req
-          | Ok [_] ->
-            if not expected_failure then
-              Fmt.failwith "Warm-up solve failed for %a on one platform" pp_request req
-          | _ ->
+        begin
+          match resp with
+          | Error _ ->
             Fmt.failwith "Warm-up solve failed for %a" pp_request req
+          | Ok sels ->
+            let expected_failure = List.mem (fst (List.hd req.root_pkgs)) expected_failures_on_windows in
+            let failure = not @@ List.exists (fun sel -> sel_id sel = "windows") sels in
+            if expected_failure && not failure then
+              Fmt.failwith "Warm-up solve should have failed for %a on Windows" pp_request req;
+            if failure && not expected_failure then
+              Fmt.failwith "Warm-up solve failed for %a on Windows" pp_request req
         end;
         (req, resp)
       )
