@@ -52,7 +52,6 @@ let metrics = function
 
 let build ~cancelled ~log t descr =
   let module R = Cluster_api.Raw.Reader.JobDescr in
-  Lwt_eio.run_eio @@ fun () ->
   match Cluster_api.Submission.get_action descr with
   | Custom_build c ->
     Log.info (fun f ->
@@ -93,29 +92,28 @@ let loop t queue =
       Lwt.async (fun () ->
           Lwt.finalize
             (fun () ->
+               Lwt_eio.run_eio @@ fun () ->
+               Log_data.info log "Building on %s" t.name;
                let t0 = Unix.gettimeofday () in
-               Lwt.try_bind
-                 (fun () ->
-                    Log_data.info log "Building on %s" t.name;
-                    build ~cancelled ~log t request)
-                 (fun (outcome, metric_label) ->
-                    let t1 = Unix.gettimeofday () in
-                    Prometheus.Summary.observe
-                      (Metrics.job_time metric_label)
-                      (t1 -. t0);
-                    Log_data.close log;
-                    Lwt.wakeup set_outcome outcome;
-                    Lwt.return_unit)
-                 (fun ex ->
-                    let t1 = Unix.gettimeofday () in
-                    Prometheus.Summary.observe (Metrics.job_time "error")
-                      (t1 -. t0);
-                    Log.warn (fun f -> f "Build failed: %a" Fmt.exn ex);
-                    Log_data.write log
-                      (Fmt.str "Uncaught exception: %a@." Fmt.exn ex);
-                    Log_data.close log;
-                    Lwt.wakeup_exn set_outcome ex;
-                    Lwt.return_unit))
+               match build ~cancelled ~log t request with
+               | (outcome, metric_label) ->
+                 let t1 = Unix.gettimeofday () in
+                 Prometheus.Summary.observe
+                   (Metrics.job_time metric_label)
+                   (t1 -. t0);
+                 Log_data.close log;
+                 Lwt.wakeup set_outcome outcome
+               | exception ex ->
+                 let bt = Printexc.get_raw_backtrace () in
+                 let t1 = Unix.gettimeofday () in
+                 Prometheus.Summary.observe (Metrics.job_time "error")
+                   (t1 -. t0);
+                 Log.warn (fun f -> f "Build failed: %a" Fmt.exn_backtrace (ex, bt));
+                 Log_data.write log
+                   (Fmt.str "Uncaught exception: %a@." Fmt.exn ex);
+                 Log_data.close log;
+                 Lwt.wakeup_exn set_outcome ex
+            )
             (fun () ->
                t.in_use <- t.in_use - 1;
                Prometheus.Gauge.set Metrics.running_jobs
