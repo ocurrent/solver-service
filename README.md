@@ -2,9 +2,10 @@
 
 A standalone, OCurrent service for solving opam dependencies extracted and modified from [OCaml-CI](https://github.com/ocurrent/ocaml-ci). This repostory contains:
 
- - `src/solver-service-api`: The Capnp solver service API, the defines the format for sending requests and receiving responses from a service.
- - `src/solver-service`: The core functionality of completing a solver request using `opam-0install` is contained here. There are binaries for running a `solver-service` which can communicate over `stdin` or over the network.
- - `src/solver-worker`: An OCluster worker that can solve requests being submitted to OCluster as a custom job specification.
+ - `api`: The Capnp solver service API, the defines the format for sending requests and receiving responses from a service.
+ - `service`: The core functionality of completing a solver request using `opam-0install` is contained here.
+ - `worker`: An OCluster worker that can solve requests being submitted to OCluster as a custom job specification.
+ - `bin`:  Binaries for running as either a stand-alone service or as an OCluster worker.
 
 ## Example
 
@@ -110,7 +111,7 @@ Be root to get the `submit-docker.cap` file from the `Mountpoint` path:
 
 ```
 $ mkdir capnp-secrets
-$ sudo cat /var/lib/docker/volumes/solver-service_capnp-secrets/_data/submit-demo.cap > ./capnp-secrets/submit-docker.cap
+$ sudo cat /var/lib/docker/volumes/solver-service_capnp-secrets/_data/submit-docker.cap > ./capnp-secrets/submit-docker.cap
 ```
 
 To reach the scheduler,
@@ -126,10 +127,10 @@ We can use the `submit-docker.cap` file to submit jobs:
 
 ```sh
 $ dune exec -- ./stress/stress.exe cluster ./capnp-secrets/submit-docker.cap --count=10
-Solved warm-up requests in: 9.97s
+Solved warm-up requests in: 23.68s
 Running another 10 solves...
 10/10 complete
-Solved 10 requests in 5.09s (0.51s/iter)
+Solved 10 requests in 17.85s (1.79s/iter) (8.96 solves/s)
 ```
 
 ### Testing
@@ -141,8 +142,8 @@ For more realistic testing, the stress tester can also run in `local` mode to ru
 
 ```sh
 $ dune exec -- ./stress/stress.exe local --cache-dir=./cache --count=10
-Solved warm-up requests in: 8.63s
+Solved warm-up requests in: 21.46s
 Running another 10 solves...
 10/10 complete
-Solved 10 requests in 4.51s (0.45s/iter)
+Solved 10 requests in 17.87s (1.79s/iter) (8.95 solves/s)
 ```
