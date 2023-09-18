@@ -2,8 +2,8 @@ type t
 
 val create :
   sw:Eio.Switch.t ->
-  domain_mgr:#Eio.Domain_manager.t ->
-  process_mgr:#Eio.Process.mgr ->
+  domain_mgr:_ Eio.Domain_manager.t ->
+  process_mgr:_ Eio.Process.mgr ->
   cache_dir:string ->
   n_workers:int ->
   t

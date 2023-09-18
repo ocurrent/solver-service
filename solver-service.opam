@@ -18,9 +18,9 @@ depends: [
   "ppx_deriving" {>= "5.1"}
   "yojson" {>= "2.1.0"}
   "lwt" {>= "5.6.1"}
-  "eio" {>= "0.11"}
-  "eio_main" {>= "0.11"}
-  "lwt_eio" {>= "0.4"}
+  "eio" {>= "0.12"}
+  "eio_main" {>= "0.12"}
+  "lwt_eio" {>= "0.5"}
   "logs" {>= "0.7.0"}
   "fmt" {>= "0.9.0"}
   "ocaml-version" {>= "3.6.1"}
@@ -52,11 +52,3 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/ocurrent/solver-service.git"
-pin-depends: [
-  ["lwt_eio.0.4" "git+https://github.com/talex5/lwt_eio.git#27688ec6aa551b9e510cd6a13747880d97451dc4"]
-  ["lwt.dev" "git+https://github.com/talex5/lwt.git#52596733b92b12458fcae701d5051d984c26ed5d"]
-  ["eio.dev" "git+https://github.com/talex5/eio.git#5d8a48c20d3905c39cd990b7bf8bf3d78e6faa1c"]
-  ["eio_linux.dev" "git+https://github.com/talex5/eio.git#5d8a48c20d3905c39cd990b7bf8bf3d78e6faa1c"]
-  ["eio_posix.dev" "git+https://github.com/talex5/eio.git#5d8a48c20d3905c39cd990b7bf8bf3d78e6faa1c"]
-  ["eio_main.dev" "git+https://github.com/talex5/eio.git#5d8a48c20d3905c39cd990b7bf8bf3d78e6faa1c"]
-]

@@ -4,7 +4,7 @@ open Lwt.Infix
 module Store = Git_unix.Store
 module Search = Git.Search.Make (Digestif.SHA1) (Store)
 
-type t = OpamFile.OPAM.t OpamPackage.Version.Map.t Safe_lazy.t OpamPackage.Name.Map.t
+type t = OpamFile.OPAM.t OpamPackage.Version.Map.t Eio.Lazy.t OpamPackage.Name.Map.t
 
 let empty = OpamPackage.Name.Map.empty
 
@@ -68,16 +68,16 @@ let read_packages ~store tree =
           (Printexc.to_string ex);
         None
       | name ->
-        Some (name, Safe_lazy.make (fun () -> Lwt_eio.run_lwt_in_main (fun () -> read_versions store entry)))
+        Some (name, Eio.Lazy.from_fun ~cancel:`Restart (fun () -> Lwt_eio.run_lwt_in_main (fun () -> read_versions store entry)))
     )
   |> OpamPackage.Name.Map.of_list
 
 let overlay v1 v2 =
   (* Overwrite the v1 entry. This gives the semantics that that second
      repo given to read_packages is an overlay on the first one. *)
-  Safe_lazy.make (fun () ->
-      let v1 = Safe_lazy.force v1 in
-      let v2 = Safe_lazy.force v2 in
+  Eio.Lazy.from_fun ~cancel:`Restart (fun () ->
+      let v1 = Eio.Lazy.force v1 in
+      let v2 = Eio.Lazy.force v2 in
       OpamPackage.Version.Map.union (fun _ v2 -> v2) v1 v2
     )
 
@@ -97,4 +97,4 @@ let of_commit ?(super=empty) store commit : t =
 let get_versions (t:t) name =
   match OpamPackage.Name.Map.find_opt name t with
   | None -> OpamPackage.Version.Map.empty
-  | Some versions -> Safe_lazy.force versions
+  | Some versions -> Eio.Lazy.force versions

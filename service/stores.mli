@@ -8,7 +8,7 @@ type commit = string * string
 
 type t
 
-val create : process_mgr:#Eio.Process.mgr -> cache_dir:string -> t
+val create : process_mgr:_ Eio.Process.mgr -> cache_dir:string -> t
 (** [create ~process_mgr ~cache_dir] is a local Git cache that maintains local Git clones
     in [cache_dir]. It uses [process_mgr] to run the git command. *)
 

@@ -10,7 +10,7 @@ type commit = string * string
 type t = {
   cache_dir : string;
   mutable stores : Safe_store.t Store_map.t;
-  process_mgr : Eio.Process.mgr;
+  process_mgr : [`Generic] Eio.Process.mgr_ty r;
 
   (* For now we only keep the most recent set of packages. *)
   mutable index_cache : (commit list * Packages.t Promise.or_exn) option;
@@ -183,7 +183,7 @@ let rec update_to_commit t commit =
 let create ~process_mgr ~cache_dir =
   {
     cache_dir;
-    process_mgr = (process_mgr :> Eio.Process.mgr);
+    process_mgr = (process_mgr :> [`Generic] Eio.Process.mgr_ty r);
     stores = Store_map.empty;
     index_cache = None;
   }

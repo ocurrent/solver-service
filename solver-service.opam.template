@@ -1,8 +1,0 @@
-pin-depends: [
-  ["lwt_eio.0.4" "git+https://github.com/talex5/lwt_eio.git#27688ec6aa551b9e510cd6a13747880d97451dc4"]
-  ["lwt.dev" "git+https://github.com/talex5/lwt.git#52596733b92b12458fcae701d5051d984c26ed5d"]
-  ["eio.dev" "git+https://github.com/talex5/eio.git#5d8a48c20d3905c39cd990b7bf8bf3d78e6faa1c"]
-  ["eio_linux.dev" "git+https://github.com/talex5/eio.git#5d8a48c20d3905c39cd990b7bf8bf3d78e6faa1c"]
-  ["eio_posix.dev" "git+https://github.com/talex5/eio.git#5d8a48c20d3905c39cd990b7bf8bf3d78e6faa1c"]
-  ["eio_main.dev" "git+https://github.com/talex5/eio.git#5d8a48c20d3905c39cd990b7bf8bf3d78e6faa1c"]
-]
