@@ -41,7 +41,7 @@
  (name solver-service-api)
  (synopsis "Cap'n Proto API for the solver service")
  (depends
-  (ocaml (>= 5.0))
+  (ocaml (>= 4.14.1))
   (capnp (>= 3.5.0))
   (capnp-rpc-lwt (>= 1.2.3))
   (ppx_deriving_yojson (>= 3.6.1))

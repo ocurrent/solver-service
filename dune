@@ -1,3 +1,1 @@
 (dirs :standard \ var cache)
-
-(vendored_dirs ocluster ocurrent ocaml-dockerfile opam-0install-solver)

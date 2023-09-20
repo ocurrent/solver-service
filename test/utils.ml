@@ -1,6 +1,6 @@
 let verbose = false
 
-let add_opam_header s = 
+let add_opam_header s =
   {|
     opam-version: "2.0"
     synopsis: "Test package"
@@ -134,7 +134,7 @@ let pp_response f = function
   | Error `Cancelled -> Fmt.string f "Cancelled"
   | Error `Msg m -> Fmt.pf f "Error: %s" m
 
-let solve ?cancelled ?(pinned_pkgs=[]) t label ~commits ~root_pkgs ~platforms = 
+let solve ?cancelled ?(pinned_pkgs=[]) t label ~commits ~root_pkgs ~platforms =
   Fmt.pr "@.## %s ##@.@.commits: %a@.root_pkgs: %a@.platforms: %a@."
     label
     pp_commits commits

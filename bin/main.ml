@@ -127,13 +127,13 @@ let capacity =
   @@ Arg.info ~doc:"The number of cluster jobs that can run in parallel" ~docv:"N"
     [ "capacity" ]
 
-let cap_file = 
+let cap_file =
   Arg.required
   @@ Arg.opt Arg.(some string) None
   @@ Arg.info ~doc:"Path for new service.cap" ~docv:"FILE"
     [ "cap-file" ]
 
-let cache_dir = 
+let cache_dir =
   Arg.required
   @@ Arg.opt Arg.(some string) None
   @@ Arg.info ~doc:"Path cached Git clones" ~docv:"DIR"

@@ -189,7 +189,7 @@ module Stress_local = struct
         ~n_workers:local.n_workers
     in
     let service = Solver_service.Service.v solver in
-    benchmark config (fun request -> 
+    benchmark config (fun request ->
         Lwt_eio.run_lwt @@ fun () ->
         Solver_service_api.Solver.solve service ~log request
       )
@@ -202,7 +202,7 @@ module Stress_local = struct
     @@ Arg.info ~doc:"The number of sub-process solving requests in parallel"
       ~docv:"N" [ "internal-workers" ]
 
-  let cache_dir = 
+  let cache_dir =
     Arg.required
     @@ Arg.opt Arg.(some string) None
     @@ Arg.info ~doc:"Path cached Git clones" ~docv:"DIR"
@@ -234,7 +234,7 @@ module Stress_service = struct
     Lwt_eio.run_lwt @@ fun () ->
     Capnp_rpc_unix.with_cap_exn sr @@ fun solver ->
     Lwt_eio.run_eio @@ fun () ->
-    benchmark config (fun request -> 
+    benchmark config (fun request ->
         Lwt_eio.run_lwt @@ fun () ->
         Solver_service_api.Solver.solve solver ~log request
       )
