@@ -20,4 +20,7 @@ type reply = ((OpamPackage.t list, string) result * float, [`Msg of string]) res
     [Ok (Error msg)] if there is no solution.
     [Error msg] if the request was invalid. *)
 
+val env : Solver_service_api.Worker.Vars.t -> string -> OpamVariable.variable_contents option
+(** [env vars name] is the value of [name] in [vars]. *)
+
 val solve : request -> reply

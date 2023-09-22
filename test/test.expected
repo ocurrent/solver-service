@@ -227,3 +227,22 @@ platforms: [debian-12-ocaml-5]
 Need to update opam-repo.git to get new commit 1bc28b8e8d98db6e524822c6f28bddebbc3504a3
 results:
   Cancelled
+
+# Available
+
+## foo-linux is only selected on Linux platform, but foo is selected for both ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0])]
+root_pkgs: [foo.dev; foo-linux.dev]
+platforms: [linux; mac]
+results:
+  [linux:
+     compat_pkgs: [foo.dev; foo-linux.dev]
+     packages: [foo.dev; foo-linux.dev; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, 1bc28b8e8d98db6e524822c6f28bddebbc3504a3)]
+     lower_bound: false;
+   mac:
+     compat_pkgs: [foo.dev]
+     packages: [foo.dev; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, 1bc28b8e8d98db6e524822c6f28bddebbc3504a3)]
+     lower_bound: false]

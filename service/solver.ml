@@ -26,12 +26,19 @@ let compatible_with ~ocaml_version (dep_name, filter) =
     OpamFormula.eval check_ocaml filter
   else true
 
+let env vars v =
+  if List.mem v OpamPackageVar.predefined_depends_variables then None
+  else Domain_worker.env vars (OpamVariable.Full.to_string v)
+
 let solve_for_platform ?cancelled t ~log ~opam_repository_commits ~packages ~root_pkgs ~pinned_pkgs ~pins ~vars id =
   let ocaml_version = OpamPackage.Version.of_string vars.Worker.Vars.ocaml_version in
   let root_pkgs =
     root_pkgs
     |> List.filter (fun (_name, (_version, opam)) ->
+        let avail = OpamFile.OPAM.available opam in
         let deps = OpamFile.OPAM.depends opam in
+        let env = env vars in
+        OpamFilter.eval_to_bool ~default:true env avail &&
         OpamFormula.eval (compatible_with ~ocaml_version) deps)
   in
   if root_pkgs = [] then (

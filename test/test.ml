@@ -214,6 +214,23 @@ let test_cancel t =
     ~commits:[opam_repo, opam_packages]
     ~platforms
 
+let test_available t =
+  let opam_repo = Opam_repo.create "opam-repo.git" in
+  let opam_packages = [
+    "ocaml-base-compiler.5.0", "";
+  ] in
+  let root_pkgs = [
+    "foo.dev", "";
+    "foo-linux.dev", {| available: os = "linux" |};
+  ] in
+  solve t "foo-linux is only selected on Linux platform, but foo is selected for both"
+    ~root_pkgs
+    ~commits:[opam_repo, opam_packages]
+    ~platforms:[
+      "linux", debian_12_ocaml_5;
+      "mac", { debian_12_ocaml_5 with os = "macos" };
+    ]
+
 let () =
   Eio_main.run @@ fun env ->
   let domain_mgr = env#domain_mgr in
@@ -232,6 +249,7 @@ let () =
     "Multiple roots", test_multiple_roots;
     "Pinned", test_pinned;
     "Cancel", test_cancel;
+    "Available", test_available;
   ]
   |> List.iter (fun (name, fn) ->
       Fmt.pr "@.# %s@." name;
