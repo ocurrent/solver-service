@@ -61,7 +61,7 @@ let build ~cancelled ~log t descr =
     let output = Custom.solve ~cancelled ~solver:t.solver ~log c in
     Log_data.write log "Job succeeded\n";
     (Ok output, "ok")
-  | _ ->
+  | Obuilder_build _ | Docker_build _ ->
     let msg = "Only custom builds are supported" in
     (Error (`Msg msg), "build failed")
 

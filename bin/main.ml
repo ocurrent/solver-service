@@ -30,7 +30,8 @@ let reporter =
 let setup_log style_renderer level =
   Fmt_tty.setup_std_outputs ?style_renderer ();
   Logs.set_level level;
-  (* Disable tls.tracing when logs are set to debug *)
+  (* Disable tls.tracing when logs are set to debug:
+     (remove once we have https://github.com/dbuenzli/logs/issues/37) *)
   (* List.iter
      (fun src -> match Logs.Src.name src with "tls.tracing" -> Logs.Src.set_level src (Some Info) | _ -> ())
      @@ Logs.Src.list (); *)
