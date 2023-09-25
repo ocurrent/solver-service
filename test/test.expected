@@ -1,0 +1,229 @@
+
+# Simple
+
+## Select foo.1.0 ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+results:
+  [debian-12-ocaml-5:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; foo.1.0; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, bf39e9df31e82a307e3daee9409f62d1a15acfe7)]
+     lower_bound: false]
+
+## Foo 1.1 now available ##
+
+commits: [(opam-repo.git, [foo.1.1; ocaml-base-compiler.5.0; foo.1.0])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+Need to update opam-repo.git to get new commit a400c503c1cd70e902c5387c3048b13df6345462
+results:
+  [debian-12-ocaml-5:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; foo.1.1; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, a400c503c1cd70e902c5387c3048b13df6345462)]
+     lower_bound: false]
+
+## Retry with previous commit ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+results:
+  [debian-12-ocaml-5:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; foo.1.0; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, bf39e9df31e82a307e3daee9409f62d1a15acfe7)]
+     lower_bound: false]
+
+# Overlay
+
+## Fails without overlay ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+Need to update opam-repo.git to get new commit daf78f787d9147faf890684079654e3c74be5adf
+results:
+  []
+
+## Selects 5.0 with overlay ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0]);
+          (overlay.git, [foo.1.0])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+results:
+  [debian-12-ocaml-5:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; foo.1.0; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, daf78f787d9147faf890684079654e3c74be5adf);
+               (overlay.git, 98827377d66bfb42ca4d7d0bd17d3b59823cf3e3)]
+     lower_bound: false]
+
+## Overlay not needed ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0]);
+          (overlay.git, [foo.1.0])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+results:
+  [debian-12-ocaml-5:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, daf78f787d9147faf890684079654e3c74be5adf)]
+     lower_bound: false]
+
+## Non-overlaid versions still visible ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0]);
+          (overlay.git, [foo.1.1])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+Need to update opam-repo.git to get new commit d2fc42d092d44bea571d52cfcc4474428c9617f2
+Need to update overlay.git to get new commit 4e63ed9c4f328b824c844e7e5eb56c564b970f69
+results:
+  [debian-12-ocaml-5:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; foo.1.0; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, d2fc42d092d44bea571d52cfcc4474428c9617f2)]
+     lower_bound: false]
+
+# Lower-bound
+
+## Selects foo 1.0 for lower-bound ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0; foo.1.1])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5; lower-bound]
+Need to update opam-repo.git to get new commit 54edcb0b76daa233fb597d4cc2cf9258a39ea49a
+results:
+  [debian-12-ocaml-5:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; foo.1.1; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, 54edcb0b76daa233fb597d4cc2cf9258a39ea49a)]
+     lower_bound: false;
+   lower-bound:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; foo.1.0; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, 54edcb0b76daa233fb597d4cc2cf9258a39ea49a)]
+     lower_bound: true]
+
+# No solution
+
+## No solution ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+Need to update opam-repo.git to get new commit 39b23821916e30bd19dbb6fb916c9248b41abd83
+results:
+  []
+
+# Errors
+
+## Invalid opam root pkg ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+results:
+  Error: Error parsing app.dev: At ./<none>:4:10-4:15::
+Parse error
+
+## Invalid package in repo ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+Need to update opam-repo.git to get new commit 17e66310c5c95560291a2d6499e7154d30f95f05
+results:
+  Error: Error parsing ocaml-base-compiler.5.0: At ./<none>:4:9-4:14::
+Parse error
+
+## Invalid commit
+
+Need to update opam-repo.git to get new commit 17e66310c5c95560291a2d6499e7154d30f95f06
+results:
+  Error: Still missing commit after update!
+
+## Invalid repository
+
+results:
+  Error: Eio.Io Process Child_error Exited (code 128),
+  running command: git clone --bare foo.git cache/no_host/foo,
+  cloning "foo.git"
+
+# Double fetch
+
+## Concurrent fetches of invalid commit
+
+Need to update opam-repo.git to get new commit 17e66310c5c95560291a2d6499e7154d30f9aaaa
+Need to update opam-repo.git to get new commit 17e66310c5c95560291a2d6499e7154d30f9aaaa
+a:
+  Error: Still missing commit after update!
+b:
+  Error: Still missing commit after update!
+
+## One bad, one good
+
+Need to update opam-repo.git to get new commit 17e66310c5c95560291a2d6499e7154d30f9aaaa
+a:
+  Error: Still missing commit after update!
+b:
+  [debian-12-ocaml-5:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, b4f969c46abb646b30bbf2cf35f9175daeb21741)]
+     lower_bound: false]
+
+# Multiple roots
+
+## Only compatible packages ##
+
+commits: [(opam-repo.git,
+           [ocaml-base-compiler.4.14; ocaml-base-compiler.5.0; ocaml.4.14;
+            ocaml.5.0])]
+root_pkgs: [api.dev; impl.dev]
+platforms: [ocaml-4.14; ocaml-5.0]
+Need to update opam-repo.git to get new commit 27e6f844ca9ba0a3cef689b91b240f0e18fc6315
+results:
+  [ocaml-4.14:
+     compat_pkgs: [api.dev]
+     packages: [api.dev; ocaml.4.14; ocaml-base-compiler.4.14]
+     commits: [(opam-repo.git, 27e6f844ca9ba0a3cef689b91b240f0e18fc6315)]
+     lower_bound: false;
+   ocaml-5.0:
+     compat_pkgs: [api.dev; impl.dev]
+     packages: [api.dev; impl.dev; ocaml.5.0; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, 27e6f844ca9ba0a3cef689b91b240f0e18fc6315)]
+     lower_bound: false]
+
+# Pinned
+
+## Solution using pinned packages ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1])]
+root_pkgs: [root.dev]
+platforms: [debian-12-ocaml-5]
+pinned: [foo.2]
+Need to update opam-repo.git to get new commit 03bb2831c6015ac386adf820cc501c74d033320e
+results:
+  [debian-12-ocaml-5:
+     compat_pkgs: [root.dev]
+     packages: [foo.2; ocaml-base-compiler.5.0; root.dev]
+     commits: [(opam-repo.git, 03bb2831c6015ac386adf820cc501c74d033320e)]
+     lower_bound: false]
+
+# Cancel
+
+## Solution using pinned packages ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0])]
+root_pkgs: [foo.dev]
+platforms: [debian-12-ocaml-5]
+Need to update opam-repo.git to get new commit 1bc28b8e8d98db6e524822c6f28bddebbc3504a3
+results:
+  Cancelled

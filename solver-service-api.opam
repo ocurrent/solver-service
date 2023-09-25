@@ -10,7 +10,6 @@ bug-reports: "https://github.com/ocurrent/solver-service/issues"
 depends: [
   "dune" {>= "3.7"}
   "ocaml" {>= "4.14.1"}
-  "alcotest-lwt" {>= "1.7.0" & with-test}
   "capnp" {>= "3.5.0"}
   "capnp-rpc-lwt" {>= "1.2.3"}
   "ppx_deriving_yojson" {>= "3.6.1"}

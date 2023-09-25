@@ -1,0 +1,18 @@
+(executable
+ (name main)
+ (package solver-service)
+ (public_name solver-service)
+ (preprocess
+  (pps ppx_deriving.std ppx_deriving_yojson))
+ (libraries
+  solver-service
+  solver-service.worker
+  eio_main
+  lwt_eio
+  capnp-rpc-unix
+  dune-build-info
+  fmt.cli
+  fmt.tty
+  logs.cli
+  logs.fmt
+  logs.threaded))

@@ -1,0 +1,61 @@
+opam-version: "2.0"
+name: "lwt_eio"
+version: "0.4"
+synopsis: "Run Lwt code within Eio"
+description:
+  "An Lwt engine that allows running Lwt within an Eio event loop."
+maintainer: "talex5@gmail.com"
+authors: "Thomas Leonard"
+license: "ISC"
+homepage: "https://github.com/ocaml-multicore/lwt_eio"
+doc: "https://ocaml-multicore.github.io/lwt_eio"
+bug-reports: "https://github.com/ocaml-multicore/lwt_eio/issues"
+depends: [
+  "dune" {>= "3.8"}
+  "eio" {>= "0.10"}
+  "lwt"
+  "mdx" {>= "1.10.0" & with-test}
+  "eio_main" {with-test}
+  "odoc" {with-doc}
+]
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]
+dev-repo: "git+https://github.com/ocaml-multicore/lwt_eio.git"
+pin-depends: [
+  [
+    "eio.dev"
+    "git+https://github.com/ocaml-multicore/eio.git#3e49036b633979995e51ec83feb2732e9c6ce1aa"
+  ]
+  [
+    "eio_linux.dev"
+    "git+https://github.com/ocaml-multicore/eio.git#3e49036b633979995e51ec83feb2732e9c6ce1aa"
+  ]
+  [
+    "eio_posix.dev"
+    "git+https://github.com/ocaml-multicore/eio.git#3e49036b633979995e51ec83feb2732e9c6ce1aa"
+  ]
+  [
+    "eio_main.dev"
+    "git+https://github.com/ocaml-multicore/eio.git#3e49036b633979995e51ec83feb2732e9c6ce1aa"
+  ]
+  [
+    "lwt.dev"
+    "git+https://github.com/talex5/lwt.git#d4367052c1be8372d33661c01749086e56af623c"
+  ]
+]
+url {
+  src:
+    "git+https://github.com/talex5/lwt_eio.git#27688ec6aa551b9e510cd6a13747880d97451dc4"
+}

@@ -7,6 +7,5 @@ var
 .*.swp
 .vscode
 
-opam-repository
 capnp-secrets
-no_host
+cache

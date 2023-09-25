@@ -36,11 +36,11 @@ let opam_template arch =
 |}
     arch
 
-let get_vars ~ocaml_package_name ~ocaml_version ?arch ?(lower_bound = false) ()
-    =
-  let+ vars =
-    Solver_service.Process.pread
-      ("", [| "opam"; "config"; "expand"; opam_template arch |])
+let get_vars ~process_mgr ~ocaml_package_name ~ocaml_version ?arch ?(lower_bound = false) () =
+  Lwt_eio.run_eio @@ fun () ->
+  let vars =
+    Eio.Process.parse_out process_mgr Eio.Buf_read.take_all
+      ["opam"; "config"; "expand"; opam_template arch]
   in
   let json =
     match Yojson.Safe.from_string vars with
@@ -57,15 +57,16 @@ let get_vars ~ocaml_package_name ~ocaml_version ?arch ?(lower_bound = false) ()
   in
   Result.get_ok @@ Solver_service_api.Worker.Vars.of_yojson json
 
-let get_opam_file pv =
-  Solver_service.Process.pread ("", [| "opam"; "show"; "--raw"; pv |])
+let get_opam_file ~process_mgr pv =
+  Lwt_eio.run_eio @@ fun () ->
+  Eio.Process.parse_out process_mgr Eio.Buf_read.take_all ["opam"; "show"; "--raw"; pv]
 
-let run_client ~package ~version ~ocaml_version ~opam_commit service =
+let run_client ~process_mgr ~package ~version ~ocaml_version ~opam_commit service =
   let pv = package ^ "." ^ version in
   let* platform =
-    get_vars ~ocaml_package_name:"ocaml-base-compiler" ~ocaml_version ()
+    get_vars ~process_mgr ~ocaml_package_name:"ocaml-base-compiler" ~ocaml_version ()
   in
-  let* opam_file = get_opam_file pv in
+  let* opam_file = get_opam_file ~process_mgr pv in
   let request =
     Solver_service_api.Worker.Solve_request.
       {
@@ -92,11 +93,14 @@ let run_client ~package ~version ~ocaml_version ~opam_commit service =
   | Error `Cancelled -> Fmt.failwith "Job Cancelled"
 
 let connect package version ocaml_version opam_commit uri =
-  Lwt_main.run
-    (let client_vat = Capnp_rpc_unix.client_only_vat () in
-     let sr = Capnp_rpc_unix.Vat.import_exn client_vat uri in
-     Capnp_rpc_unix.with_cap_exn sr
-       (run_client ~package ~version ~ocaml_version ~opam_commit))
+  Eio_main.run @@ fun env ->
+  let process_mgr = env#process_mgr in
+  Lwt_eio.with_event_loop ~clock:env#clock @@ fun () ->
+  Lwt_eio.run_lwt @@ fun () ->
+  let client_vat = Capnp_rpc_unix.client_only_vat () in
+  let sr = Capnp_rpc_unix.Vat.import_exn client_vat uri in
+  Capnp_rpc_unix.with_cap_exn sr
+    (run_client ~process_mgr ~package ~version ~ocaml_version ~opam_commit)
 
 open Cmdliner
 

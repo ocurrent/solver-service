@@ -1,4 +1,4 @@
-(test
- (name test)
+(tests
+ (names test)
  (package solver-service)
- (libraries alcotest-lwt solver-service))
+ (libraries solver-service eio_main lwt_eio))
