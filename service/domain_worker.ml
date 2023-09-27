@@ -11,7 +11,7 @@ type request = {
   cancelled : unit Eio.Promise.t option;
 }
 
-type reply = ((OpamPackage.t list, string) result * float, [`Msg of string]) result
+type reply = ((OpamPackage.t list, string) result * float, [`Msg of string | `Cancelled]) result
 
 let env (vars : Worker.Vars.t) v =
   match v with
@@ -31,7 +31,7 @@ let env (vars : Worker.Vars.t) v =
 
 let solve { packages; root_pkgs; pinned_pkgs; vars; cancelled } =
   match cancelled with
-  | Some p when Promise.is_resolved p -> Error (`Msg "Cancelled")
+  | Some p when Promise.is_resolved p -> Error `Cancelled
   | _ ->
     try
       let pins = root_pkgs @ pinned_pkgs |> OpamPackage.Name.Map.of_list in
