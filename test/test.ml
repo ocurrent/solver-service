@@ -12,7 +12,20 @@ let debian_12_ocaml_5 =
     os_version = "12";
     ocaml_package = "ocaml-base-compiler";
     ocaml_version = "5.0";
-    opam_version = "2.1.3";
+    opam_version = "2.1.5";
+    lower_bound = false;
+  }
+
+let debian_12_ocaml_4 =
+  { Solver_service_api.Worker.Vars.
+    arch = "x86_64";
+    os = "linux";
+    os_family = "debian";
+    os_distribution = "debian";
+    os_version = "12";
+    ocaml_package = "ocaml-base-compiler";
+    ocaml_version = "4.14.1";
+    opam_version = "2.1.5";
     lower_bound = false;
   }
 
@@ -34,6 +47,22 @@ let test_simple t =
   ];
   (* Doesn't do another git-fetch, and doesn't use latest commit. *)
   solve t "Retry with previous commit" ~platforms ~root_pkgs ~commits:[opam_repo, opam_packages];
+  ()
+
+let test_multiple_ocaml_versions t =
+  let platforms = [
+      "debian-12-ocaml-5", debian_12_ocaml_5;
+      "debian-12-ocaml-4", debian_12_ocaml_4;
+    ] in
+  let opam_repo = Opam_repo.create "opam-repo.git" in
+  let root_pkgs = ["app.dev", {| depends: [ "foo" ] |}] in
+  let opam_packages = [
+      "ocaml-base-compiler.5.0", "";
+      "ocaml-base-compiler.4.14.1", "";
+      "foo.1.0", {| depends: [ "ocaml-base-compiler" { >= "4.14" }] |};
+    ]
+  in
+  solve t "Select foo.1.0 for 5.0 and 4.14.1" ~platforms ~root_pkgs ~commits:[opam_repo, opam_packages];
   ()
 
 let test_overlay t =
@@ -241,6 +270,7 @@ let () =
   let t = Solver_service.Solver.create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers:2 in
   [
     "Simple", test_simple;
+    "Multiple OCaml versions", test_multiple_ocaml_versions;
     "Overlay", test_overlay;
     "Lower-bound", test_lower_bound;
     "No solution", test_no_solution;
