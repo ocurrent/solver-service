@@ -38,6 +38,27 @@ results:
      commits: [(opam-repo.git, bf39e9df31e82a307e3daee9409f62d1a15acfe7)]
      lower_bound: false]
 
+# Multiple OCaml versions
+
+## Select foo.1.0 for 5.0 and 4.14.1 ##
+
+commits: [(opam-repo.git,
+           [ocaml-base-compiler.5.0; ocaml-base-compiler.4.14.1; foo.1.0])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5; debian-12-ocaml-4]
+Need to update opam-repo.git to get new commit a50e88bf106724a4758fdc7a9af58a2fd39d392f
+results:
+  [debian-12-ocaml-5:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; foo.1.0; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, a50e88bf106724a4758fdc7a9af58a2fd39d392f)]
+     lower_bound: false;
+   debian-12-ocaml-4:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; foo.1.0; ocaml-base-compiler.4.14.1]
+     commits: [(opam-repo.git, a50e88bf106724a4758fdc7a9af58a2fd39d392f)]
+     lower_bound: false]
+
 # Overlay
 
 ## Fails without overlay ##
