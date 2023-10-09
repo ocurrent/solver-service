@@ -6,9 +6,7 @@ type ('request, 'reply) t = {
 
 let rec run_worker t handle =
   let request, set_reply = Eio.Stream.take t.requests in
-  Atomic.incr t.running;
   handle request |> Promise.resolve set_reply;
-  Atomic.decr t.running;
   run_worker t handle
 
 let create ~sw ~domain_mgr ~n_workers handle =
@@ -25,6 +23,6 @@ let use t request =
   Eio.Stream.add t.requests (request, set_reply);
   Promise.await reply
 
-let running_workers t = Atomic.get t.running
-
 let n_workers t = t.n_workers
+
+let wait_requests t = Eio.Stream.length t.requests
