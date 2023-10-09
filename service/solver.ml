@@ -14,6 +14,7 @@ type t = {
 
 let ocaml = OpamPackage.Name.of_string "ocaml"
 
+
 module Metrics = struct
   open Prometheus
 
@@ -28,12 +29,12 @@ module Metrics = struct
     let help = "Number of handled requests by state" in
     Gauge.v_label ~label_name:"state" ~help ~namespace ~subsystem "solve_request_state"
 
-  let update_request_handling pool =
-    let running = Pool.running_workers pool in
-    let waiting = (Pool.n_workers pool) - running in
+  let update_request_handling pool n_requests =
+    let workers = Pool.n_workers pool in
+    let waiting = Pool.wait_requests pool in
+    let running = min !n_requests workers in
     Gauge.set (request_handling "running") (float_of_int running);
     Gauge.set (request_handling "waiting") (float_of_int waiting)
-
 
   let request_ok =
     let help = "Total number of success solve requests" in
@@ -169,6 +170,7 @@ let solve ?cancelled ~cacheable t ~log request =
   Log.info log "Solving for %a" Fmt.(list ~sep:comma string) root_pkgs;
   let serious_errors = ref [] in
   let cancels_without_running = ref 0 in
+  let n_requests = ref 0 in
   let*! root_pkgs = parse_opams request.root_pkgs in
   let*! pinned_pkgs = parse_opams request.pinned_pkgs in
   let*! packages = Stores.packages t.stores opam_repository_commits in
@@ -176,7 +178,8 @@ let solve ?cancelled ~cacheable t ~log request =
     platforms
     |> Fiber.List.map (fun (id, vars) ->
         Prometheus.Counter.inc_one Metrics.request_handling_total;
-        Metrics.update_request_handling t.pool;
+        incr n_requests;
+        Metrics.update_request_handling t.pool n_requests;
         let result =
           solve_for_platform t id
             ?cancelled
@@ -189,7 +192,8 @@ let solve ?cancelled ~cacheable t ~log request =
             ~pins
             ~vars
         in
-        Metrics.update_request_handling t.pool;
+        decr n_requests;
+        Metrics.update_request_handling t.pool n_requests;
         (id, result)
       )
     |> List.filter_map (fun (id, result) ->
