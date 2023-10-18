@@ -17,7 +17,7 @@ module Metrics = struct
   open Prometheus
 
   let namespace = "ocluster"
-  let subsystem = "worker"
+  let subsystem = "solver"
 
   let request_handling_total =
     let help = "Total number of handled solve requests" in
