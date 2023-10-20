@@ -10,7 +10,7 @@ let rec run_worker t handle =
   run_worker t handle
 
 let create ~sw ~domain_mgr ~n_workers handle =
-  let t = { requests = Eio.Stream.create 0; running = Atomic.make 0; n_workers } in
+  let t = { requests = Eio.Stream.create max_int; running = Atomic.make 0; n_workers } in
   for _i = 1 to n_workers do
     Fiber.fork_daemon ~sw (fun () ->
         Eio.Domain_manager.run domain_mgr (fun () -> run_worker t handle)

@@ -25,7 +25,7 @@ module Metrics = struct
 
   let request_handling =
     let help = "Number of handled requests by state" in
-    Gauge.v_label ~label_name:"state" ~help ~namespace ~subsystem "solve_request_state"
+    Gauge.v_label ~label_name:"state" ~help ~namespace ~subsystem "request_state"
 
   let update_request_handling pool n_requests =
     let workers = Pool.n_workers pool in
@@ -36,23 +36,23 @@ module Metrics = struct
 
   let request_ok =
     let help = "Total number of success solve requests" in
-    Counter.v ~help ~namespace ~subsystem "success_solve"
+    Counter.v ~help ~namespace ~subsystem "success"
 
   let request_fail =
     let help = "Total number of fail solve requests" in
-    Counter.v ~help ~namespace ~subsystem "fail_solve"
+    Counter.v ~help ~namespace ~subsystem "failed"
 
   let request_no_solution =
     let help = "Total number of no solution solve requests " in
-    Counter.v ~help ~namespace ~subsystem "no_solution_solve"
+    Counter.v ~help ~namespace ~subsystem "no_solution"
 
-  let request_cancelled =
-    let help = "Total number of cancel without running solve requests" in
-    Counter.v ~help ~namespace ~subsystem "cancel_without_running_solve"
+  let request_cancel_waiting =
+    let help = "Total number of cancel when the requests are waiting" in
+    Counter.v ~help ~namespace ~subsystem "cancel_waiting"
 
-  let request_cancelled_after =
-    let help = "Total number of cancel when running solve requests" in
-    Counter.v ~help ~namespace ~subsystem "cancel_when_running_solve"
+  let request_cancel_running =
+    let help = "Total number of cancel when the requests are running" in
+    Counter.v ~help ~namespace ~subsystem "cancel_running"
 
 end
 
@@ -160,8 +160,9 @@ let solve ?cancelled t ~log request =
   in
   Log.info log "Solving for %a" Fmt.(list ~sep:comma string) root_pkgs;
   let serious_errors = ref [] in
-  let cancels_without_running = ref 0 in
+  let cancel_waiting = ref 0 in
   let n_requests = ref 0 in
+  let pool = t.pool in
   let*! root_pkgs = parse_opams request.root_pkgs in
   let*! pinned_pkgs = parse_opams request.pinned_pkgs in
   let*! packages = Stores.packages t.stores opam_repository_commits in
@@ -170,7 +171,7 @@ let solve ?cancelled t ~log request =
     |> Fiber.List.map (fun (id, vars) ->
         Prometheus.Counter.inc_one Metrics.request_handling_total;
         incr n_requests;
-        Metrics.update_request_handling t.pool n_requests;
+        Metrics.update_request_handling pool n_requests;
         let result =
           solve_for_platform t id
             ?cancelled
@@ -182,12 +183,13 @@ let solve ?cancelled t ~log request =
             ~pins
             ~vars
         in
-        decr n_requests;
-        Metrics.update_request_handling t.pool n_requests;
+        Metrics.update_request_handling pool n_requests;
         (id, result)
       )
     |> List.filter_map (fun (id, result) ->
         Log.info log "= %s =" id;
+        decr n_requests;
+        Metrics.update_request_handling pool n_requests;
         match result with
         | Ok result ->
           Prometheus.Counter.inc_one Metrics.request_ok;
@@ -199,8 +201,8 @@ let solve ?cancelled t ~log request =
             result.Selection.commits;
           Some result
         | Error `Cancelled ->
-          Prometheus.Counter.inc_one Metrics.request_cancelled;
-          incr cancels_without_running;
+          Prometheus.Counter.inc_one Metrics.request_cancel_waiting;
+          incr cancel_waiting;
           Log.info log "%s" "Cancelled";
           None
         | Error (`No_solution msg) ->
@@ -216,8 +218,8 @@ let solve ?cancelled t ~log request =
   in
   match cancelled with
   | Some p when Promise.is_resolved p ->
-    let cancels = (List.length platforms) - (!cancels_without_running) in
-    Prometheus.Counter.inc Metrics.request_cancelled_after (float_of_int cancels);
+    let cancels = (List.length platforms) - (!cancel_waiting) in
+    Prometheus.Counter.inc Metrics.request_cancel_running (float_of_int cancels);
     Error `Cancelled
   | _ ->
     match !serious_errors with
