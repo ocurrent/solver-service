@@ -22,7 +22,7 @@ module Metrics = struct
   let subsystem = "solver"
 
   let request_handling_total =
-    let help = "Total number of handled solve requests" in
+    let help = "Total number of handled requests" in
     Counter.v ~help ~namespace ~subsystem "requests_handled_total"
 
   let request_handling =
@@ -34,18 +34,19 @@ module Metrics = struct
     let waiting = Pool.wait_requests pool in
     let running = min !n_requests workers in
     Gauge.set (request_handling "running") (float_of_int running);
-    Gauge.set (request_handling "waiting") (float_of_int waiting)
+    Gauge.set (request_handling "waiting") (float_of_int waiting);
+    Gauge.set (request_handling "capacity") (float_of_int workers)
 
   let request_ok =
-    let help = "Total number of success solve requests" in
+    let help = "Total number of success requests" in
     Counter.v ~help ~namespace ~subsystem "success"
 
   let request_fail =
-    let help = "Total number of fail solve requests" in
+    let help = "Total number of fail requests" in
     Counter.v ~help ~namespace ~subsystem "failed"
 
   let request_no_solution =
-    let help = "Total number of no solution solve requests " in
+    let help = "Total number of no solution requests " in
     Counter.v ~help ~namespace ~subsystem "no_solution"
 
   let request_cancel_waiting =
@@ -56,6 +57,9 @@ module Metrics = struct
     let help = "Total number of cancel when the requests are running" in
     Counter.v ~help ~namespace ~subsystem "cancel_running"
 
+  let request_timing =
+    let help = "Total time spent finding solutions" in
+    Summary.v ~help ~namespace ~subsystem "timing"
 end
 
 (* If a local package has a literal constraint on OCaml's version and it doesn't match
@@ -98,9 +102,11 @@ let solve_for_platform ?cancelled t ~cacheable ~log ~opam_repository_commits ~pa
     | Ok (results, time) ->
       match results with
       | Error e ->
+        Prometheus.Summary.observe Metrics.request_timing time;
         Log.info log "%s: eliminated all possibilities in %.2f s" id time;
         Error (`No_solution e)
       | Ok packages ->
+        Prometheus.Summary.observe Metrics.request_timing time;
         Log.info log "%s: found solution in %.2f s" id time;
         let commits =
           if cacheable then
