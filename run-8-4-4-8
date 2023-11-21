@@ -1,0 +1,1405 @@
+[
+  "Ok",
+  [
+    {
+      "id": "linux",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-domains.base",
+        "base-nnp.base", "base-threads.base", "base-unix.base", "dune.3.9.1",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ounit2.2.2.7", "seq.base",
+        "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "windows",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-bytes.base",
+        "base-domains.base", "base-nnp.base", "base-threads.base",
+        "base-unix.base", "dune.3.3.0", "ocaml.5.0.0",
+        "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocamlfind.1.9.5", "ounit2.2.2.6",
+        "seq.0.2.2", "stdlib-shims.0.1.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": true
+    },
+    {
+      "id": "4.08.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.08.0",
+        "ocaml-base-compiler.4.08.0", "ocaml-config.1", "ounit2.2.2.7",
+        "seq.base", "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.09.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.09.0",
+        "ocaml-base-compiler.4.09.0", "ocaml-config.1", "ounit2.2.2.7",
+        "seq.base", "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.10.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.10.0",
+        "ocaml-base-compiler.4.10.0", "ocaml-config.1", "ounit2.2.2.7",
+        "seq.base", "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.11.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.11.0",
+        "ocaml-base-compiler.4.11.0", "ocaml-config.1", "ounit2.2.2.7",
+        "seq.base", "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.12.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.12.0",
+        "ocaml-base-compiler.4.12.0", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "ounit2.2.2.7", "seq.base",
+        "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.13.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.13.0",
+        "ocaml-base-compiler.4.13.0", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "ounit2.2.2.7", "seq.base",
+        "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.14.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.14.0",
+        "ocaml-base-compiler.4.14.0", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "ounit2.2.2.7", "seq.base",
+        "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    }
+  ]
+]
+[
+  "Ok",
+  [
+    {
+      "id": "linux",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-domains.base", "base-nnp.base", "base-threads.base",
+        "base-unix.base", "base64.3.5.1", "bos.0.2.1", "cmdliner.1.2.0",
+        "dune.3.9.1", "fmt.0.9.0", "fpath.0.7.3", "logs.0.7.0",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocaml-syntax-shims.1.0.0",
+        "ocamlbuild.0.14.2", "ocamlfind.1.9.6", "re.1.10.4", "rresult.0.7.0",
+        "seq.base", "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "windows",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.0.0", "astring.0.8.5", "base-bigarray.base",
+        "base-domains.base", "base-nnp.base", "base-threads.base",
+        "base-unix.base", "base64.3.5.1", "bos.0.2.1", "cmdliner.1.1.0",
+        "dune.3.3.0", "fmt.0.9.0", "fpath.0.7.3", "logs.0.6.3",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocamlbuild.0.14.1", "ocamlfind.1.9.5",
+        "re.1.9.0", "rresult.0.7.0", "seq.0.2.2", "stdlib-shims.0.1.0",
+        "topkg.1.0.6", "uuidm.0.9.8"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": true
+    },
+    {
+      "id": "4.05.0",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.5.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base64.3.5.1", "bos.0.2.0",
+        "cmdliner.1.0.4", "dune.3.9.1", "fmt.0.8.9", "fpath.0.7.3",
+        "logs.0.7.0", "ocaml.4.05.0", "ocaml-base-compiler.4.05.0",
+        "ocaml-config.1", "ocaml-secondary-compiler.4.08.1-1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "ocamlfind-secondary.1.9.6", "re.1.10.4", "result.1.5",
+        "rresult.0.6.0", "seq.0.3.1", "stdlib-shims.0.3.0", "topkg.1.0.7",
+        "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.06.0",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.5.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base64.3.5.1", "bos.0.2.0",
+        "cmdliner.1.0.4", "dune.3.9.1", "fmt.0.8.9", "fpath.0.7.3",
+        "logs.0.7.0", "ocaml.4.06.0", "ocaml-base-compiler.4.06.0",
+        "ocaml-config.1", "ocaml-secondary-compiler.4.08.1-1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "ocamlfind-secondary.1.9.6", "re.1.10.4", "result.1.5",
+        "rresult.0.6.0", "seq.0.3.1", "stdlib-shims.0.3.0", "topkg.1.0.7",
+        "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.07.0",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.5.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base64.3.5.1", "bos.0.2.0",
+        "cmdliner.1.0.4", "dune.3.9.1", "fmt.0.8.9", "fpath.0.7.3",
+        "logs.0.7.0", "ocaml.4.07.0", "ocaml-base-compiler.4.07.0",
+        "ocaml-config.1", "ocaml-secondary-compiler.4.08.1-1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "ocamlfind-secondary.1.9.6", "re.1.10.4", "result.1.5",
+        "rresult.0.6.0", "seq.base", "stdlib-shims.0.3.0", "topkg.1.0.7",
+        "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.08.0",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base64.3.5.1", "bos.0.2.1",
+        "cmdliner.1.2.0", "dune.3.9.1", "fmt.0.9.0", "fpath.0.7.3",
+        "logs.0.7.0", "ocaml.4.08.0", "ocaml-base-compiler.4.08.0",
+        "ocaml-config.1", "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "re.1.10.4", "rresult.0.7.0", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.09.0",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base64.3.5.1", "bos.0.2.1",
+        "cmdliner.1.2.0", "dune.3.9.1", "fmt.0.9.0", "fpath.0.7.3",
+        "logs.0.7.0", "ocaml.4.09.0", "ocaml-base-compiler.4.09.0",
+        "ocaml-config.1", "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "re.1.10.4", "rresult.0.7.0", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.10.0",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base64.3.5.1", "bos.0.2.1",
+        "cmdliner.1.2.0", "dune.3.9.1", "fmt.0.9.0", "fpath.0.7.3",
+        "logs.0.7.0", "ocaml.4.10.0", "ocaml-base-compiler.4.10.0",
+        "ocaml-config.1", "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "re.1.10.4", "rresult.0.7.0", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.11.0",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base64.3.5.1", "bos.0.2.1",
+        "cmdliner.1.2.0", "dune.3.9.1", "fmt.0.9.0", "fpath.0.7.3",
+        "logs.0.7.0", "ocaml.4.11.0", "ocaml-base-compiler.4.11.0",
+        "ocaml-config.1", "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "re.1.10.4", "rresult.0.7.0", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.12.0",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base64.3.5.1", "bos.0.2.1",
+        "cmdliner.1.2.0", "dune.3.9.1", "fmt.0.9.0", "fpath.0.7.3",
+        "logs.0.7.0", "ocaml.4.12.0", "ocaml-base-compiler.4.12.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "re.1.10.4", "rresult.0.7.0", "seq.base", "stdlib-shims.0.3.0",
+        "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.13.0",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base64.3.5.1", "bos.0.2.1",
+        "cmdliner.1.2.0", "dune.3.9.1", "fmt.0.9.0", "fpath.0.7.3",
+        "logs.0.7.0", "ocaml.4.13.0", "ocaml-base-compiler.4.13.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "re.1.10.4", "rresult.0.7.0", "seq.base", "stdlib-shims.0.3.0",
+        "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.14.0",
+      "compat_pkgs": [ "base64.3.5.1" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base64.3.5.1", "bos.0.2.1",
+        "cmdliner.1.2.0", "dune.3.9.1", "fmt.0.9.0", "fpath.0.7.3",
+        "logs.0.7.0", "ocaml.4.14.0", "ocaml-base-compiler.4.14.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "re.1.10.4", "rresult.0.7.0", "seq.base", "stdlib-shims.0.3.0",
+        "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    }
+  ]
+]
+[
+  "Ok",
+  [
+    {
+      "id": "linux",
+      "compat_pkgs": [ "async_kernel.v0.16.0" ],
+      "packages": [
+        "async_kernel.v0.16.0", "base.v0.16.1", "base-bigarray.base",
+        "base-domains.base", "base-nnp.base", "base-threads.base",
+        "base-unix.base", "base_bigstring.v0.16.0",
+        "base_quickcheck.v0.16.0", "bin_prot.v0.16.0", "core.v0.16.1",
+        "core_kernel.v0.16.0", "csexp.1.5.2", "dune.3.9.1",
+        "dune-configurator.3.9.1", "fieldslib.v0.16.0", "int_repr.v0.16.0",
+        "jane-street-headers.v0.16.0", "jst-config.v0.16.0", "num.1.4",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0",
+        "ocaml-compiler-libs.v0.12.4", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocamlfind.1.9.6", "parsexp.v0.16.0",
+        "ppx_assert.v0.16.0", "ppx_base.v0.16.0", "ppx_bench.v0.16.0",
+        "ppx_bin_prot.v0.16.0", "ppx_cold.v0.16.0", "ppx_compare.v0.16.0",
+        "ppx_custom_printf.v0.16.0", "ppx_derivers.1.2.1",
+        "ppx_disable_unused_warnings.v0.16.0", "ppx_enumerate.v0.16.0",
+        "ppx_expect.v0.16.0", "ppx_fields_conv.v0.16.0",
+        "ppx_fixed_literal.v0.16.0", "ppx_globalize.v0.16.0",
+        "ppx_hash.v0.16.0", "ppx_here.v0.16.0",
+        "ppx_ignore_instrumentation.v0.16.0", "ppx_inline_test.v0.16.0",
+        "ppx_jane.v0.16.0", "ppx_let.v0.16.0", "ppx_log.v0.16.0",
+        "ppx_module_timer.v0.16.0", "ppx_optcomp.v0.16.0",
+        "ppx_optional.v0.16.0", "ppx_pipebang.v0.16.0",
+        "ppx_sexp_conv.v0.16.0", "ppx_sexp_message.v0.16.0",
+        "ppx_sexp_value.v0.16.0", "ppx_stable.v0.16.0",
+        "ppx_stable_witness.v0.16.0", "ppx_string.v0.16.0",
+        "ppx_tydi.v0.16.0", "ppx_typerep_conv.v0.16.0",
+        "ppx_variants_conv.v0.16.0", "ppxlib.0.30.0", "re.1.10.4",
+        "seq.base", "sexplib.v0.16.0", "sexplib0.v0.16.0",
+        "splittable_random.v0.16.0", "stdio.v0.16.0", "stdlib-shims.0.3.0",
+        "time_now.v0.16.0", "typerep.v0.16.0", "variantslib.v0.16.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "windows",
+      "compat_pkgs": [ "async_kernel.v0.16.0" ],
+      "packages": [
+        "async_kernel.v0.16.0", "base.v0.16.1", "base-bigarray.base",
+        "base-domains.base", "base-nnp.base", "base-threads.base",
+        "base-unix.base", "base_bigstring.v0.16.0",
+        "base_quickcheck.v0.16.0", "bin_prot.v0.16.0", "core.v0.16.0",
+        "core_kernel.v0.16.0", "dune.3.3.0", "dune-configurator.2.7.0",
+        "fieldslib.v0.16.0", "int_repr.v0.16.0",
+        "jane-street-headers.v0.16.0", "jst-config.v0.16.0", "num.1.0",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0",
+        "ocaml-compiler-libs.v0.12.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocamlfind.1.9.5", "parsexp.v0.16.0",
+        "ppx_assert.v0.16.0", "ppx_base.v0.16.0", "ppx_bench.v0.16.0",
+        "ppx_bin_prot.v0.16.0", "ppx_cold.v0.16.0", "ppx_compare.v0.16.0",
+        "ppx_custom_printf.v0.16.0", "ppx_derivers.1.2.1",
+        "ppx_disable_unused_warnings.v0.16.0", "ppx_enumerate.v0.16.0",
+        "ppx_expect.v0.16.0", "ppx_fields_conv.v0.16.0",
+        "ppx_fixed_literal.v0.16.0", "ppx_globalize.v0.16.0",
+        "ppx_hash.v0.16.0", "ppx_here.v0.16.0",
+        "ppx_ignore_instrumentation.v0.16.0", "ppx_inline_test.v0.16.0",
+        "ppx_jane.v0.16.0", "ppx_let.v0.16.0", "ppx_log.v0.16.0",
+        "ppx_module_timer.v0.16.0", "ppx_optcomp.v0.16.0",
+        "ppx_optional.v0.16.0", "ppx_pipebang.v0.16.0",
+        "ppx_sexp_conv.v0.16.0", "ppx_sexp_message.v0.16.0",
+        "ppx_sexp_value.v0.16.0", "ppx_stable.v0.16.0",
+        "ppx_stable_witness.v0.16.0", "ppx_string.v0.16.0",
+        "ppx_tydi.v0.16.0", "ppx_typerep_conv.v0.16.0",
+        "ppx_variants_conv.v0.16.0", "ppxlib.0.28.0", "re.1.9.0",
+        "seq.0.2.2", "sexplib.v0.16.0", "sexplib0.v0.16.0",
+        "splittable_random.v0.16.0", "stdio.v0.16.0", "stdlib-shims.0.1.0",
+        "time_now.v0.16.0", "typerep.v0.16.0", "variantslib.v0.16.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "a07cf26672131eb450592f4def30ccda20f3d4d5"
+        ]
+      ],
+      "lower_bound": true
+    },
+    {
+      "id": "4.14.0",
+      "compat_pkgs": [ "async_kernel.v0.16.0" ],
+      "packages": [
+        "async_kernel.v0.16.0", "base.v0.16.1", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "base_bigstring.v0.16.0",
+        "base_quickcheck.v0.16.0", "bin_prot.v0.16.0", "core.v0.16.1",
+        "core_kernel.v0.16.0", "csexp.1.5.2", "dune.3.9.1",
+        "dune-configurator.3.9.1", "fieldslib.v0.16.0", "int_repr.v0.16.0",
+        "jane-street-headers.v0.16.0", "jst-config.v0.16.0", "num.1.4",
+        "ocaml.4.14.0", "ocaml-base-compiler.4.14.0",
+        "ocaml-compiler-libs.v0.12.4", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "ocamlfind.1.9.6", "parsexp.v0.16.0",
+        "ppx_assert.v0.16.0", "ppx_base.v0.16.0", "ppx_bench.v0.16.0",
+        "ppx_bin_prot.v0.16.0", "ppx_cold.v0.16.0", "ppx_compare.v0.16.0",
+        "ppx_custom_printf.v0.16.0", "ppx_derivers.1.2.1",
+        "ppx_disable_unused_warnings.v0.16.0", "ppx_enumerate.v0.16.0",
+        "ppx_expect.v0.16.0", "ppx_fields_conv.v0.16.0",
+        "ppx_fixed_literal.v0.16.0", "ppx_globalize.v0.16.0",
+        "ppx_hash.v0.16.0", "ppx_here.v0.16.0",
+        "ppx_ignore_instrumentation.v0.16.0", "ppx_inline_test.v0.16.0",
+        "ppx_jane.v0.16.0", "ppx_let.v0.16.0", "ppx_log.v0.16.0",
+        "ppx_module_timer.v0.16.0", "ppx_optcomp.v0.16.0",
+        "ppx_optional.v0.16.0", "ppx_pipebang.v0.16.0",
+        "ppx_sexp_conv.v0.16.0", "ppx_sexp_message.v0.16.0",
+        "ppx_sexp_value.v0.16.0", "ppx_stable.v0.16.0",
+        "ppx_stable_witness.v0.16.0", "ppx_string.v0.16.0",
+        "ppx_tydi.v0.16.0", "ppx_typerep_conv.v0.16.0",
+        "ppx_variants_conv.v0.16.0", "ppxlib.0.30.0", "re.1.10.4",
+        "seq.base", "sexplib.v0.16.0", "sexplib0.v0.16.0",
+        "splittable_random.v0.16.0", "stdio.v0.16.0", "stdlib-shims.0.3.0",
+        "time_now.v0.16.0", "typerep.v0.16.0", "variantslib.v0.16.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    }
+  ]
+]
+[
+  "Ok",
+  [
+    {
+      "id": "linux",
+      "compat_pkgs": [ "base.v0.16.1" ],
+      "packages": [
+        "base.v0.16.1", "base-bigarray.base", "base-domains.base",
+        "base-nnp.base", "base-threads.base", "base-unix.base",
+        "csexp.1.5.2", "dune.3.9.1", "dune-configurator.3.9.1",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "sexplib0.v0.16.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "windows",
+      "compat_pkgs": [ "base.v0.16.1" ],
+      "packages": [
+        "base.v0.16.1", "base-bigarray.base", "base-domains.base",
+        "base-nnp.base", "base-threads.base", "base-unix.base", "dune.3.3.0",
+        "dune-configurator.2.7.0", "ocaml.5.0.0",
+        "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "sexplib0.v0.16.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "921b2b7e884ea897b0bcbe4c65554dd886ce6361"
+        ]
+      ],
+      "lower_bound": true
+    },
+    {
+      "id": "4.14.0",
+      "compat_pkgs": [ "base.v0.16.1" ],
+      "packages": [
+        "base.v0.16.1", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "csexp.1.5.2", "dune.3.9.1",
+        "dune-configurator.3.9.1", "ocaml.4.14.0",
+        "ocaml-base-compiler.4.14.0", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "sexplib0.v0.16.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    }
+  ]
+]
+[
+  "Ok",
+  [
+    {
+      "id": "linux",
+      "compat_pkgs": [ "asn1-combinators.0.2.6" ],
+      "packages": [
+        "alcotest.1.7.0", "asn1-combinators.0.2.6", "astring.0.8.5",
+        "base-bigarray.base", "base-domains.base", "base-nnp.base",
+        "base-threads.base", "base-unix.base", "cmdliner.1.2.0",
+        "conf-gmp.4", "cstruct.6.2.0", "dune.3.9.1", "fmt.0.9.0",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocaml-syntax-shims.1.0.0",
+        "ocamlbuild.0.14.2", "ocamlfind.1.9.6", "ptime.1.1.0", "re.1.10.4",
+        "seq.base", "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3",
+        "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "windows",
+      "compat_pkgs": [ "asn1-combinators.0.2.6" ],
+      "packages": [
+        "alcotest.1.0.0", "asn1-combinators.0.2.6", "astring.0.8.5",
+        "base-bigarray.base", "base-domains.base", "base-nnp.base",
+        "base-threads.base", "base-unix.base", "bigarray-compat.1.1.0",
+        "cmdliner.1.1.0", "conf-gmp.1", "conf-perl.1", "cstruct.6.0.0",
+        "dune.3.3.0", "fmt.0.9.0", "ocaml.5.0.0",
+        "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocamlbuild.0.14.1", "ocamlfind.1.9.5",
+        "ptime.0.8.6", "re.1.9.0", "seq.0.2.2", "stdlib-shims.0.1.0",
+        "topkg.1.0.6", "uuidm.0.9.8", "zarith.1.4"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": true
+    },
+    {
+      "id": "4.08.0",
+      "compat_pkgs": [ "asn1-combinators.0.2.6" ],
+      "packages": [
+        "alcotest.1.7.0", "asn1-combinators.0.2.6", "astring.0.8.5",
+        "base-bigarray.base", "base-threads.base", "base-unix.base",
+        "cmdliner.1.2.0", "conf-gmp.4", "cstruct.6.2.0", "dune.3.9.1",
+        "fmt.0.9.0", "ocaml.4.08.0", "ocaml-base-compiler.4.08.0",
+        "ocaml-config.1", "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "ptime.1.1.0", "re.1.10.4", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.09.0",
+      "compat_pkgs": [ "asn1-combinators.0.2.6" ],
+      "packages": [
+        "alcotest.1.7.0", "asn1-combinators.0.2.6", "astring.0.8.5",
+        "base-bigarray.base", "base-threads.base", "base-unix.base",
+        "cmdliner.1.2.0", "conf-gmp.4", "cstruct.6.2.0", "dune.3.9.1",
+        "fmt.0.9.0", "ocaml.4.09.0", "ocaml-base-compiler.4.09.0",
+        "ocaml-config.1", "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "ptime.1.1.0", "re.1.10.4", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.10.0",
+      "compat_pkgs": [ "asn1-combinators.0.2.6" ],
+      "packages": [
+        "alcotest.1.7.0", "asn1-combinators.0.2.6", "astring.0.8.5",
+        "base-bigarray.base", "base-threads.base", "base-unix.base",
+        "cmdliner.1.2.0", "conf-gmp.4", "cstruct.6.2.0", "dune.3.9.1",
+        "fmt.0.9.0", "ocaml.4.10.0", "ocaml-base-compiler.4.10.0",
+        "ocaml-config.1", "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "ptime.1.1.0", "re.1.10.4", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.11.0",
+      "compat_pkgs": [ "asn1-combinators.0.2.6" ],
+      "packages": [
+        "alcotest.1.7.0", "asn1-combinators.0.2.6", "astring.0.8.5",
+        "base-bigarray.base", "base-threads.base", "base-unix.base",
+        "cmdliner.1.2.0", "conf-gmp.4", "cstruct.6.2.0", "dune.3.9.1",
+        "fmt.0.9.0", "ocaml.4.11.0", "ocaml-base-compiler.4.11.0",
+        "ocaml-config.1", "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "ptime.1.1.0", "re.1.10.4", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.12.0",
+      "compat_pkgs": [ "asn1-combinators.0.2.6" ],
+      "packages": [
+        "alcotest.1.7.0", "asn1-combinators.0.2.6", "astring.0.8.5",
+        "base-bigarray.base", "base-threads.base", "base-unix.base",
+        "cmdliner.1.2.0", "conf-gmp.4", "cstruct.6.2.0", "dune.3.9.1",
+        "fmt.0.9.0", "ocaml.4.12.0", "ocaml-base-compiler.4.12.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "ptime.1.1.0", "re.1.10.4", "seq.base", "stdlib-shims.0.3.0",
+        "topkg.1.0.7", "uutf.1.0.3", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.13.0",
+      "compat_pkgs": [ "asn1-combinators.0.2.6" ],
+      "packages": [
+        "alcotest.1.7.0", "asn1-combinators.0.2.6", "astring.0.8.5",
+        "base-bigarray.base", "base-threads.base", "base-unix.base",
+        "cmdliner.1.2.0", "conf-gmp.4", "cstruct.6.2.0", "dune.3.9.1",
+        "fmt.0.9.0", "ocaml.4.13.0", "ocaml-base-compiler.4.13.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "ptime.1.1.0", "re.1.10.4", "seq.base", "stdlib-shims.0.3.0",
+        "topkg.1.0.7", "uutf.1.0.3", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.14.0",
+      "compat_pkgs": [ "asn1-combinators.0.2.6" ],
+      "packages": [
+        "alcotest.1.7.0", "asn1-combinators.0.2.6", "astring.0.8.5",
+        "base-bigarray.base", "base-threads.base", "base-unix.base",
+        "cmdliner.1.2.0", "conf-gmp.4", "cstruct.6.2.0", "dune.3.9.1",
+        "fmt.0.9.0", "ocaml.4.14.0", "ocaml-base-compiler.4.14.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "ptime.1.1.0", "re.1.10.4", "seq.base", "stdlib-shims.0.3.0",
+        "topkg.1.0.7", "uutf.1.0.3", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    }
+  ]
+]
+[
+  "Ok",
+  [
+    {
+      "id": "linux",
+      "compat_pkgs": [ "awa-mirage.0.3.0" ],
+      "packages": [
+        "asn1-combinators.0.2.6", "awa.0.3.0", "awa-mirage.0.3.0",
+        "base-bigarray.base", "base-bytes.base", "base-domains.base",
+        "base-nnp.base", "base-threads.base", "base-unix.base",
+        "base64.3.5.1", "cmdliner.1.2.0", "conf-gmp.4",
+        "conf-gmp-powm-sec.3", "cppo.1.6.9", "csexp.1.5.2", "cstruct.6.2.0",
+        "cstruct-unix.6.2.0", "domain-name.0.4.0", "dune.3.9.1",
+        "dune-configurator.3.9.1", "duration.0.2.1", "eqaf.0.9", "fmt.0.9.0",
+        "gmap.0.3.0", "ipaddr.5.5.0", "logs.0.7.0", "lwt.5.6.1",
+        "macaddr.5.5.0", "mirage-clock.4.2.0", "mirage-crypto.0.11.1",
+        "mirage-crypto-ec.0.11.1", "mirage-crypto-pk.0.11.1",
+        "mirage-crypto-rng.0.11.1", "mirage-flow.3.0.0", "mirage-time.3.0.0",
+        "mtime.2.0.0", "ocaml.5.0.0", "ocaml-base-compiler.5.0.0",
+        "ocaml-config.3", "ocaml-options-vanilla.1", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "ocplib-endian.1.2", "pbkdf.1.2.0", "ptime.1.1.0",
+        "sexplib0.v0.16.0", "topkg.1.0.7", "x509.0.16.5", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "windows",
+      "compat_pkgs": [ "awa-mirage.0.3.0" ],
+      "packages": [
+        "asn1-combinators.0.2.6", "astring.0.8.5", "awa.0.3.0",
+        "awa-mirage.0.3.0", "base.v0.15.1", "base-bigarray.base",
+        "base-bytes.base", "base-domains.base", "base-nnp.base",
+        "base-threads.base", "base-unix.base", "base64.3.3.0",
+        "bigarray-compat.1.1.0", "cmdliner.1.1.0", "conf-gmp.1",
+        "conf-gmp-powm-sec.1", "conf-perl.1", "cppo.1.6.6", "cpuid.0.1.2",
+        "cstruct.6.0.0", "cstruct-lwt.3.4.0", "cstruct-unix.6.0.0",
+        "domain-name.0.3.0", "dune.3.3.0", "dune-configurator.2.7.0",
+        "duration.0.2.0", "eqaf.0.9", "fmt.0.9.0", "gmap.0.3.0",
+        "ipaddr.5.2.0", "logs.0.6.3", "lwt.5.6.0", "macaddr.5.2.0",
+        "mirage-clock.3.0.1", "mirage-crypto.0.11.0",
+        "mirage-crypto-ec.0.11.0", "mirage-crypto-pk.0.11.0",
+        "mirage-crypto-rng.0.11.0", "mirage-flow.2.0.1", "mirage-no-solo5.1",
+        "mirage-no-xen.1", "mirage-time.2.0.1", "mtime.1.0.0",
+        "nocrypto.0.5.4-1", "num.1.0", "ocaml.5.0.0",
+        "ocaml-base-compiler.5.0.0", "ocaml-compiler-libs.v0.12.0",
+        "ocaml-config.3", "ocaml-options-vanilla.1", "ocamlbuild.0.14.1",
+        "ocamlfind.1.9.5", "ocb-stubblr.0.1.0", "ocplib-endian.1.1",
+        "parsexp.v0.15.0", "pbkdf.0.1.0", "ppx_derivers.1.2.1",
+        "ppx_deriving.5.2", "ppx_sexp_conv.v0.15.0", "ppxlib.0.25.1",
+        "ptime.0.8.6", "result.1.5", "sexplib.v0.15.1", "sexplib0.v0.15.1",
+        "stdlib-shims.0.1.0", "topkg.1.0.6", "x509.0.15.2", "zarith.1.4"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "47d8e6c32efcb88ab38beb6d9ce11f33679891a6"
+        ]
+      ],
+      "lower_bound": true
+    },
+    {
+      "id": "4.10.0",
+      "compat_pkgs": [ "awa-mirage.0.3.0" ],
+      "packages": [
+        "asn1-combinators.0.2.6", "awa.0.3.0", "awa-mirage.0.3.0",
+        "base-bigarray.base", "base-bytes.base", "base-threads.base",
+        "base-unix.base", "base64.3.5.1", "cmdliner.1.2.0", "conf-gmp.4",
+        "conf-gmp-powm-sec.3", "cppo.1.6.9", "csexp.1.5.2", "cstruct.6.2.0",
+        "cstruct-unix.6.2.0", "domain-name.0.4.0", "dune.3.9.1",
+        "dune-configurator.3.9.1", "duration.0.2.1", "eqaf.0.9", "fmt.0.9.0",
+        "gmap.0.3.0", "ipaddr.5.5.0", "logs.0.7.0", "lwt.5.6.1",
+        "macaddr.5.5.0", "mirage-clock.4.2.0", "mirage-crypto.0.11.1",
+        "mirage-crypto-ec.0.11.1", "mirage-crypto-pk.0.11.1",
+        "mirage-crypto-rng.0.11.1", "mirage-flow.3.0.0", "mirage-time.3.0.0",
+        "mtime.2.0.0", "ocaml.4.10.0", "ocaml-base-compiler.4.10.0",
+        "ocaml-config.1", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "ocplib-endian.1.2", "pbkdf.1.2.0", "ptime.1.1.0",
+        "sexplib0.v0.16.0", "topkg.1.0.7", "x509.0.16.5", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.11.0",
+      "compat_pkgs": [ "awa-mirage.0.3.0" ],
+      "packages": [
+        "asn1-combinators.0.2.6", "awa.0.3.0", "awa-mirage.0.3.0",
+        "base-bigarray.base", "base-bytes.base", "base-threads.base",
+        "base-unix.base", "base64.3.5.1", "cmdliner.1.2.0", "conf-gmp.4",
+        "conf-gmp-powm-sec.3", "cppo.1.6.9", "csexp.1.5.2", "cstruct.6.2.0",
+        "cstruct-unix.6.2.0", "domain-name.0.4.0", "dune.3.9.1",
+        "dune-configurator.3.9.1", "duration.0.2.1", "eqaf.0.9", "fmt.0.9.0",
+        "gmap.0.3.0", "ipaddr.5.5.0", "logs.0.7.0", "lwt.5.6.1",
+        "macaddr.5.5.0", "mirage-clock.4.2.0", "mirage-crypto.0.11.1",
+        "mirage-crypto-ec.0.11.1", "mirage-crypto-pk.0.11.1",
+        "mirage-crypto-rng.0.11.1", "mirage-flow.3.0.0", "mirage-time.3.0.0",
+        "mtime.2.0.0", "ocaml.4.11.0", "ocaml-base-compiler.4.11.0",
+        "ocaml-config.1", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "ocplib-endian.1.2", "pbkdf.1.2.0", "ptime.1.1.0",
+        "sexplib0.v0.16.0", "topkg.1.0.7", "x509.0.16.5", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.12.0",
+      "compat_pkgs": [ "awa-mirage.0.3.0" ],
+      "packages": [
+        "asn1-combinators.0.2.6", "awa.0.3.0", "awa-mirage.0.3.0",
+        "base-bigarray.base", "base-bytes.base", "base-threads.base",
+        "base-unix.base", "base64.3.5.1", "cmdliner.1.2.0", "conf-gmp.4",
+        "conf-gmp-powm-sec.3", "cppo.1.6.9", "csexp.1.5.2", "cstruct.6.2.0",
+        "cstruct-unix.6.2.0", "domain-name.0.4.0", "dune.3.9.1",
+        "dune-configurator.3.9.1", "duration.0.2.1", "eqaf.0.9", "fmt.0.9.0",
+        "gmap.0.3.0", "ipaddr.5.5.0", "logs.0.7.0", "lwt.5.6.1",
+        "macaddr.5.5.0", "mirage-clock.4.2.0", "mirage-crypto.0.11.1",
+        "mirage-crypto-ec.0.11.1", "mirage-crypto-pk.0.11.1",
+        "mirage-crypto-rng.0.11.1", "mirage-flow.3.0.0", "mirage-time.3.0.0",
+        "mtime.2.0.0", "ocaml.4.12.0", "ocaml-base-compiler.4.12.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "ocplib-endian.1.2", "pbkdf.1.2.0", "ptime.1.1.0",
+        "sexplib0.v0.16.0", "topkg.1.0.7", "x509.0.16.5", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.13.0",
+      "compat_pkgs": [ "awa-mirage.0.3.0" ],
+      "packages": [
+        "asn1-combinators.0.2.6", "awa.0.3.0", "awa-mirage.0.3.0",
+        "base-bigarray.base", "base-bytes.base", "base-threads.base",
+        "base-unix.base", "base64.3.5.1", "cmdliner.1.2.0", "conf-gmp.4",
+        "conf-gmp-powm-sec.3", "cppo.1.6.9", "csexp.1.5.2", "cstruct.6.2.0",
+        "cstruct-unix.6.2.0", "domain-name.0.4.0", "dune.3.9.1",
+        "dune-configurator.3.9.1", "duration.0.2.1", "eqaf.0.9", "fmt.0.9.0",
+        "gmap.0.3.0", "ipaddr.5.5.0", "logs.0.7.0", "lwt.5.6.1",
+        "macaddr.5.5.0", "mirage-clock.4.2.0", "mirage-crypto.0.11.1",
+        "mirage-crypto-ec.0.11.1", "mirage-crypto-pk.0.11.1",
+        "mirage-crypto-rng.0.11.1", "mirage-flow.3.0.0", "mirage-time.3.0.0",
+        "mtime.2.0.0", "ocaml.4.13.0", "ocaml-base-compiler.4.13.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "ocplib-endian.1.2", "pbkdf.1.2.0", "ptime.1.1.0",
+        "sexplib0.v0.16.0", "topkg.1.0.7", "x509.0.16.5", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.14.0",
+      "compat_pkgs": [ "awa-mirage.0.3.0" ],
+      "packages": [
+        "asn1-combinators.0.2.6", "awa.0.3.0", "awa-mirage.0.3.0",
+        "base-bigarray.base", "base-bytes.base", "base-threads.base",
+        "base-unix.base", "base64.3.5.1", "cmdliner.1.2.0", "conf-gmp.4",
+        "conf-gmp-powm-sec.3", "cppo.1.6.9", "csexp.1.5.2", "cstruct.6.2.0",
+        "cstruct-unix.6.2.0", "domain-name.0.4.0", "dune.3.9.1",
+        "dune-configurator.3.9.1", "duration.0.2.1", "eqaf.0.9", "fmt.0.9.0",
+        "gmap.0.3.0", "ipaddr.5.5.0", "logs.0.7.0", "lwt.5.6.1",
+        "macaddr.5.5.0", "mirage-clock.4.2.0", "mirage-crypto.0.11.1",
+        "mirage-crypto-ec.0.11.1", "mirage-crypto-pk.0.11.1",
+        "mirage-crypto-rng.0.11.1", "mirage-flow.3.0.0", "mirage-time.3.0.0",
+        "mtime.2.0.0", "ocaml.4.14.0", "ocaml-base-compiler.4.14.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "ocplib-endian.1.2", "pbkdf.1.2.0", "ptime.1.1.0",
+        "sexplib0.v0.16.0", "topkg.1.0.7", "x509.0.16.5", "zarith.1.12"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    }
+  ]
+]
+[
+  "Ok",
+  [
+    {
+      "id": "linux",
+      "compat_pkgs": [ "alcotest.1.7.0" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-domains.base", "base-nnp.base", "base-threads.base",
+        "base-unix.base", "cmdliner.1.2.0", "dune.3.9.1", "fmt.0.9.0",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocaml-syntax-shims.1.0.0",
+        "ocamlbuild.0.14.2", "ocamlfind.1.9.6", "re.1.10.4", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "windows",
+      "compat_pkgs": [ "alcotest.1.7.0" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-domains.base", "base-nnp.base", "base-threads.base",
+        "base-unix.base", "cmdliner.1.1.0", "dune.3.3.0", "fmt.0.9.0",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocaml-syntax-shims.1.0.0",
+        "ocamlbuild.0.14.1", "ocamlfind.1.9.5", "re.1.9.0", "seq.0.2.2",
+        "stdlib-shims.0.1.0", "topkg.1.0.6", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": true
+    },
+    {
+      "id": "4.08.0",
+      "compat_pkgs": [ "alcotest.1.7.0" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "cmdliner.1.2.0",
+        "dune.3.9.1", "fmt.0.9.0", "ocaml.4.08.0",
+        "ocaml-base-compiler.4.08.0", "ocaml-config.1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "re.1.10.4", "seq.base", "stdlib-shims.0.3.0", "topkg.1.0.7",
+        "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.09.0",
+      "compat_pkgs": [ "alcotest.1.7.0" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "cmdliner.1.2.0",
+        "dune.3.9.1", "fmt.0.9.0", "ocaml.4.09.0",
+        "ocaml-base-compiler.4.09.0", "ocaml-config.1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "re.1.10.4", "seq.base", "stdlib-shims.0.3.0", "topkg.1.0.7",
+        "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.10.0",
+      "compat_pkgs": [ "alcotest.1.7.0" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "cmdliner.1.2.0",
+        "dune.3.9.1", "fmt.0.9.0", "ocaml.4.10.0",
+        "ocaml-base-compiler.4.10.0", "ocaml-config.1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "re.1.10.4", "seq.base", "stdlib-shims.0.3.0", "topkg.1.0.7",
+        "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.11.0",
+      "compat_pkgs": [ "alcotest.1.7.0" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "cmdliner.1.2.0",
+        "dune.3.9.1", "fmt.0.9.0", "ocaml.4.11.0",
+        "ocaml-base-compiler.4.11.0", "ocaml-config.1",
+        "ocaml-syntax-shims.1.0.0", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "re.1.10.4", "seq.base", "stdlib-shims.0.3.0", "topkg.1.0.7",
+        "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.12.0",
+      "compat_pkgs": [ "alcotest.1.7.0" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "cmdliner.1.2.0",
+        "dune.3.9.1", "fmt.0.9.0", "ocaml.4.12.0",
+        "ocaml-base-compiler.4.12.0", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "ocaml-syntax-shims.1.0.0",
+        "ocamlbuild.0.14.2", "ocamlfind.1.9.6", "re.1.10.4", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.13.0",
+      "compat_pkgs": [ "alcotest.1.7.0" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "cmdliner.1.2.0",
+        "dune.3.9.1", "fmt.0.9.0", "ocaml.4.13.0",
+        "ocaml-base-compiler.4.13.0", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "ocaml-syntax-shims.1.0.0",
+        "ocamlbuild.0.14.2", "ocamlfind.1.9.6", "re.1.10.4", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.14.0",
+      "compat_pkgs": [ "alcotest.1.7.0" ],
+      "packages": [
+        "alcotest.1.7.0", "astring.0.8.5", "base-bigarray.base",
+        "base-threads.base", "base-unix.base", "cmdliner.1.2.0",
+        "dune.3.9.1", "fmt.0.9.0", "ocaml.4.14.0",
+        "ocaml-base-compiler.4.14.0", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "ocaml-syntax-shims.1.0.0",
+        "ocamlbuild.0.14.2", "ocamlfind.1.9.6", "re.1.10.4", "seq.base",
+        "stdlib-shims.0.3.0", "topkg.1.0.7", "uutf.1.0.3"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    }
+  ]
+]
+[
+  "Ok",
+  [
+    {
+      "id": "linux",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-domains.base",
+        "base-nnp.base", "base-threads.base", "base-unix.base",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "windows",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-domains.base",
+        "base-nnp.base", "base-threads.base", "base-unix.base",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocamlbuild.0.14.1", "ocamlfind.1.9.5",
+        "topkg.1.0.6"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": true
+    },
+    {
+      "id": "4.05.0",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "ocaml.4.05.0", "ocaml-base-compiler.4.05.0",
+        "ocaml-config.1", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.06.0",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "ocaml.4.06.0", "ocaml-base-compiler.4.06.0",
+        "ocaml-config.1", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.07.0",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "ocaml.4.07.0", "ocaml-base-compiler.4.07.0",
+        "ocaml-config.1", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.08.0",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "ocaml.4.08.0", "ocaml-base-compiler.4.08.0",
+        "ocaml-config.1", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.09.0",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "ocaml.4.09.0", "ocaml-base-compiler.4.09.0",
+        "ocaml-config.1", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.10.0",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "ocaml.4.10.0", "ocaml-base-compiler.4.10.0",
+        "ocaml-config.1", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.11.0",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "ocaml.4.11.0", "ocaml-base-compiler.4.11.0",
+        "ocaml-config.1", "ocamlbuild.0.14.2", "ocamlfind.1.9.6",
+        "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.12.0",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "ocaml.4.12.0", "ocaml-base-compiler.4.12.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.13.0",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "ocaml.4.13.0", "ocaml-base-compiler.4.13.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.14.0",
+      "compat_pkgs": [ "astring.0.8.5" ],
+      "packages": [
+        "astring.0.8.5", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "ocaml.4.14.0", "ocaml-base-compiler.4.14.0",
+        "ocaml-config.2", "ocaml-options-vanilla.1", "ocamlbuild.0.14.2",
+        "ocamlfind.1.9.6", "topkg.1.0.7"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": false
+    }
+  ]
+]
+
+Solved warm-up requests in: 17.71s
+Running another 8 solves...
+1/8 complete2/8 complete3/8 complete4/8 complete5/8 complete6/8 complete7/8 complete8/8 complete
+Solved 8 requests in 14.50s (1.81s/iter) (8.83 solves/s)

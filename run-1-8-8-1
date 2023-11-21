@@ -1,0 +1,169 @@
+[
+  "Ok",
+  [
+    {
+      "id": "linux",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-domains.base",
+        "base-nnp.base", "base-threads.base", "base-unix.base", "dune.3.9.1",
+        "ocaml.5.0.0", "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ounit2.2.2.7", "seq.base",
+        "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "windows",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-bytes.base",
+        "base-domains.base", "base-nnp.base", "base-threads.base",
+        "base-unix.base", "dune.3.3.0", "ocaml.5.0.0",
+        "ocaml-base-compiler.5.0.0", "ocaml-config.3",
+        "ocaml-options-vanilla.1", "ocamlfind.1.9.5", "ounit2.2.2.6",
+        "seq.0.2.2", "stdlib-shims.0.1.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "d62ae43a864a59218cb6a4db6bac3e1935213ff9"
+        ]
+      ],
+      "lower_bound": true
+    },
+    {
+      "id": "4.08.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.08.0",
+        "ocaml-base-compiler.4.08.0", "ocaml-config.1", "ounit2.2.2.7",
+        "seq.base", "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.09.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.09.0",
+        "ocaml-base-compiler.4.09.0", "ocaml-config.1", "ounit2.2.2.7",
+        "seq.base", "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.10.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.10.0",
+        "ocaml-base-compiler.4.10.0", "ocaml-config.1", "ounit2.2.2.7",
+        "seq.base", "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.11.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.11.0",
+        "ocaml-base-compiler.4.11.0", "ocaml-config.1", "ounit2.2.2.7",
+        "seq.base", "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.12.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.12.0",
+        "ocaml-base-compiler.4.12.0", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "ounit2.2.2.7", "seq.base",
+        "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.13.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.13.0",
+        "ocaml-base-compiler.4.13.0", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "ounit2.2.2.7", "seq.base",
+        "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    },
+    {
+      "id": "4.14.0",
+      "compat_pkgs": [ "0install-solver.2.18" ],
+      "packages": [
+        "0install-solver.2.18", "base-bigarray.base", "base-threads.base",
+        "base-unix.base", "dune.3.9.1", "ocaml.4.14.0",
+        "ocaml-base-compiler.4.14.0", "ocaml-config.2",
+        "ocaml-options-vanilla.1", "ounit2.2.2.7", "seq.base",
+        "stdlib-shims.0.3.0"
+      ],
+      "commits": [
+        [
+          "https://github.com/ocaml/opam-repository.git",
+          "ee215ea3c6ed092638e15a126c2493f697e2006e"
+        ]
+      ],
+      "lower_bound": false
+    }
+  ]
+]
+
+Solved warm-up requests in: 3.82s
+Running another 1 solves...
+1/1 complete
+Solved 1 requests in 3.76s (3.76s/iter) (4.26 solves/s)
