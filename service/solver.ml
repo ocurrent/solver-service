@@ -8,6 +8,8 @@ let (let*!) = Result.bind
 type t = {
   pool : (Domain_worker.request, Domain_worker.reply) Pool.t;
   stores : Stores.t;
+  cache_dir : string;
+  process_mgr : [`Generic] Eio.Process.mgr_ty r;
 }
 
 let ocaml = OpamPackage.Name.of_string "ocaml"
@@ -30,7 +32,7 @@ let env vars v =
   if List.mem v OpamPackageVar.predefined_depends_variables then None
   else Domain_worker.env vars (OpamVariable.Full.to_string v)
 
-let solve_for_platform ?cancelled t ~log ~opam_repository_commits ~packages ~root_pkgs ~pinned_pkgs ~pins ~vars id =
+let solve_for_platform ?cancelled t ~cacheable ~log ~opam_repository_commits ~packages ~root_pkgs ~pinned_pkgs ~pins ~vars id =
   let ocaml_version = OpamPackage.Version.of_string vars.Worker.Vars.ocaml_version in
   let root_pkgs =
     root_pkgs
@@ -55,18 +57,25 @@ let solve_for_platform ?cancelled t ~log ~opam_repository_commits ~packages ~roo
         Error (`No_solution e)
       | Ok packages ->
         Log.info log "%s: found solution in %.2f s" id time;
-        let repo_packages =
-          packages
-          |> List.filter_map (fun (pkg : OpamPackage.t) ->
-              if OpamPackage.Name.Set.mem pkg.name pins then None
-              else Some pkg)
-        in
-        (* Hack: ocaml-ci sometimes also installs odoc, but doesn't tell us about it.
+        let commits =
+          if cacheable then
+            (* The cache system handle a sort of oldest_commit*)
+            opam_repository_commits
+          else
+            let repo_packages =
+              packages
+              |> List.filter_map (fun (pkg : OpamPackage.t) ->
+                if OpamPackage.Name.Set.mem pkg.name pins then None
+                else Some pkg)
+            in
+            (* Hack: ocaml-ci sometimes also installs odoc, but doesn't tell us about it.
            Make sure we have at least odoc 2.1.1 available, otherwise it won't work on OCaml 5.0. *)
-        let repo_packages =
-          OpamPackage.of_string "odoc.2.1.1" :: repo_packages
+            let repo_packages =
+              OpamPackage.of_string "odoc.2.1.1" :: repo_packages
+            in
+            let commits = Stores.oldest_commits_with t.stores repo_packages ~from:opam_repository_commits in
+            commits
         in
-        let commits = Stores.oldest_commits_with t.stores repo_packages ~from:opam_repository_commits in
         let compat_pkgs =
           let to_string (name, (version,_)) = OpamPackage.to_string (OpamPackage.create name version) in
           List.map to_string root_pkgs
@@ -96,7 +105,7 @@ let rec parse_opams = function
     Ok (x :: xs)
 
 (* Handle a request by distributing it among the worker processes and then aggregating their responses. *)
-let solve ?cancelled t ~log request =
+let solve ?cancelled ~cacheable t ~log request =
   let {
     Worker.Solve_request.opam_repository_commits;
     platforms;
@@ -124,6 +133,7 @@ let solve ?cancelled t ~log request =
         let result =
           solve_for_platform t id
             ?cancelled
+            ~cacheable
             ~log
             ~opam_repository_commits
             ~packages
@@ -161,10 +171,20 @@ let solve ?cancelled t ~log request =
     | [] -> Ok results
     | errors -> Fmt.error_msg "@[<v>%a@]" Fmt.(list ~sep:cut string) errors
 
+let solve ?cacheable ?cancelled t ~log request =
+  match cacheable with
+  | Some true ->
+    let solve = solve t ?cancelled ~cacheable:true in
+    let cache = { Solve_cache.cache_dir = t.cache_dir; process_mgr = t.process_mgr } in
+    Solve_cache.solve cache solve log request
+  | _ -> solve ?cancelled ~cacheable:false t ~log request
+
 let create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers =
   let stores = Stores.create ~process_mgr ~cache_dir in
   let pool = Pool.create ~sw ~domain_mgr ~n_workers Domain_worker.solve in
   {
     stores;
     pool;
+    cache_dir;
+    process_mgr = (process_mgr :> [`Generic] Eio.Process.mgr_ty r);
   }

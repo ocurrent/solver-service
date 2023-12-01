@@ -1,4 +1,4 @@
 (tests
  (names test)
  (package solver-service)
- (libraries solver-service eio_main lwt_eio))
+ (libraries solver-service scache eio_main lwt_eio))

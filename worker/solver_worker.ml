@@ -34,6 +34,7 @@ type t = {
   name : string;
   registration_service : Cluster_api.Raw.Client.Registration.t Sturdy_ref.t;
   capacity : int;
+  cacheable : bool;
   mutable in_use : int; (* Number of active builds *)
   cond : unit Lwt_condition.t;
   (* Fires when a build finishes (or switch turned off) *)
@@ -50,7 +51,7 @@ let metrics = function
   | `Host ->
     failwith "No host metrics from solver service"
 
-let build ~cancelled ~log t descr =
+let build ~cacheable ~cancelled ~log t descr =
   let module R = Cluster_api.Raw.Reader.JobDescr in
   match Cluster_api.Submission.get_action descr with
   | Custom_build c ->
@@ -58,7 +59,7 @@ let build ~cancelled ~log t descr =
         f "Got request to build a job of kind \"%s\""
           (Cluster_api.Custom.kind c));
     (* Oddly, the protocol has us report cancellation and errors as "successful" jobs with the error inside! *)
-    let output = Custom.solve ~cancelled ~solver:t.solver ~log c in
+    let output = Custom.solve ~cacheable ~cancelled ~solver:t.solver ~log c in
     Log_data.write log "Job succeeded\n";
     (Ok output, "ok")
   | Obuilder_build _ | Docker_build _ ->
@@ -95,7 +96,7 @@ let loop t queue =
                Lwt_eio.run_eio @@ fun () ->
                Log_data.info log "Building on %s" t.name;
                let t0 = Unix.gettimeofday () in
-               match build ~cancelled ~log t request with
+               match build ~cacheable:t.cacheable ~cancelled ~log t request with
                | (outcome, metric_label) ->
                  let t1 = Unix.gettimeofday () in
                  Prometheus.Summary.observe
@@ -127,7 +128,7 @@ let loop t queue =
 
 let self_update () = failwith "TODO: Self-update"
 
-let run ~name ~capacity solver registration_service =
+let run ~cacheable ~name ~capacity solver registration_service =
   Lwt_eio.run_lwt @@ fun () ->
   let t = {
     solver;
@@ -136,6 +137,7 @@ let run ~name ~capacity solver registration_service =
     cond = Lwt_condition.create ();
     capacity;
     in_use = 0;
+    cacheable;
   } in
   let rec reconnect () =
     let connect_time = Unix.gettimeofday () in

@@ -17,6 +17,7 @@ val create :
     @param n_workers Maximum number of worker domains. *)
 
 val solve :
+  ?cacheable:bool ->
   ?cancelled:unit Eio.Promise.t ->
   t ->
   log:Solver_service_api.Solver.Log.t ->

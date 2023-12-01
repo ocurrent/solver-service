@@ -231,6 +231,44 @@ let test_available t =
       "mac", { debian_12_ocaml_5 with os = "macos" };
     ]
 
+let test_solve_cache t =
+  let solve = solve_cache in
+  let opam_repo = Opam_repo.create "opam-repo.git" in
+  let root_pkgs = ["app.dev", {| depends: [ "foo" ] |}] in
+  let opam_packages = [
+    "ocaml-base-compiler.5.0", "";
+    "foo.1.0", {| depends: [ "ocaml-base-compiler" ] |};
+  ]
+  in
+  let first_opam_packages = opam_packages in
+  let recent_commits =
+    solve t "Select foo.1.0" ~platforms ~root_pkgs ~previous_commits:[opam_repo,[]]
+      ~commits:[opam_repo, opam_packages]
+  in
+  let opam_packages = ("foo.1.1","") :: opam_packages in
+  let recent_commits =
+  solve t "Foo 1.1 now available" ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
+    opam_repo, opam_packages
+  ]
+  in
+  let recent_commits =
+    solve t "Foo 1.1 (hit the cache, the commit won't change)" ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
+      opam_repo, ("foo.1.1","")::opam_packages
+    ]
+  in
+  let opam_packages = ("oof.1.0","") :: opam_packages in
+  let recent_commits =
+  solve t "Oof 1.0 now available (hit the cache, the commit won't change)" ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
+    opam_repo, ("oof.1.0","") :: opam_packages
+  ]
+  in
+  solve t
+    "Oof 1.1 now available (invalidate the cache foo 1.1 will be removed on the next commit, the newest commit for the result)"
+    ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
+    opam_repo, ("oof.1.1","") :: first_opam_packages
+  ] |> ignore;
+  ()
+
 let () =
   Eio_main.run @@ fun env ->
   let domain_mgr = env#domain_mgr in
@@ -250,6 +288,7 @@ let () =
     "Pinned", test_pinned;
     "Cancel", test_cancel;
     "Available", test_available;
+    "Solve_cache", test_solve_cache;
   ]
   |> List.iter (fun (name, fn) ->
       Fmt.pr "@.# %s@." name;
