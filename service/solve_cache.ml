@@ -5,6 +5,8 @@ module Log_data = Solver_service_api.Solver.Log
 module Cache = Scache.Cache
 module Set = Set.Make(Worker.Selection)
 
+exception Invalidated
+
 type t = {
   cache_dir : string;
   process_mgr : [`Generic] Eio.Process.mgr_ty r;
@@ -26,12 +28,6 @@ module Solve_cache = struct
 
 end
 
-(* module Log = struct *)
-(*   (* let src = Logs.Src.create "solver-worker" ~doc:"solver worker agent" *) *)
-(*   let src = Logs.Src.create "solver-scache" ~doc:"solver cache system" *)
-(*   include (val Logs.src_log src : Logs.LOG) *)
-(* end *)
-
 let mutex = Lazy.from_fun (fun () -> Eio.Mutex.create ())
 
 let git_command ?cwd args =
@@ -40,16 +36,16 @@ let git_command ?cwd args =
   | Some dir -> "-C" :: dir :: args
   | None -> args
 
-let find_command ?cwd args =
-  "find" ::
-  match cwd with
-  | Some dir -> dir :: args
-  | None -> args
 
-let grep_command ?cwd args = let _ = cwd in "grep" :: args
+let [@warning "-27"] grep_command ?cwd args = "grep" :: args
+
+let [@warning "-27"] rm_command ?cwd args = "rm" :: args
 
 let run_git ?cwd t args =
   Eio.Process.run t.process_mgr (git_command ?cwd args)
+
+let run_rm ?cwd t args =
+  Eio.Process.run t.process_mgr (rm_command ?cwd args)
 
 let take_all_opt r =
   if Eio.Buf_read.at_end_of_input r then None
@@ -71,7 +67,6 @@ let run_git_take_all ?cwd ?stdin t args = run_take_all ?cwd ?stdin t args git_co
 
 let run_grep_lines ?cwd ?stdin t args = run_lines ?cwd ?stdin t args grep_command
 
-let run_find_take_all ?cwd ?stdin t args = run_take_all ?cwd ?stdin t args find_command 
 
 module Git_clone = struct
 
@@ -107,6 +102,18 @@ let rec mkdir_p path =
     in
     Fpath.(v t.cache_dir / solve_dir / sane_host / sane_path)
 
+  let remove t repo_url =
+    let clone_path = repo_url_to_clone_path t repo_url in
+    let clone_path_str = Fpath.to_string clone_path in
+    match Unix.lstat clone_path_str with
+    | Unix.{ st_kind = S_DIR; _ } -> (
+      try
+        run_rm t ["-fr"; clone_path_str]
+      with Eio.Io _ as ex ->
+        let bt = Printexc.get_raw_backtrace () in
+        Eio.Exn.reraise_with_context ex bt "removing %S" clone_path_str)
+    | _ -> ()
+
   let clone t repo_url =
     let clone_path = repo_url_to_clone_path t repo_url in
     let clone_parent = Fpath.parent clone_path |> Fpath.to_string in
@@ -137,30 +144,6 @@ let rec mkdir_p path =
        :: "--reverse"
        :: [ "--format=format:%H" ]
     |> Option.value ~default:[]
-
-  let _log t repo_url =
-    let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
-    run_git_take_all t ~cwd:clone_path
-    @@ ["log"]
-    |> Option.value ~default:"Nothing"
-
-  let _branch t repo_url =
-    let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
-    run_git_take_all t ~cwd:clone_path
-    @@ ["branch"]
-    |> Option.value ~default:"Nothing"
-
-  let _reflog t repo_url =
-    let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
-    run_git_take_all t ~cwd:clone_path
-    @@ ["reflog"]
-    |> Option.value ~default:"Nothing"
-
-  let find t repo_url =
-    let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
-    run_find_take_all t ~cwd:clone_path
-    @@ []
-    |> Option.value ~default:"Nothing"
 
   let diff t ~repo_url ~new_commit ~old_commit =
     let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
@@ -231,55 +214,58 @@ let yojson_of_list l = l |> [%to_yojson: string list]
 let yojosn_to_list l = l |> [%of_yojson: string list]
 
   
-(* opam-repository comit with their rank *)
+(* opam-repo comits with their rank *)
 let opam_commits = Lazy.from_fun (fun () -> Hashtbl.create 10)
 
-let update_commits t repo_url commit =
+let update_commit t repo_url commit =
   let opam_commits = Lazy.force opam_commits in
   let mutex = Lazy.force mutex in
+  let get_repo t repo_url =
+    Git_clone.clone t repo_url;
+    Git_clone.pull t repo_url; 
+    Git_clone.all_commits_rev t repo_url
+  in
   match Hashtbl.find_opt opam_commits commit with
   | Some _ -> ()
-  | None -> (
+  | None -> 
     Eio.Mutex.use_rw mutex ~protect:true (fun () ->
-      Git_clone.clone t repo_url;
-      Git_clone.pull t repo_url; 
-      Git_clone.all_commits_rev t repo_url)
-    |> List.iteri (fun rank commit -> Hashtbl.replace opam_commits commit rank))
+      try
+        get_repo t repo_url;
+      with _ -> (
+        (* could be a conflict between commits when pulling *)
+        Git_clone.remove t repo_url;
+        get_repo t repo_url))
+    |> List.iteri (fun rank commit -> Hashtbl.replace opam_commits commit rank)
 
 let changed_packages t ~new_opam_repo ~old_opam_repo =
   let opam_commits = Lazy.force opam_commits in
   try
+    (* new_opam_repo and old_opam_repo nead to be sorted by url*)
     List.combine new_opam_repo old_opam_repo
     |> List.map (fun ((repo_url,new_commit), (_,old_commit)) ->
       let key = ("diff"^new_commit^"-"^old_commit) in
       match Cache.get cache ~key with
       | Some pkgs -> Yojson.Safe.from_string pkgs |> yojosn_to_list |> Result.get_ok
       | None -> (
-        update_commits t repo_url new_commit;
-        update_commits t repo_url old_commit;
-        (* Fmt.pr "DIFF new=%s old=%s :%a@." new_commit old_commit *)
-        (*   Fmt.(list string) (Git_clone.diff t ~repo_url ~new_commit ~old_commit); *)
-        (* Fmt.pr "ALL COMMITS = %a@." Fmt.(list string) (Git_clone.all_commits t repo_url); *)
-        (* Fmt.pr "FIND = %s@." (Git_clone.find t repo_url); *)
-        (* Fmt.pr "BRANCH = %s@." (Git_clone.branch t repo_url); *)
-        (* Fmt.pr "REFLOG = %s@." (Git_clone.reflog t repo_url); *)
-        (* Fmt.pr "LOG %s@." (Git_clone.log t repo_url); *)
+        update_commit t repo_url new_commit;
+        update_commit t repo_url old_commit;
         match Hashtbl.find_opt opam_commits new_commit, Hashtbl.find_opt opam_commits old_commit with
-        | Some rank_new, Some rank_old ->
-          (* With the rank, we make sure the new_commit is newer in the opam-repo git history *)
-          if rank_new > rank_old then
-            let pkgs = Git_clone.diff t ~repo_url ~new_commit ~old_commit in
-            Cache.set cache ~key ~value:(Yojson.Safe.to_string (yojson_of_list pkgs));
-            pkgs
-          else []
+        | Some new_rank, Some old_rank when new_rank = old_rank -> []
+        | Some new_rank, Some old_rank when new_rank < old_rank ->
+          (* This new commit is supposed to be newer in the commit history,
+             it could be a specific request on opam commits, like fixed demand *)
+          raise Invalidated
+        | Some _, Some _ -> 
+          let pkgs = Git_clone.diff t ~repo_url ~new_commit ~old_commit in
+          Cache.set cache ~key ~value:(Yojson.Safe.to_string (yojson_of_list pkgs));
+          pkgs
         | None, _ ->
-            Fmt.failwith "The repo %s has not the commit %s@." repo_url new_commit
+          Fmt.epr "The repo %s has not the commit %s@." repo_url new_commit; raise Invalidated
         | _, None ->
-            Fmt.failwith "The repo %s has not the commit %s@." repo_url old_commit))
+          Fmt.epr "The repo %s has not the commit %s@." repo_url old_commit; raise Invalidated))
     |> List.flatten
     |> Option.some
-  with Failure er ->
-    Fmt.epr "%s" er; None
+  with Invalidated -> None
 
 let get_names = OpamFormula.fold_left (fun a (name, _) -> name :: a) []
 
@@ -324,6 +310,7 @@ let solve t solve log (request: Worker.Solve_request.t) =
   match get_solve ~cache ~digest:(digest_request request) with
   | Some solve_cache when Result.is_ok solve_cache.solve_response -> (
     (* Log.info (fun f -> f "Solve from cache with exact opam-commits"); *)
+    (* Fmt.pr "Exact from cache@."; *)
     Log_data.info log "From cache@.";
     solve_cache.solve_response)
   | _ -> (
@@ -333,6 +320,7 @@ let solve t solve log (request: Worker.Solve_request.t) =
     match get_solve ~cache ~digest:(digest_request req) with
     | Some solve_cache when not (Result.is_error solve_cache.solve_response || is_invalidated t ~request ~solve_cache) ->
       (* Log.info (fun f -> f "Solve from cache (the old solve wasn't invalidated"); *)
+      (* Fmt.pr "From cache@."; *)
       Log_data.info log "From cache@.";
       let solve_cache =
         { solve_cache with last_opam_repository_commits = request.opam_repository_commits }
@@ -342,6 +330,7 @@ let solve t solve log (request: Worker.Solve_request.t) =
       solve_cache.solve_response
     | Some solve_cache when Result.is_ok solve_cache.solve_response ->
       (* Log.info (fun f -> f "Invalidated solve from cache"); *)
+      (* Fmt.pr "Invalidated@."; *)
       let solve_response = solve () in
       let solve_cache =
         if is_same_solution ~solve_response_cache:solve_cache.solve_response ~solve_response then
@@ -353,6 +342,7 @@ let solve t solve log (request: Worker.Solve_request.t) =
       set_solve ~cache ~solve_cache ~digest:(digest_request request);
       solve_cache.solve_response
     | _ ->
+      (* Fmt.pr "First solve@."; *)
       (* Log.info (fun f -> f "Solve not from cache"); *)
       let solve_response = solve () in
       let solve_cache =
