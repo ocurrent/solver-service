@@ -1,1 +1,3 @@
-(dirs :standard \ var cache)
+(dirs :standard \ var)
+
+(vendored_dirs scache)

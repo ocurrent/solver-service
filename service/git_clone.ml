@@ -28,12 +28,12 @@ module Make (Cache : CacheType) = struct
   let run_rm ?cwd t args =
     Eio.Process.run (Cache.process_mgr t) (rm_command ?cwd args)
 
-let line_opt r =
-  if Eio.Buf_read.at_end_of_input r then None
-  else Some (Eio.Buf_read.line r)
+  let line_opt r =
+    if Eio.Buf_read.at_end_of_input r then None
+    else Some (Eio.Buf_read.line r)
 
-let run_git_line ?cwd t args =
-  Eio.Process.parse_out (Cache.process_mgr t) line_opt (git_command ?cwd args)
+  let run_git_line ?cwd t args =
+    Eio.Process.parse_out (Cache.process_mgr t) line_opt (git_command ?cwd args)
 
   let take_all_opt r =
     if Eio.Buf_read.at_end_of_input r then None
@@ -141,18 +141,18 @@ let run_git_line ?cwd t args =
     let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
     run_git_lines t ~cwd:clone_path
     @@ "log"
-    :: "--reverse"
-    :: [ "--format=format:%H" ]
+       :: "--reverse"
+       :: [ "--format=format:%H" ]
     |> Option.value ~default:[]
 
   let diff_pkgs t ~repo_url ~new_commit ~old_commit =
     let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
     run_git_take_all t ~cwd:clone_path
     @@ "diff"
-    :: old_commit
-    :: new_commit
-    :: "--"
-    :: [ "packages" ]
+       :: old_commit
+       :: new_commit
+       :: "--"
+       :: [ "packages" ]
     |> function
     | None -> []
     | Some diff ->
