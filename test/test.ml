@@ -263,7 +263,7 @@ let test_solve_cache t =
   ]
   in
   solve t
-    "Oof 1.1 now available (invalidate the cache, foo 1.1 will be removed on the next commit, the lastest commit in the result)"
+    "Oof 1.1 now available (invalidate the cache, foo 1.1 will be removed, the new commit will be taken for the result)"
     ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
     opam_repo, ("oof.1.1","") :: first_opam_packages
   ] |> ignore;

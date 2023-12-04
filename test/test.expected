@@ -308,7 +308,7 @@ results:
      commits: [(opam-repo.git, 6b20fc580721bea55bdb0bf54780aaa98d162e0e)]
      lower_bound: false]
 
-## Oof 1.1 now available (invalidate the cache foo 1.1 will be removed on the next commit, the newest commit for the result) ##
+## Oof 1.1 now available (invalidate the cache, foo 1.1 will be removed, the new commit will be taken for the result) ##
 
 commits: [(opam-repo.git, [oof.1.1; ocaml-base-compiler.5.0; foo.1.0])]
 root_pkgs: [app.dev]

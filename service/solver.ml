@@ -175,8 +175,8 @@ let solve ?cacheable ?cancelled t ~log request =
   match cacheable with
   | Some true ->
     let solve = solve t ?cancelled ~cacheable:true in
-    let cache = { Solve_cache.cache_dir = t.cache_dir; process_mgr = t.process_mgr } in
-    Solve_cache.solve cache solve log request
+    let cache = Solve_cache.create ~cache_dir:t.cache_dir ~proc_mgr:t.process_mgr in 
+    Solve_cache.solve cache ~solve log request
   | _ -> solve ?cancelled ~cacheable:false t ~log request
 
 let create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers =

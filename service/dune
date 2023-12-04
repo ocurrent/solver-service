@@ -11,4 +11,5 @@
   git-unix
   scache
   ocaml-version)
- (preprocess (pps ppx_deriving_yojson)))
+ (preprocess
+  (pps ppx_deriving_yojson)))
