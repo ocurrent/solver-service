@@ -235,9 +235,13 @@ let test_solve_cache t =
   let solve = solve_cache in
   let opam_repo = Opam_repo.create "opam-repo.git" in
   let root_pkgs = ["app.dev", {| depends: [ "foo" ] |}] in
+  let depends = {| depends: [ "ocaml-base-compiler" "bar" ] |} in
   let opam_packages = [
     "ocaml-base-compiler.5.0", "";
-    "foo.1.0", {| depends: [ "ocaml-base-compiler" ] |};
+    "bar.1.0", {| depends: [ "baz" ] |};
+    "baz.1.0", "";
+    "foo.1.0",depends;
+    "foobar.0.1", "";
   ]
   in
   let first_opam_packages = opam_packages in
@@ -245,25 +249,36 @@ let test_solve_cache t =
     solve t "Select foo.1.0" ~platforms ~root_pkgs ~previous_commits:[opam_repo,[]]
       ~commits:[opam_repo, opam_packages]
   in
-  let opam_packages = ("foo.1.1","") :: opam_packages in
+  let opam_packages = ("foo.1.1",depends) :: opam_packages in
   let recent_commits =
-  solve t "Foo 1.1 now available" ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
+  solve t "Foo 1.1 now available (A direct dependency, the result will contain the new commit)" ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
     opam_repo, opam_packages
   ]
   in
+  let opam_packages = ("foo.1.1",depends)::opam_packages in
   let recent_commits =
-    solve t "Foo 1.1 (hit the cache, the commit won't change)" ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
-      opam_repo, ("foo.1.1","")::opam_packages
+    solve t "Foo 1.1 again (hit the cache, the commit won't change)" ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
+      opam_repo, opam_packages
     ]
   in
+  let opam_packages =
+   ("baz.1.0",{|depends: [ "foobar" ]|})
+    ::(List.remove_assoc "baz.1.0" opam_packages)
+  in
+  let recent_commits =
+    solve t "Baz 1.0 is a transitive dep of Foo, the cache will be invalidated(the result will contain the new commit)" ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
+      opam_repo, opam_packages
+    ]
+  in
+
   let opam_packages = ("oof.1.0","") :: opam_packages in
   let recent_commits =
-  solve t "Oof 1.0 now available (hit the cache, the commit won't change)" ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
-    opam_repo, ("oof.1.0","") :: opam_packages
+  solve t "Oof 1.0 now available (hit the cache, the commit won't change in the result)" ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
+    opam_repo, opam_packages
   ]
   in
   solve t
-    "Oof 1.1 now available (invalidate the cache, foo 1.1 will be removed, the new commit will be taken for the result)"
+    "Oof 1.1 now available (will invalidate the cache because foo 1.1 will be removed, the result will contain the new commit)"
     ~previous_commits:recent_commits ~platforms ~root_pkgs ~commits:[
     opam_repo, ("oof.1.1","") :: first_opam_packages
   ] |> ignore;

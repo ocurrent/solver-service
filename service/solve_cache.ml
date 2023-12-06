@@ -3,7 +3,7 @@ open Eio.Std
 module Worker = Solver_service_api.Worker
 module Log_data = Solver_service_api.Solver.Log
 module Cache = Scache.Cache
-module Set = Set.Make(Worker.Selection)
+module Selections = Set.Make(Worker.Selection)
 
 exception Invalidated
 
@@ -79,7 +79,7 @@ let is_same_solution ~solve_response_cache ~solve_response =
   | Error _, _ -> false
   | _, Error _ -> false
   | Ok selections_cache, Ok selections ->
-    Set.equal (Set.of_list selections_cache) (Set.of_list selections)
+    Selections.equal (Selections.of_list selections_cache) (Selections.of_list selections)
 
 let yojson_of_list l = l |> [%to_yojson: string list]
 let yojosn_to_list l = l |> [%of_yojson: string list]
@@ -127,9 +127,9 @@ let changed_packages t ~new_opam_repo ~old_opam_repo =
              so it invalidated *)
           raise Invalidated
         | Some _, Some _ -> 
-          let pkgs = Git_clone.diff_pkgs t ~repo_url ~new_commit ~old_commit in
-          Cache.set cache ~key ~value:(Yojson.Safe.to_string (yojson_of_list pkgs));
-          pkgs
+          let pkgs_filename = Git_clone.diff_pkgs t ~repo_url ~new_commit ~old_commit in
+          Cache.set cache ~key ~value:(Yojson.Safe.to_string (yojson_of_list pkgs_filename));
+          pkgs_filename
         | None, _ ->
           Fmt.epr "The repo %s has not the commit %s@." repo_url new_commit; raise Invalidated
         | _, None ->
@@ -140,7 +140,7 @@ let changed_packages t ~new_opam_repo ~old_opam_repo =
 
 let get_names = OpamFormula.fold_left (fun a (name, _) -> name :: a) []
 
-let deps opam_pkgs =
+let deps_of_opam_file opam_pkgs =
   opam_pkgs
   |> List.map (fun (_, content) ->
     OpamFile.OPAM.read_from_string content |> OpamFile.OPAM.depends |> get_names)
@@ -152,9 +152,22 @@ let is_invalidated t ~request ~solve_cache =
     pinned_pkgs; _ } = request 
   in
   let request_pkgs =
-    List.concat_map (fun pkgs -> deps pkgs) [root_pkgs; pinned_pkgs]
+    List.concat_map (fun pkgs_name -> deps_of_opam_file pkgs_name) [root_pkgs; pinned_pkgs]
     |> List.flatten
     |> OpamPackage.Name.Set.of_list
+  in
+  let response_pkgs =
+    solve_cache.Solve_cache.solve_response
+    |> Result.get_ok
+    |> List.map (fun selection -> selection.Worker.Selection.packages)
+    |> List.concat
+    |> List.map (fun pkg_version ->
+      pkg_version
+      |> Astring.String.cut ~sep:"."
+      |> Option.get
+      |> fun (name,version) ->
+        OpamPackage.create  (OpamPackage.Name.of_string name) (OpamPackage.Version.of_string version))
+    |> OpamPackage.Set.of_list
   in
   let old_opam_repo =
     solve_cache.Solve_cache.last_opam_repository_commits
@@ -169,7 +182,11 @@ let is_invalidated t ~request ~solve_cache =
   | Some pkgs ->
     pkgs
     |> List.find_opt (fun pkg ->
-      OpamPackage.Name.Set.mem (OpamPackage.Name.of_string pkg) request_pkgs)
+      OpamFilename.raw pkg
+      |> OpamPackage.of_filename
+      |> Option.get
+      |> fun opam_pkg ->
+        OpamPackage.Name.Set.mem (OpamPackage.name opam_pkg) request_pkgs || OpamPackage.Set.mem opam_pkg response_pkgs)
     |> Option.is_some
 
 (**
@@ -182,7 +199,8 @@ let is_invalidated t ~request ~solve_cache =
 
     The invalidation is about looking if the request packages is involve in
     the 2 different commit, the commit of the cached response and the commit of
-    the request.
+    the request. Also the cache response contain the transitive dependencies, we
+    make sure those ones are not also involve in the commit changes.
 
     The oldest commit used during the solve is kept when the response is the same
     as previous solve.

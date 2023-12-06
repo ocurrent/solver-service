@@ -251,52 +251,78 @@ results:
 
 ## Select foo.1.0 ##
 
-commits: [(opam-repo.git, [ocaml-base-compiler.5.0; foo.1.0])]
+commits: [(opam-repo.git,
+           [ocaml-base-compiler.5.0; bar.1.0; baz.1.0; foo.1.0; foobar.0.1])]
 root_pkgs: [app.dev]
 platforms: [debian-12-ocaml-5]
+Need to update opam-repo.git to get new commit 4733cec979c5946f667f86e0df0ac20741277d68
 results:
   [debian-12-ocaml-5:
      compat_pkgs: [app.dev]
-     packages: [app.dev; foo.1.0; ocaml-base-compiler.5.0]
-     commits: [(opam-repo.git, bf39e9df31e82a307e3daee9409f62d1a15acfe7)]
+     packages: [app.dev; bar.1.0; baz.1.0; foo.1.0; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, 4733cec979c5946f667f86e0df0ac20741277d68)]
      lower_bound: false]
 
-## Foo 1.1 now available ##
+## Foo 1.1 now available (A direct dependency, the result will contain the new commit) ##
 
-commits: [(opam-repo.git, [foo.1.1; ocaml-base-compiler.5.0; foo.1.0])]
+commits: [(opam-repo.git,
+           [foo.1.1; ocaml-base-compiler.5.0; bar.1.0; baz.1.0; foo.1.0;
+            foobar.0.1])]
 root_pkgs: [app.dev]
 platforms: [debian-12-ocaml-5]
 Already up to date.
-Need to update opam-repo.git to get new commit 6b20fc580721bea55bdb0bf54780aaa98d162e0e
+Need to update opam-repo.git to get new commit e82813b4ed60505d8511d132e77ca062776b0b10
 results:
   [debian-12-ocaml-5:
      compat_pkgs: [app.dev]
-     packages: [app.dev; foo.1.1; ocaml-base-compiler.5.0]
-     commits: [(opam-repo.git, 6b20fc580721bea55bdb0bf54780aaa98d162e0e)]
+     packages: [app.dev; bar.1.0; baz.1.0; foo.1.1; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, e82813b4ed60505d8511d132e77ca062776b0b10)]
      lower_bound: false]
 
-## Foo 1.1 (hit the cache, the commit won't change) ##
+## Foo 1.1 again (hit the cache, the commit won't change) ##
 
 commits: [(opam-repo.git,
-           [foo.1.1; foo.1.1; ocaml-base-compiler.5.0; foo.1.0])]
+           [foo.1.1; foo.1.1; ocaml-base-compiler.5.0; bar.1.0; baz.1.0;
+            foo.1.0; foobar.0.1])]
 root_pkgs: [app.dev]
 platforms: [debian-12-ocaml-5]
-Updating 6b20fc5..8b14733
+Updating e82813b..07bc05a
 Fast-forward
 results:
   [debian-12-ocaml-5:
      compat_pkgs: [app.dev]
-     packages: [app.dev; foo.1.1; ocaml-base-compiler.5.0]
-     commits: [(opam-repo.git, 6b20fc580721bea55bdb0bf54780aaa98d162e0e)]
+     packages: [app.dev; bar.1.0; baz.1.0; foo.1.1; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, e82813b4ed60505d8511d132e77ca062776b0b10)]
      lower_bound: false]
 
-## Oof 1.0 now available (hit the cache, the commit won't change) ##
+## Baz 1.0 is a transitive dep of Foo, the cache will be invalidated(the result will contain the new commit) ##
 
 commits: [(opam-repo.git,
-           [oof.1.0; oof.1.0; foo.1.1; ocaml-base-compiler.5.0; foo.1.0])]
+           [baz.1.0; foo.1.1; foo.1.1; ocaml-base-compiler.5.0; bar.1.0;
+            foo.1.0; foobar.0.1])]
 root_pkgs: [app.dev]
 platforms: [debian-12-ocaml-5]
-Updating 8b14733..fbfff59
+Updating 07bc05a..86fca69
+Fast-forward
+ packages/baz/baz.1.0/opam | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+Need to update opam-repo.git to get new commit 86fca698addda8dd554cffc2ea09bf616c351332
+results:
+  [debian-12-ocaml-5:
+     compat_pkgs: [app.dev]
+     packages: [app.dev; bar.1.0; baz.1.0; foo.1.1; foobar.0.1;
+                ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, 86fca698addda8dd554cffc2ea09bf616c351332)]
+     lower_bound: false]
+
+## Oof 1.0 now available (hit the cache, the commit won't change in the result) ##
+
+commits: [(opam-repo.git,
+           [oof.1.0; baz.1.0; foo.1.1; foo.1.1; ocaml-base-compiler.5.0;
+            bar.1.0; foo.1.0; foobar.0.1])]
+root_pkgs: [app.dev]
+platforms: [debian-12-ocaml-5]
+Updating 86fca69..0eb9328
 Fast-forward
  packages/oof/oof.1.0/opam | 4 ++++
  1 file changed, 4 insertions(+)
@@ -304,25 +330,30 @@ Fast-forward
 results:
   [debian-12-ocaml-5:
      compat_pkgs: [app.dev]
-     packages: [app.dev; foo.1.1; ocaml-base-compiler.5.0]
-     commits: [(opam-repo.git, 6b20fc580721bea55bdb0bf54780aaa98d162e0e)]
+     packages: [app.dev; bar.1.0; baz.1.0; foo.1.1; foobar.0.1;
+                ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, 86fca698addda8dd554cffc2ea09bf616c351332)]
      lower_bound: false]
 
-## Oof 1.1 now available (invalidate the cache, foo 1.1 will be removed, the new commit will be taken for the result) ##
+## Oof 1.1 now available (will invalidate the cache because foo 1.1 will be removed, the result will contain the new commit) ##
 
-commits: [(opam-repo.git, [oof.1.1; ocaml-base-compiler.5.0; foo.1.0])]
+commits: [(opam-repo.git,
+           [oof.1.1; ocaml-base-compiler.5.0; bar.1.0; baz.1.0; foo.1.0;
+            foobar.0.1])]
 root_pkgs: [app.dev]
 platforms: [debian-12-ocaml-5]
-Updating fbfff59..df311eb
+Updating 0eb9328..44d1c6f
 Fast-forward
- packages/oof/oof.1.0/opam                  | 4 ----
- packages/{foo/foo.1.1 => oof/oof.1.1}/opam | 0
- 2 files changed, 4 deletions(-)
- delete mode 100644 packages/oof/oof.1.0/opam
- rename packages/{foo/foo.1.1 => oof/oof.1.1}/opam (100%)
+ packages/baz/baz.1.0/opam              | 2 +-
+ packages/foo/foo.1.1/opam              | 4 ----
+ packages/oof/{oof.1.0 => oof.1.1}/opam | 0
+ 3 files changed, 1 insertion(+), 5 deletions(-)
+ delete mode 100644 packages/foo/foo.1.1/opam
+ rename packages/oof/{oof.1.0 => oof.1.1}/opam (100%)
+Need to update opam-repo.git to get new commit 44d1c6f9bf942a6ea6719e70e0f1340cfb6b3c9e
 results:
   [debian-12-ocaml-5:
      compat_pkgs: [app.dev]
-     packages: [app.dev; foo.1.1; ocaml-base-compiler.5.0]
-     commits: [(opam-repo.git, 6b20fc580721bea55bdb0bf54780aaa98d162e0e)]
+     packages: [app.dev; bar.1.0; baz.1.0; foo.1.0; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, 44d1c6f9bf942a6ea6719e70e0f1340cfb6b3c9e)]
      lower_bound: false]

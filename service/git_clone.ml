@@ -157,13 +157,10 @@ module Make (Cache : CacheType) = struct
     | None -> []
     | Some diff ->
       try
-        run_grep_lines ~stdin:(Eio.Flow.string_source diff) t ["^... ./packages/.*/opam"] |> Option.value ~default:[]
-        |> List.map (fun path ->
-          Astring.String.cuts ~rev:true ~sep:"/" path 
-          |> function
-          | _::_::package::_ ->  package
-          | _ -> Fmt.failwith "Pkgs diff between %s and %s of %s@." repo_url new_commit old_commit)
-      with _ -> [] (* grep could exits with status 1 *)
+        run_grep_lines ~stdin:(Eio.Flow.string_source diff) t ["^... ./packages/.*/opam"]
+        |> Option.value ~default:[]
+        |> List.filter_map (fun path -> Astring.String.cut ~sep:"/" path |> Option.map snd)
+      with _ -> [] (* grep could exits with status 1 if there's no match *)
 
   let oldest_commit_with t ~repo_url ~from paths =
     let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
