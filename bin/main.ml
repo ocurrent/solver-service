@@ -75,24 +75,25 @@ let start_server ~service vat_config =
   let+ vat = Capnp_rpc_unix.serve vat_config ~restore in
   Capnp_rpc_unix.Vat.sturdy_uri vat service_id
 
-let main_service () solver cap_file vat_config =
-  let uri = start_server ~service:(Solver_service.Service.v solver) vat_config in
+let main_service () solver cacheable cap_file vat_config =
+  let uri = start_server ~service:(Solver_service.Service.v ~cacheable solver) vat_config in
   Capnp_rpc_unix.Cap_file.save_uri uri cap_file |> or_die;
   Fmt.pr "Wrote solver service's address to %S@." cap_file;
   Fiber.await_cancel ()
 
-let main_service_pipe () solver =
+let main_service_pipe () solver cacheable =
   let socket = Lwt_unix.stdin in
   (* Run locally reading from socket *)
-  export (Solver_service.Service.v solver) ~on:socket
+  export (Solver_service.Service.v ~cacheable solver) ~on:socket
 
-let main_cluster () solver name capacity register_addr =
+let main_cluster () solver cacheable name capacity register_addr =
   let vat = Capnp_rpc_unix.client_only_vat () in
   let sr = Capnp_rpc_unix.Vat.import_exn vat register_addr in
   let `Cancelled =
     Solver_worker.run solver sr
       ~name
       ~capacity
+      ~cacheable
   in
   ()
 
@@ -127,6 +128,11 @@ let capacity =
   @@ Arg.opt Arg.int 15
   @@ Arg.info ~doc:"The number of cluster jobs that can run in parallel" ~docv:"N"
     [ "capacity" ]
+
+let cacheable =
+  Arg.value
+  @@ Arg.flag
+  @@ Arg.info ~doc:"Activate the cache system" [ "activate-cache"; "cache" ]
 
 let cap_file =
   Arg.required
@@ -168,6 +174,7 @@ let () =
         const main_service
         $ setup_log
         $ solver
+        $ cacheable
         $ cap_file
         $ Capnp_rpc_unix.Vat_config.cmd
       )
@@ -179,6 +186,7 @@ let () =
         const main_service_pipe
         $ setup_log
         $ solver
+        $ cacheable
       )
   in
   let run_agent =
@@ -188,6 +196,7 @@ let () =
         const main_cluster
         $ setup_log
         $ solver
+        $ cacheable
         $ worker_name
         $ capacity
         $ register_addr

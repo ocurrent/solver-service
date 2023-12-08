@@ -1,6 +1,6 @@
 module Worker = Solver_service_api.Worker
 
-let v t =
+let v ?cacheable t =
   let open Capnp_rpc_lwt in
   let module X = Solver_service_api.Raw.Service.Solver in
   X.local
@@ -27,7 +27,7 @@ let v t =
                (Capnp_rpc.Error.exn "Bad JSON in request: %s" msg))
         | Ok request ->
           Lwt_eio.run_eio @@ fun () ->
-          let selections = Solver.solve t ~log request in
+          let selections = Solver.solve ?cacheable t ~log request in
           let json =
             Yojson.Safe.to_string
               (Worker.Solve_response.to_yojson selections)

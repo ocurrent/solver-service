@@ -28,14 +28,14 @@ let cluster_worker_log log =
       Capnp_rpc_lwt.Service.return_empty ()
   end
 
-let solve ~cancelled ~solver ~log c =
+let solve ~cacheable ~cancelled ~solver ~log c =
   let selections =
     let*! request = solve_of_custom c in
     let log = cluster_worker_log log in
     Lwt_eio.run_lwt @@ fun () ->
     Capnp_rpc_lwt.Capability.with_ref log @@ fun log ->
     Lwt_eio.run_eio @@ fun () ->
-    Solver_service.Solver.solve ~cancelled solver ~log request
+    Solver_service.Solver.solve ~cacheable ~cancelled solver ~log request
   in
   begin match selections with
     | Ok sels ->

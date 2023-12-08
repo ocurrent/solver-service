@@ -9,6 +9,7 @@ homepage: "https://github.com/ocurrent/solver-service"
 bug-reports: "https://github.com/ocurrent/solver-service/issues"
 depends: [
   "dune" {>= "3.7"}
+  "opam-file-format" {>= "2.1.6"}
   "ocaml" {>= "5.0.0"}
   "current_web" {>= "0.6.4" & with-test}
   "current_git" {>= "0.6.4" & with-test}
@@ -23,6 +24,7 @@ depends: [
   "lwt_eio" {>= "0.5"}
   "logs" {>= "0.7.0"}
   "fmt" {>= "0.9.0"}
+  "sqlite3"
   "ocaml-version" {>= "3.6.1"}
   "solver-service-api" {= version}
   "dune-build-info" {>= "3.8.0"}

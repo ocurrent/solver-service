@@ -2,6 +2,7 @@
     custom job specification. *)
 
 val solve :
+  cacheable:bool ->
   cancelled:unit Eio.Promise.t ->
   solver:Solver_service.Solver.t ->
   log:Log_data.t ->

@@ -1,0 +1,4 @@
+[submodule "scache"]
+	path = scache
+	url = https://github.com/moyodiallo/scache.git
+	branch = master

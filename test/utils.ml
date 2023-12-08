@@ -6,13 +6,18 @@ let add_opam_header s =
     synopsis: "Test package"
   |} ^ s
 
+module S = Git_unix.Store
+
 module Opam_repo : sig
-  type t
+  type t = {
+    name : string;
+    store : S.t;
+  }
 
   val create : string -> t
   (** [create path] opens a Git repository at [path], creating it if needed. *)
 
-  val commit : t -> (string * string) list -> string * string
+  val commit : ?parents:S.Value.Commit.hash list -> t -> (string * string) list -> string * string
   (** [commit t files] creates a commit with the given opam package files and returns
       the [(repo_url, hash]) pair for it. *)
 
@@ -20,7 +25,6 @@ module Opam_repo : sig
 end = struct
   (* A fake opam-repository upstream for testing. *)
 
-  module S = Git_unix.Store
 
   type t = {
     name : string;
@@ -85,7 +89,7 @@ end = struct
     in
     write_tree t (List.map write_version versions)
 
-  let commit t pkgs =
+  let commit ?parents t pkgs =
     let pkgs =
       group_packages pkgs
       |> OpamPackage.Name.Map.to_seq
@@ -95,10 +99,11 @@ end = struct
         )
     in
     let tree = write_tree t ["packages", `Dir (write_tree t pkgs)] in
-    let commit = S.Value.Commit.make ~tree ~author:test_user ~committer:test_user (Some "Commit") in
+    let commit = S.Value.Commit.make ?parents ~tree ~author:test_user ~committer:test_user (Some "Commit") in
     let commit = write t (S.Value.commit commit) in
     set_branch t Git.Reference.master commit;
     (t.name, S.Hash.to_hex commit)
+
 end
 
 let stderr_log =
@@ -153,3 +158,39 @@ let solve ?cancelled ?(pinned_pkgs=[]) t label ~commits ~root_pkgs ~platforms =
   in
   let response = Solver_service.Solver.solve ?cancelled t ~log:stderr_log req in
   Fmt.pr "@[<v2>results:@,%a@]@." pp_response response
+
+let solve_cache ?cancelled ?(pinned_pkgs=[])
+  t label ~previous_commits ~commits ~root_pkgs ~platforms =
+  Fmt.pr "@.## %s ##@.@.commits: %a@.root_pkgs: %a@.platforms: %a@."
+    label
+    pp_commits commits
+    pp_packages root_pkgs
+    pp_platforms platforms;
+  if pinned_pkgs <> [] then Fmt.pr "pinned: %a@." pp_packages pinned_pkgs;
+  let root_pkgs = List.map (fun (pkg, opam) -> pkg, add_opam_header opam) root_pkgs in
+  let pinned_pkgs = List.map (fun (pkg, opam) -> pkg, add_opam_header opam) pinned_pkgs in
+  let opam_repository_commits =
+    commits
+    |> List.map (fun (repo, packages) ->
+      let (_, parents) =
+        List.find (fun (repo_prev,_) -> String.equal repo_prev.Opam_repo.name repo.Opam_repo.name) previous_commits
+      in
+      let parents = List.map S.Hash.of_hex parents in
+      Opam_repo.commit ~parents repo packages)
+  in
+  let req = { Solver_service_api.Worker.Solve_request.
+              opam_repository_commits;
+              root_pkgs;
+              pinned_pkgs;
+              platforms;
+            }
+  in
+  let response = Solver_service.Solver.solve ~cacheable:true ?cancelled t ~log:stderr_log req in
+  Fmt.pr "@[<v2>results:@,%a@]@." pp_response response;
+  let recent_commits =
+    List.map (fun (repo_prev, repo_previous_commits) ->
+      let (_, commit) =
+        List.find (fun (repo,_) -> String.equal repo_prev.Opam_repo.name  repo) opam_repository_commits
+      in repo_prev, commit::repo_previous_commits) previous_commits
+  in
+  recent_commits
