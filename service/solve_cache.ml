@@ -69,16 +69,17 @@ let sort_by_url opam_repository_commits =
   opam_repository_commits
   |> List.sort (fun (url1,_) (url2,_) -> String.compare url1 url2)
 
-let _digest_opam_commits opam_repository_commits =
-  opam_repository_commits
-  |> List.fold_left (fun acc (_,commit) -> acc^commit) ""
-  |> Digest.string
-
 let is_same_solution ~solve_response_cache ~solve_response =
   match solve_response_cache, solve_response with
   | Error _, _ -> false
   | _, Error _ -> false
   | Ok selections_cache, Ok selections ->
+    let selections_cache =
+      List.map (fun sel -> { sel with Worker.Selection.commits = []}) selections_cache
+    in
+    let selections =
+      List.map (fun sel -> { sel with Worker.Selection.commits = []}) selections
+    in
     Selections.equal (Selections.of_list selections_cache) (Selections.of_list selections)
 
 let yojson_of_list l = l |> [%to_yojson: string list]
@@ -108,35 +109,37 @@ let update_commit t repo_url commit =
     |> List.iteri (fun rank commit -> Hashtbl.replace opam_commits commit rank)
 
 let changed_packages t ~new_opam_repo ~old_opam_repo =
-  let opam_commits = Lazy.force opam_commits in
-  try
-    (* new_opam_repo and old_opam_repo nead to be sorted by url *)
-    List.combine new_opam_repo old_opam_repo
-    |> List.map (fun ((repo_url,new_commit), (_,old_commit)) ->
-      let key = ("diff"^new_commit^"-"^old_commit) in
-      match Cache.get cache ~key with
-      | Some pkgs -> Yojson.Safe.from_string pkgs |> yojosn_to_list |> Result.get_ok
-      | None -> (
-        update_commit t repo_url new_commit;
-        update_commit t repo_url old_commit;
-        match Hashtbl.find_opt opam_commits new_commit, Hashtbl.find_opt opam_commits old_commit with
-        | Some new_rank, Some old_rank when new_rank = old_rank -> []
-        | Some new_rank, Some old_rank when new_rank < old_rank ->
-          (* This new commit is supposed to be newer in the commit history,
+  if new_opam_repo = old_opam_repo then
+    Some []
+  else
+    let opam_commits = Lazy.force opam_commits in
+    try
+      (* new_opam_repo and old_opam_repo nead to be sorted by url *)
+      List.combine new_opam_repo old_opam_repo
+      |> List.map (fun ((repo_url,new_commit), (_,old_commit)) ->
+        let key = ("diff"^new_commit^"-"^old_commit) in
+        match Cache.get cache ~key with
+        | Some pkgs -> Yojson.Safe.from_string pkgs |> yojosn_to_list |> Result.get_ok
+        | None -> (
+          update_commit t repo_url new_commit;
+          update_commit t repo_url old_commit;
+          match Hashtbl.find_opt opam_commits new_commit, Hashtbl.find_opt opam_commits old_commit with
+          | Some new_rank, Some old_rank when new_rank < old_rank ->
+            (* This new commit is supposed to be newer in the commit history,
              this could be a specific request on opam commits, like fixed demand
              so it invalidated *)
-          raise Invalidated
-        | Some _, Some _ -> 
-          let pkgs_filename = Git_clone.diff_pkgs t ~repo_url ~new_commit ~old_commit in
-          Cache.set cache ~key ~value:(Yojson.Safe.to_string (yojson_of_list pkgs_filename));
-          pkgs_filename
-        | None, _ ->
-          Fmt.epr "The repo %s has not the commit %s@." repo_url new_commit; raise Invalidated
-        | _, None ->
-          Fmt.epr "The repo %s has not the commit %s@." repo_url old_commit; raise Invalidated))
-    |> List.flatten
-    |> Option.some
-  with Invalidated -> None
+            raise Invalidated
+          | Some _, Some _ ->
+            let pkgs_filename = Git_clone.diff_pkgs t ~repo_url ~new_commit ~old_commit in
+            Cache.set cache ~key ~value:(Yojson.Safe.to_string (yojson_of_list pkgs_filename));
+            pkgs_filename
+          | None, _ ->
+            Fmt.epr "The repo %s has not the commit %s@." repo_url new_commit; raise Invalidated
+          | _, None ->
+            Fmt.epr "The repo %s has not the commit %s@." repo_url old_commit; raise Invalidated))
+      |> List.flatten
+      |> Option.some
+    with Invalidated -> None
 
 let get_names = OpamFormula.fold_left (fun a (name, _) -> name :: a) []
 
@@ -151,12 +154,12 @@ let is_invalidated t ~request ~solve_cache =
     root_pkgs;
     pinned_pkgs; _ } = request 
   in
-  let request_pkgs =
+  let request_pkgs () =
     List.concat_map (fun pkgs_name -> deps_of_opam_file pkgs_name) [root_pkgs; pinned_pkgs]
     |> List.flatten
     |> OpamPackage.Name.Set.of_list
   in
-  let response_pkgs =
+  let response_pkgs () =
     solve_cache.Solve_cache.solve_response
     |> Result.get_ok
     |> List.map (fun selection -> selection.Worker.Selection.packages)
@@ -182,6 +185,8 @@ let is_invalidated t ~request ~solve_cache =
   | Some pkgs ->
     pkgs
     |> List.find_opt (fun pkg ->
+      let request_pkgs = request_pkgs () in
+      let response_pkgs = response_pkgs () in
       OpamFilename.raw pkg
       |> OpamPackage.of_filename
       |> Option.get
