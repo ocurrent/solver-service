@@ -6,15 +6,17 @@ val create :
   process_mgr:_ Eio.Process.mgr ->
   cache_dir:string ->
   n_workers:int ->
+  main_does_work:bool ->
   t
-(** [create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers] is a solver service that
+(** [create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers ~main_does_work] is a solver service that
     distributes work between [n_workers] domains.
 
     @param sw Holds the worker domains.
     @param domain_mgr Used to spawn new domains.
     @param process_mgr Used to run the "git" command.
     @param cache_dir Directory for local git clones.
-    @param n_workers Maximum number of worker domains. *)
+    @param n_workers Maximum number of worker domains.
+    @param main_does_work Work around a problem with OCaml minor GCs being slow. *)
 
 val solve :
   ?cancelled:unit Eio.Promise.t ->

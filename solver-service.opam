@@ -9,7 +9,7 @@ homepage: "https://github.com/ocurrent/solver-service"
 bug-reports: "https://github.com/ocurrent/solver-service/issues"
 depends: [
   "dune" {>= "3.7"}
-  "ocaml" {>= "5.0.0"}
+  "ocaml" {>= "5.2.0"}
   "current_web" {>= "0.6.4" & with-test}
   "current_git" {>= "0.6.4" & with-test}
   "current_github" {>= "0.6.4" & with-test}

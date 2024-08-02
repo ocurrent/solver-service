@@ -238,7 +238,7 @@ let () =
   let cache_dir = "cache" in
   Lwt_eio.with_event_loop ~clock:env#clock @@ fun () ->
   Switch.run @@ fun sw ->
-  let t = Solver_service.Solver.create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers:2 in
+  let t = Solver_service.Solver.create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers:2 ~main_does_work:false in
   [
     "Simple", test_simple;
     "Overlay", test_overlay;

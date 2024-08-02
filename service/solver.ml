@@ -118,6 +118,7 @@ let solve ?cancelled t ~log request =
   let*! root_pkgs = parse_opams request.root_pkgs in
   let*! pinned_pkgs = parse_opams request.pinned_pkgs in
   let*! packages = Stores.packages t.stores opam_repository_commits in
+  Pool.wake_main_later t.pool;
   let results =
     platforms
     |> Fiber.List.map (fun (id, vars) ->
@@ -161,9 +162,9 @@ let solve ?cancelled t ~log request =
     | [] -> Ok results
     | errors -> Fmt.error_msg "@[<v>%a@]" Fmt.(list ~sep:cut string) errors
 
-let create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers =
+let create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers ~main_does_work =
   let stores = Stores.create ~process_mgr ~cache_dir in
-  let pool = Pool.create ~sw ~domain_mgr ~n_workers Domain_worker.solve in
+  let pool = Pool.create ~sw ~domain_mgr ~n_workers ~main_does_work Domain_worker.solve in
   {
     stores;
     pool;

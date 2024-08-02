@@ -177,6 +177,7 @@ module Stress_local = struct
   type config = {
     cache_dir : string;
     n_workers : int;
+    main_does_work : bool;
   }
 
   let main ~domain_mgr ~process_mgr local config =
@@ -187,6 +188,7 @@ module Stress_local = struct
         ~process_mgr
         ~cache_dir:local.cache_dir
         ~n_workers:local.n_workers
+        ~main_does_work:local.main_does_work
     in
     let service = Solver_service.Service.v solver in
     benchmark config (fun request ->
@@ -202,6 +204,12 @@ module Stress_local = struct
     @@ Arg.info ~doc:"The number of sub-process solving requests in parallel"
       ~docv:"N" [ "internal-workers" ]
 
+  let main_does_work =
+    Arg.value
+    @@ Arg.flag
+    @@ Arg.info ~doc:"Use main domain for work too (avoids GC slowness problem)"
+      [ "main-does-work" ]
+
   let cache_dir =
     Arg.required
     @@ Arg.opt Arg.(some string) None
@@ -209,8 +217,8 @@ module Stress_local = struct
       [ "cache-dir" ]
 
   let config =
-    let make cache_dir n_workers = { cache_dir; n_workers } in
-    Term.(const make $ cache_dir $ internal_workers)
+    let make cache_dir n_workers main_does_work = { cache_dir; n_workers; main_does_work } in
+    Term.(const make $ cache_dir $ internal_workers $ main_does_work)
 end
 
 module Stress_service = struct

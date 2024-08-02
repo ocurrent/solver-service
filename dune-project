@@ -11,7 +11,7 @@
  (name solver-service)
  (synopsis "Choose package versions to test")
  (depends
-  (ocaml (>= 5.0.0))
+  (ocaml (>= 5.2.0))
   ; Examples dependencies
   (current_web (and (>= 0.6.4) :with-test))
   (current_git (and (>= 0.6.4) :with-test))

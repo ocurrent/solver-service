@@ -145,6 +145,12 @@ let version =
   | None -> "n/a"
   | Some v -> Build_info.V1.Version.to_string v
 
+let main_does_work =
+  Arg.value
+  @@ Arg.flag
+  @@ Arg.info ~doc:"Use main domain for work too (avoids GC slowness problem)"
+    [ "main-does-work" ]
+
 let () =
   let doc = "a service for selecting opam packages" in
   let info = Cmd.info "solver-service" ~doc ~version in
@@ -155,11 +161,11 @@ let () =
   Switch.run @@ fun sw ->
   Lwt_eio.with_event_loop ~clock:env#clock @@ fun () ->
   let solver =
-    let make cache_dir n_workers =
+    let make cache_dir n_workers main_does_work =
       if not (Sys.file_exists cache_dir) then Unix.mkdir cache_dir 0o777;
-      Solver_service.Solver.create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers
+      Solver_service.Solver.create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers ~main_does_work
     in
-    Term.(const make $ cache_dir $ internal_workers)
+    Term.(const make $ cache_dir $ internal_workers $ main_does_work)
   in
   let run_service =
     let doc = "run solver as a stand-alone service" in
