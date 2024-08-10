@@ -1,0 +1,6 @@
+pin-depends: [
+  ["opam-core.dev" "git+https://github.com/ocaml/opam.git#6dbcfe78980f598e97c2247999e537c328a1f942"]
+  ["opam-state.dev" "git+https://github.com/ocaml/opam.git#6dbcfe78980f598e97c2247999e537c328a1f942"]
+  ["opam-repository.dev" "git+https://github.com/ocaml/opam.git#6dbcfe78980f598e97c2247999e537c328a1f942"]
+  ["opam-format.dev" "git+https://github.com/ocaml/opam.git#6dbcfe78980f598e97c2247999e537c328a1f942"]
+]
