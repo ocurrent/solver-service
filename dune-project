@@ -29,7 +29,7 @@
   (ocaml-version (>= 3.6.1))
   (solver-service-api (= :version))
   (dune-build-info (>= 3.8.0))
-  (opam-0install (>= 0.4.3))
+  (opam-0install (>= 0.4.4))
   (git-unix (>= 3.12.0))
   (ocluster-api (>= 0.2.1))
   (prometheus-app (>= 1.2))
