@@ -1,4 +1,4 @@
-FROM ocaml/opam:debian-12-ocaml-5.1 AS build
+FROM ocaml/opam:debian-12-ocaml-5.2 AS build
 RUN sudo apt-get update && sudo apt-get install libev-dev capnproto m4 pkg-config libsqlite3-dev libgmp-dev libzstd-dev -y --no-install-recommends
 RUN cd ~/opam-repository && git fetch -q origin master && git reset --hard 13acffc3de9c22953d1e08bad3e56ee6e965eeed && opam update
 RUN sudo ln -sf /usr/bin/opam-2.1 /usr/bin/opam
