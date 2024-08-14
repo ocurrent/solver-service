@@ -37,6 +37,7 @@ module Config = struct
   type t = {
     requests : Solver_service_api.Worker.Solve_request.t list;
     count : int;
+    quiet : bool;
   }
 
   let compilers =
@@ -76,7 +77,7 @@ module Config = struct
         platforms;
       }
 
-  let create ~test_packages count =
+  let create ~test_packages count quiet =
     let packages =
       Eio.Path.read_dir test_packages
       |> List.to_seq
@@ -85,7 +86,7 @@ module Config = struct
       |> List.of_seq
     in
     let requests = Fiber.List.map ~max_fibers:4 (make_request ~test_packages) packages in
-    { requests; count }
+    { requests; count; quiet }
 
   open Cmdliner
 
@@ -94,9 +95,14 @@ module Config = struct
     @@ Arg.opt Arg.int 3
     @@ Arg.info ~doc:"The number of requests to send" ~docv:"N" [ "count" ]
 
+  let quiet =
+    Arg.value
+    @@ Arg.flag
+    @@ Arg.info ~doc:"Just output the rate" [ "q"; "quiet" ]
+
   let term ~test_packages =
     let make count = create ~test_packages count in
-    Term.(const make $ count)
+    Term.(const make $ count $ quiet)
 end
 
 let pp_request f (x : Solver_service_api.Worker.Solve_request.t) =
@@ -113,9 +119,11 @@ let benchmark (config:Config.t) solve =
     config.requests
     |> Fiber.List.map (fun (req : Solver_service_api.Worker.Solve_request.t) ->
         let resp = solve req in
-        Format.printf "%a@."
-          (Yojson.Safe.pretty_print ?std:None)
-          (Solver_service_api.Worker.Solve_response.to_yojson resp);
+        if not config.quiet then (
+          Format.printf "%a@."
+            (Yojson.Safe.pretty_print ?std:None)
+            (Solver_service_api.Worker.Solve_response.to_yojson resp);
+        );
         begin
           match resp with
           | Error _ ->
@@ -132,7 +140,7 @@ let benchmark (config:Config.t) solve =
       )
   in
   let time = Unix.gettimeofday () -. before in
-  Format.printf "@.Solved warm-up requests in: %.2fs@." time;
+  if not config.quiet then Format.printf "@.Solved warm-up requests in: %.2fs@." time;
   let expected =
     results
     |> List.to_seq
@@ -140,7 +148,7 @@ let benchmark (config:Config.t) solve =
     |> Seq.take config.count
   in
   (* Main run *)
-  Format.printf "Running another %d solves...@." config.count;
+  if not config.quiet then Format.printf "Running another %d solves...@." config.count;
   let before = Unix.gettimeofday () in
   let complete = ref 0 in
   Switch.run (fun sw ->
@@ -149,14 +157,19 @@ let benchmark (config:Config.t) solve =
               let resp = solve req in
               assert (resp = expected);
               incr complete;
-              Printf.printf "\r%d/%d complete%!" !complete config.count
+              if not config.quiet then Printf.printf "\r%d/%d complete%!" !complete config.count
             )
         )
     );
   let time = Unix.gettimeofday () -. before in
-  Format.printf "@.Solved %d requests in %.2fs (%.2fs/iter) (%.2f solves/s)@."
-    config.count time (time /. float config.count)
-    (float (config.count * List.length Config.platforms) /. time)
+  let rate = float (config.count * List.length Config.platforms) /. time in
+  if config.quiet then (
+    Format.printf "%.2f@." rate
+  ) else (
+    Format.printf "@.Solved %d requests in %.2fs (%.2fs/iter) (%.2f solves/s)@."
+      config.count time (time /. float config.count)
+      rate
+  )
 
 let verbose = false
 
