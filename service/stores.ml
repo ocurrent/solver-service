@@ -11,6 +11,7 @@ type t = {
   cache_dir : string;
   mutable stores : Safe_store.t Store_map.t;
   process_mgr : [`Generic] Eio.Process.mgr_ty r;
+  history : History.Cache.t;
 
   (* For now we only keep the most recent set of packages. *)
   mutable index_cache : (commit list * Packages.t Promise.or_exn) option;
@@ -24,13 +25,6 @@ let git_command ?cwd args =
 
 let run_git ?cwd t args =
   Eio.Process.run t.process_mgr (git_command ?cwd args)
-
-let line_opt r =
-  if Eio.Buf_read.at_end_of_input r then None
-  else Some (Eio.Buf_read.line r)
-
-let run_git_line ?cwd t args =
-  Eio.Process.parse_out t.process_mgr line_opt (git_command ?cwd args)
 
 module Git_clone = struct
   let replace_special =
@@ -87,30 +81,6 @@ module Git_clone = struct
     | Error e ->
       Fmt.failwith "Failed to open %a: %a" Fpath.pp path Store.pp_error e
 
-  let oldest_commit_with t ~repo_url ~from paths =
-    let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
-    run_git_line t ~cwd:clone_path
-    @@ "log"
-       :: "-n" :: "1"
-       :: "--format=format:%H"
-       :: from
-       :: "--"
-       :: paths
-
-  let oldest_commits_with t ~from pkgs =
-    let paths =
-      pkgs
-      |> List.map (fun pkg ->
-          let name = OpamPackage.name_to_string pkg in
-          let version = OpamPackage.version_to_string pkg in
-          Printf.sprintf "packages/%s/%s.%s" name name version)
-    in
-    from
-    |> Fiber.List.filter_map (fun (repo_url, hash) ->
-        oldest_commit_with t ~repo_url ~from:hash paths
-        |> Option.map (fun commit -> (repo_url, commit))
-      )
-
   let fetch t repo_url =
     try
       let clone_path = repo_url_to_clone_path t repo_url |> Fpath.to_string in
@@ -119,10 +89,6 @@ module Git_clone = struct
       let bt = Printexc.get_raw_backtrace () in
       Eio.Exn.reraise_with_context ex bt "fetching %S" repo_url
 end
-
-let oldest_commit = Eio.Semaphore.make 180
-(* we are using at most 360 pipes at the same time and that's enough to keep the current
- * performance and prevent some jobs to fail because of file descriptors exceed the limit.*)
 
 let get t repo_url =
   match Store_map.find_opt repo_url t.stores with
@@ -186,12 +152,36 @@ let create ~process_mgr ~cache_dir =
     process_mgr = (process_mgr :> [`Generic] Eio.Process.mgr_ty r);
     stores = Store_map.empty;
     index_cache = None;
+    history = History.Cache.create ();
   }
 
+let oldest_commit_with t ~repo_url ~from pkgs =
+  match get t repo_url with
+  | Error (`Msg msg) -> failwith msg
+  | Ok store ->
+    Switch.run ~name:"oldest_commit_with" @@ fun sw ->
+    let request = Safe_store.get ~sw store in
+    match Safe_store.get_store request with
+    | Error ex -> raise ex
+    | Ok store ->
+      let paths =
+        pkgs
+        |> List.map (fun pkg ->
+            let name = OpamPackage.name_to_string pkg in
+            let version = OpamPackage.version_to_string pkg in
+            Printf.sprintf "packages/%s/%s.%s" name name version)
+      in
+      History.oldest_commit_with
+        ~cache:t.history
+        ~store
+        ~from:(Store.Hash.of_hex from)
+        paths
+
 let oldest_commits_with t ~from repo_packages =
-  Eio.Semaphore.acquire oldest_commit;
-  Fun.protect ~finally:(fun () -> Eio.Semaphore.release oldest_commit) @@ fun () ->
-  Git_clone.oldest_commits_with t repo_packages ~from
+  from |> Fiber.List.filter_map (fun (repo_url, hash) ->
+      oldest_commit_with t ~repo_url ~from:hash repo_packages
+      |> Option.map (fun commit -> (repo_url, commit))
+    )
 
 (* We could do this in parallel, except that there might be duplicate repos in the list. *)
 let rec fetch_commits t = function
