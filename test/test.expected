@@ -246,3 +246,17 @@ results:
      packages: [foo.dev; ocaml-base-compiler.5.0]
      commits: [(opam-repo.git, 1bc28b8e8d98db6e524822c6f28bddebbc3504a3)]
      lower_bound: false]
+
+# with-dev-setup
+
+## foo depends on bar only using with-dev-setup ##
+
+commits: [(opam-repo.git, [ocaml-base-compiler.5.0])]
+root_pkgs: [foo.dev]
+platforms: [linux]
+results:
+  [linux:
+     compat_pkgs: [foo.dev]
+     packages: [foo.dev; ocaml-base-compiler.5.0]
+     commits: [(opam-repo.git, 1bc28b8e8d98db6e524822c6f28bddebbc3504a3)]
+     lower_bound: false]

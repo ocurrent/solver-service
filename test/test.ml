@@ -231,6 +231,21 @@ let test_available t =
       "mac", { debian_12_ocaml_5 with os = "macos" };
     ]
 
+let test_dev_setup t =
+  let opam_repo = Opam_repo.create "opam-repo.git" in
+  let opam_packages = [
+    "ocaml-base-compiler.5.0", "";
+  ] in
+  let root_pkgs = [
+    "foo.dev", {| depends: [ "bar" { with-dev-setup } ] |};
+  ] in
+  solve t "foo depends on bar only using with-dev-setup"
+    ~root_pkgs
+    ~commits:[opam_repo, opam_packages]
+    ~platforms:[
+      "linux", debian_12_ocaml_5;
+    ]
+
 let () =
   Eio_main.run @@ fun env ->
   let domain_mgr = env#domain_mgr in
@@ -250,6 +265,7 @@ let () =
     "Pinned", test_pinned;
     "Cancel", test_cancel;
     "Available", test_available;
+    "with-dev-setup", test_dev_setup;
   ]
   |> List.iter (fun (name, fn) ->
       Fmt.pr "@.# %s@." name;
