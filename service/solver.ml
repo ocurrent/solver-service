@@ -12,6 +12,54 @@ type t = {
 
 let ocaml = OpamPackage.Name.of_string "ocaml"
 
+
+module Metrics = struct
+  open Prometheus
+
+  let namespace = "ocluster"
+  let subsystem = "solver"
+
+  let request_handling_total =
+    let help = "Total number of handled requests" in
+    Counter.v ~help ~namespace ~subsystem "requests_handled_total"
+
+  let request_handling =
+    let help = "Number of handled requests by state" in
+    Gauge.v_label ~label_name:"state" ~help ~namespace ~subsystem "request_state"
+
+  let update_request_handling pool n_requests =
+    let workers = Pool.n_workers pool in
+    let waiting = Pool.wait_requests pool in
+    let running = min !n_requests workers in
+    Gauge.set (request_handling "running") (float_of_int running);
+    Gauge.set (request_handling "waiting") (float_of_int waiting);
+    Gauge.set (request_handling "capacity") (float_of_int workers)
+
+  let request_ok =
+    let help = "Total number of success requests" in
+    Counter.v ~help ~namespace ~subsystem "success"
+
+  let request_fail =
+    let help = "Total number of fail requests" in
+    Counter.v ~help ~namespace ~subsystem "failed"
+
+  let request_no_solution =
+    let help = "Total number of no solution requests " in
+    Counter.v ~help ~namespace ~subsystem "no_solution"
+
+  let request_cancel_waiting =
+    let help = "Total number of cancel when the requests are waiting" in
+    Counter.v ~help ~namespace ~subsystem "cancel_waiting"
+
+  let request_cancel_running =
+    let help = "Total number of cancel when the requests are running" in
+    Counter.v ~help ~namespace ~subsystem "cancel_running"
+
+  let request_timing =
+    let help = "Total time spent finding solutions" in
+    Summary.v ~help ~namespace ~subsystem "timing"
+end
+
 (* If a local package has a literal constraint on OCaml's version and it doesn't match
    the platform, we just remove that package from the set to test, so other packages
    can still be tested. *)
@@ -47,13 +95,16 @@ let solve_for_platform ?cancelled t ~log ~opam_repository_commits ~packages ~roo
   ) else (
     let slice = { Domain_worker.vars; root_pkgs; packages; pinned_pkgs; cancelled } in
     match Pool.use t.pool slice with
+    | Error `Cancelled -> Error `Cancelled
     | Error (`Msg m) -> Error (`Msg m)
     | Ok (results, time) ->
       match results with
       | Error e ->
+        Prometheus.Summary.observe Metrics.request_timing time;
         Log.info log "%s: eliminated all possibilities in %.2f s" id time;
         Error (`No_solution e)
       | Ok packages ->
+        Prometheus.Summary.observe Metrics.request_timing time;
         Log.info log "%s: found solution in %.2f s" id time;
         let repo_packages =
           packages
@@ -115,12 +166,18 @@ let solve ?cancelled t ~log request =
   in
   Log.info log "Solving for %a" Fmt.(list ~sep:comma string) root_pkgs;
   let serious_errors = ref [] in
+  let cancel_waiting = ref 0 in
+  let n_requests = ref 0 in
+  let pool = t.pool in
   let*! root_pkgs = parse_opams request.root_pkgs in
   let*! pinned_pkgs = parse_opams request.pinned_pkgs in
   let*! packages = Stores.packages t.stores opam_repository_commits in
   let results =
     platforms
     |> Fiber.List.map (fun (id, vars) ->
+        Prometheus.Counter.inc_one Metrics.request_handling_total;
+        incr n_requests;
+        Metrics.update_request_handling pool n_requests;
         let result =
           solve_for_platform t id
             ?cancelled
@@ -132,12 +189,16 @@ let solve ?cancelled t ~log request =
             ~pins
             ~vars
         in
+        Metrics.update_request_handling pool n_requests;
         (id, result)
       )
     |> List.filter_map (fun (id, result) ->
         Log.info log "= %s =" id;
+        decr n_requests;
+        Metrics.update_request_handling pool n_requests;
         match result with
         | Ok result ->
+          Prometheus.Counter.inc_one Metrics.request_ok;
           Log.info log "-> @[<hov>%a@]"
             Fmt.(list ~sep:sp string)
             result.Selection.packages;
@@ -145,17 +206,27 @@ let solve ?cancelled t ~log request =
             Fmt.(list ~sep:semi (pair ~sep:comma string string))
             result.Selection.commits;
           Some result
+        | Error `Cancelled ->
+          Prometheus.Counter.inc_one Metrics.request_cancel_waiting;
+          incr cancel_waiting;
+          Log.info log "%s" "Cancelled";
+          None
         | Error (`No_solution msg) ->
+          Prometheus.Counter.inc_one Metrics.request_no_solution;
           Log.info log "%s" msg;
           None
         | Error (`Msg msg) ->
+          Prometheus.Counter.inc_one Metrics.request_fail;
           Log.info log "%s" msg;
           serious_errors := msg :: !serious_errors;
           None
       )
   in
   match cancelled with
-  | Some p when Promise.is_resolved p -> Error `Cancelled
+  | Some p when Promise.is_resolved p ->
+    let cancels = (List.length platforms) - (!cancel_waiting) in
+    Prometheus.Counter.inc Metrics.request_cancel_running (float_of_int cancels);
+    Error `Cancelled
   | _ ->
     match !serious_errors with
     | [] -> Ok results
