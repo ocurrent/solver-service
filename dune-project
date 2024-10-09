@@ -30,6 +30,12 @@
   (solver-service-api (= :version))
   (dune-build-info (>= 3.8.0))
   (opam-0install (>= 0.4.4))
+  ; Lower bound on opam with performance fixes #6144 #6122
+  (opam-core (>= 2.3.0~alpha1))
+  (opam-state (>= 2.3.0~alpha1))
+  (opam-repository (>= 2.3.0~alpha1))
+  (opam-format (>= 2.3.0~alpha1))
+
   (git-unix (>= 3.12.0))
   (ocluster-api (>= 0.2.1))
   (prometheus-app (>= 1.2))
