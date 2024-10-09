@@ -27,6 +27,10 @@ depends: [
   "solver-service-api" {= version}
   "dune-build-info" {>= "3.8.0"}
   "opam-0install" {>= "0.4.4"}
+  "opam-core" {>= "2.3.0~alpha1"}
+  "opam-state" {>= "2.3.0~alpha1"}
+  "opam-repository" {>= "2.3.0~alpha1"}
+  "opam-format" {>= "2.3.0~alpha1"}
   "git-unix" {>= "3.12.0"}
   "ocluster-api" {>= "0.2.1"}
   "prometheus-app" {>= "1.2"}
@@ -52,9 +56,3 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/ocurrent/solver-service.git"
-pin-depends: [
-  ["opam-core.dev" "git+https://github.com/ocaml/opam.git#6dbcfe78980f598e97c2247999e537c328a1f942"]
-  ["opam-state.dev" "git+https://github.com/ocaml/opam.git#6dbcfe78980f598e97c2247999e537c328a1f942"]
-  ["opam-repository.dev" "git+https://github.com/ocaml/opam.git#6dbcfe78980f598e97c2247999e537c328a1f942"]
-  ["opam-format.dev" "git+https://github.com/ocaml/opam.git#6dbcfe78980f598e97c2247999e537c328a1f942"]
-]
