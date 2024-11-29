@@ -11,7 +11,7 @@
  (name solver-service)
  (synopsis "Choose package versions to test")
  (depends
-  (ocaml (>= 5.0.0))
+  (ocaml (>= 5.1.0))
   ; Examples dependencies
   (current_web (and (>= 0.6.4) :with-test))
   (current_git (and (>= 0.6.4) :with-test))
@@ -21,8 +21,8 @@
   (ppx_deriving (>= 5.1))
   (yojson (>= 2.1.0))
   (lwt (>= 5.6.1))
-  (eio (>= 0.12))
-  (eio_main (>= 0.12))
+  (eio (>= 1.2))
+  (eio_main (>= 1.2))
   (lwt_eio (>= 0.5))
   (logs (>= 0.7.0))
   (fmt (>= 0.9.0))
@@ -39,8 +39,8 @@
   (git-unix (>= 3.12.0))
   (ocluster-api (>= 0.2.1))
   (prometheus-app (>= 1.2))
-  (capnp-rpc-net (>= 1.2.3))
-  (capnp-rpc-unix (>= 1.2.3)))
+  (capnp-rpc-net (and (>= 1.2.3) (< 2.0)))
+  (capnp-rpc-unix (and (>= 1.2.3) (< 2.0))))
  (conflicts (carton (< 0.4.2))))
 
 (package

@@ -100,6 +100,8 @@ let pipeline ~cluster vars () =
       Current_github.Api.Anonymous.head_of opam_repository
         (`Ref "refs/heads/master")
     in
+    let { Solver_service_api.Worker.Vars.os; ocaml_version; _ } = vars in
+    let name = Fmt.str "%s-%s" os ocaml_version in
     Solver_service_api.Worker.Solve_request.
       {
         opam_repository_commits =
@@ -109,7 +111,7 @@ let pipeline ~cluster vars () =
           ];
         root_pkgs = opamfiles;
         pinned_pkgs = [];
-        platforms = [ ("os", vars) ];
+        platforms = [ (name, vars) ];
       }
   in
   let selection =
@@ -135,7 +137,7 @@ let main () config mode submission_uri =
   let open Lwt.Syntax in
   let vat = Capnp_rpc_unix.client_only_vat () in
   let* vars =
-    Solve.get_vars ~ocaml_package_name:"obuilder" ~ocaml_version:"4.13.1" ()
+    Solve.get_vars ~ocaml_package_name:"obuilder" ~ocaml_version:"5.2.0" ()
   in
   let submission_cap = Capnp_rpc_unix.Vat.import_exn vat submission_uri in
   let cluster = Current_ocluster.Connection.create submission_cap in
