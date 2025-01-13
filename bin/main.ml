@@ -100,10 +100,12 @@ let main_cluster () solver name capacity register_addr =
 
 open Cmdliner
 
+let ( $ ) = Term.( $ )
+let ( $$ ) f x = Term.const f $ x
+
 let setup_log =
   let docs = Manpage.s_common_options in
-  Term.(
-    const setup_log $ Fmt_cli.style_renderer ~docs () $ Logs_cli.level ~docs ())
+  setup_log $$ Fmt_cli.style_renderer ~docs () $ Logs_cli.level ~docs ()
 
 let internal_workers =
   Arg.value
@@ -159,38 +161,25 @@ let () =
       if not (Sys.file_exists cache_dir) then Unix.mkdir cache_dir 0o777;
       Solver_service.Solver.create ~sw ~domain_mgr ~process_mgr ~cache_dir ~n_workers
     in
-    Term.(const make $ cache_dir $ internal_workers)
+    make $$ cache_dir $ internal_workers
   in
   let run_service =
     let doc = "run solver as a stand-alone service" in
     let info = Cmd.info "run-service" ~doc ~version in
-    Cmd.v info Term.(
-        const main_service
-        $ setup_log
-        $ solver
-        $ cap_file
-        $ Capnp_rpc_unix.Vat_config.cmd
-      )
+    Cmd.v info (
+      main_service $$ setup_log $ solver $ cap_file $ Capnp_rpc_unix.Vat_config.cmd
+    )
   in
   let run_service_pipe =
     let doc = "run solver as sub-process using stdin as socket" in
     let info = Cmd.info "run-child" ~doc ~version in
-    Cmd.v info Term.(
-        const main_service_pipe
-        $ setup_log
-        $ solver
-      )
+    Cmd.v info (main_service_pipe $$ setup_log $ solver)
   in
   let run_agent =
     let doc = "run solver as a cluster worker agent" in
     let info = Cmd.info "run-cluster" ~doc ~version in
-    Cmd.v info Term.(
-        const main_cluster
-        $ setup_log
-        $ solver
-        $ worker_name
-        $ capacity
-        $ register_addr
-      )
+    Cmd.v info (
+      main_cluster $$ setup_log $ solver $ worker_name $ capacity $ register_addr
+    )
   in
   Cmd.eval @@ Cmd.group info [ run_service; run_service_pipe; run_agent ]

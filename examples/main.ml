@@ -92,10 +92,8 @@ let run_client ~process_mgr ~package ~version ~ocaml_version ~opam_commit servic
   | Error (`Msg m) -> Fmt.failwith "Solver service failed with: %s" m
   | Error `Cancelled -> Fmt.failwith "Job Cancelled"
 
-let connect package version ocaml_version opam_commit uri =
-  Eio_main.run @@ fun env ->
+let connect env package version ocaml_version opam_commit uri =
   let process_mgr = env#process_mgr in
-  Lwt_eio.with_event_loop ~clock:env#clock @@ fun () ->
   Lwt_eio.run_lwt @@ fun () ->
   let client_vat = Capnp_rpc_unix.client_only_vat () in
   let sr = Capnp_rpc_unix.Vat.import_exn client_vat uri in
@@ -103,6 +101,9 @@ let connect package version ocaml_version opam_commit uri =
     (run_client ~process_mgr ~package ~version ~ocaml_version ~opam_commit)
 
 open Cmdliner
+
+let ( $ ) = Term.( $ )
+let ( $$ ) f x = Term.const f $ x
 
 let connect_addr =
   let i = Arg.info [] ~docv:"ADDR" ~doc:"Address of server (capnp://...)" in
@@ -132,16 +133,14 @@ let version =
   @@ Arg.info [ "version" ] ~docv:"VERSION"
        ~doc:"The version of the package to solve for (e.g. 3.0.0)"
 
-let connect_cmd =
+let connect_cmd env =
   let doc = "Solve a simple package.version request using a solver-service" in
   let info = Cmd.info "solve-local" ~doc in
   Cmd.v info
-    Term.(
-      const connect
-      $ package
-      $ version
-      $ ocaml_version
-      $ opam_commit
-      $ connect_addr)
+    (connect env $$ package $ version $ ocaml_version $ opam_commit $ connect_addr)
 
-let () = Cmd.(exit @@ eval connect_cmd)
+let () =
+  exit @@
+  Eio_main.run @@ fun env ->
+  Lwt_eio.with_event_loop ~clock:env#clock @@ fun () ->
+  Cmd.eval (connect_cmd env)
