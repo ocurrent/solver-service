@@ -29,6 +29,7 @@
   (dune-build-info (>= 3.8.0))
   conf-libev
   (opam-0install (>= 0.4.3))
+  (opam-format (>= 2.2.0))
   (git-unix (>= 3.12.0))
   (capnp-rpc-unix (>= 1.2.3)))
  (conflicts (carton (< 0.4.2))))
