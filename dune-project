@@ -53,7 +53,7 @@
   (alcotest-lwt (and (>= 1.7.0) :with-test))
   (current_ocluster (and (>= 0.2.1) :with-test))
   (ocluster-api (>= 0.2.1))
-  (prometheus-app (>= 1.2))
+  (prometheus-app (>= 2.0))
   (logs (>= 0.7.0))
   (fmt (>= 0.9.0))
   (dune-build-info (>= 3.7))
