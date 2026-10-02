@@ -38,7 +38,7 @@
 
   (git-unix (>= 3.12.0))
   (ocluster-api (>= 0.2.1))
-  (prometheus-app (>= 1.2))
+  (prometheus-app (>= 2.0))
   (capnp-rpc-net (and (>= 1.2.3) (< 2.0)))
   (capnp-rpc-unix (and (>= 1.2.3) (< 2.0))))
  (conflicts (carton (< 0.4.2))))
